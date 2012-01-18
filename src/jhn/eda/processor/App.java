@@ -3,7 +3,7 @@ package jhn.eda.processor;
 import jhn.eda.Util;
 
 
-public class Indexer {
+public class App {
 //	private static final int LABEL_COUNT = 3550567;
 //	private static final int WORD_TYPE_COUNT = 1978075;
 	
