@@ -135,21 +135,11 @@ public class Indexer {
 		}
 
 		public void afterEverything() {
-			FileOutputStream fos = null;
-			ObjectOutputStream out = null;
-			try {
-				fos = new FileOutputStream(outputFilename);
-				out = new ObjectOutputStream(fos);
-				out.writeObject(index);
-				out.close();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			Util.serialize(index, outputFilename);
 		}
 	}
 	
 	private static class LabelIndexingVisitor extends IndexingVisitor {
-		
 		public LabelIndexingVisitor(String outputFilename) {
 			super(outputFilename);
 		}
@@ -166,7 +156,6 @@ public class Indexer {
 	}
 	
 	private static class WordIndexingVisitor extends IndexingVisitor {
-		
 		public WordIndexingVisitor(String outputFilename) {
 			super(outputFilename);
 		}
