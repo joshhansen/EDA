@@ -78,10 +78,62 @@ public class Indexer {
 		}
 	}
 	
+	private static class CountingVisitor extends Visitor {
+		private int count;
+		private final String name;
+		
+		public CountingVisitor(final String name) {
+			this.name = name;
+		}
+		
+		public void beforeEverything() {
+			count = 0;
+		}
+		
+		public void afterEverything() {
+			System.out.println("Count '" + name + "' = " + count);
+		}
+		
+		protected int increment() {
+			return ++count;
+		}
+		
+		protected int count() {
+			return count;
+		}
+	}
+	
+	private static class LabelCountingVisitor extends CountingVisitor {
+		public LabelCountingVisitor() {
+			super("Labels");
+		}
+		public void visitLabel(String label) {
+			int count = increment();
+			if(count % 10000 == 0) System.out.println(count + " " + label);
+		}
+	}
+	
+	private static class WordCountingVisitor extends Visitor {
+		private Set<String> words = new HashSet<String>();
+		public WordCountingVisitor() {
+		}
+		public void visitWord(String word) {
+			words.add(word);
+		}
+		
+		public void afterEverything() {
+			System.out.println("Word Types: " + words.size());
+		}
+	}
+	
 	private static class IndexingVisitor extends Visitor {
 		protected Alphabet index;
-		private String outputFilename;
+		private final String outputFilename;
 		
+		public IndexingVisitor(String outputFilename) {
+			this.outputFilename = outputFilename;
+		}
+
 		public void afterEverything() {
 			FileOutputStream fos = null;
 			ObjectOutputStream out = null;
@@ -97,16 +149,28 @@ public class Indexer {
 	}
 	
 	private static class LabelIndexingVisitor extends IndexingVisitor {
+		
+		public LabelIndexingVisitor(String outputFilename) {
+			super(outputFilename);
+		}
+
 		public void beforeEverything() {
 			index = new LabelAlphabet();
 		}
 		
 		public void visitLabel(String label) {
-			index.lookupIndex(label, true);
+			int idx = index.lookupIndex(label, true);
+			if(idx % 10000 == 0 && idx > 0)
+				System.out.println(idx + " " + label);
 		}
 	}
 	
 	private static class WordIndexingVisitor extends IndexingVisitor {
+		
+		public WordIndexingVisitor(String outputFilename) {
+			super(outputFilename);
+		}
+
 		public void beforeEverything() {
 			index = new Alphabet();
 		}
@@ -116,47 +180,55 @@ public class Indexer {
 		}
 	}
 	
-	private static class AbstractCountingVisitor extends Visitor {
-		private final String outputDir;
-		private final Alphabet wordIdx;
-		private Map<Integer,Integer> counts;
-		private String label;
-		
-		public AbstractCountingVisitor(String outputDir, Alphabet wordIdx) {
-			this.outputDir = outputDir;
-			this.wordIdx = wordIdx;
-		}
-
-		public void beforeLabel() {
-			counts = new HashMap<Integer,Integer>();
-		}
-		
-		public void visitLabel(String label) {
-			this.label = label;
-		}
-		
-		public void visitWord(String word) {
-			Integer idx = Integer.valueOf(wordIdx.lookupIndex(word));
-			Integer count = counts.get(idx);
-			
-			if(count == null) count = 1;
-			else count++;
-			
-			counts.put(idx, count);
-		}
-		
-		public void afterLabel() {
-			
-		}
-	}
+//	private static class AbstractCountingVisitor extends Visitor {
+//		private final String outputDir;
+//		private final Alphabet wordIdx;
+//		private Map<Integer,Integer> counts;
+//		private String label;
+//		
+//		public AbstractCountingVisitor(String outputDir, Alphabet wordIdx) {
+//			this.outputDir = outputDir;
+//			this.wordIdx = wordIdx;
+//		}
+//
+//		public void beforeLabel() {
+//			counts = new HashMap<Integer,Integer>();
+//		}
+//		
+//		public void visitLabel(String label) {
+//			this.label = label;
+//		}
+//		
+//		public void visitWord(String word) {
+//			Integer idx = Integer.valueOf(wordIdx.lookupIndex(word));
+//			Integer count = counts.get(idx);
+//			
+//			if(count == null) count = 1;
+//			else count++;
+//			
+//			counts.put(idx, count);
+//		}
+//		
+//		public void afterLabel() {
+//			
+//		}
+//	}
+	
+	private static final int LABEL_COUNT = 3550567;
+	private static final int WORD_TYPE_COUNT = 1978075;
 	
 	public static void main(String[] args) {
+		final String outputDir = "/home/jjfresh/Projects/eda_output";
 		final Set<String> stopwords = new HashSet<String>();
 		for(String stopword : Util.stopwords) stopwords.add(stopword);
 		
 		
 		final String abstractsFilename = "/home/jjfresh/Data/dbpedia.org/3.7/short_abstracts_en.nt.bz2";
 		AbstractsProcessor ap = new AbstractsProcessor(abstractsFilename, stopwords);
+		ap.visitors.add(new LabelIndexingVisitor(outputDir+"/labelAlphabet.ser"));
+		ap.visitors.add(new WordIndexingVisitor(outputDir+"/alphabet.ser"));
+//		ap.visitors.add(new LabelCountingVisitor());
+//		ap.visitors.add(new WordCountingVisitor());
 		ap.process();
 	}
 }
