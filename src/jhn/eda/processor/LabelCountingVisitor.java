@@ -1,6 +1,6 @@
 package jhn.eda.processor;
 
-class LabelCountingVisitor extends CountingVisitor {
+public class LabelCountingVisitor extends CountingVisitor {
 	public LabelCountingVisitor() {
 		super("Labels");
 	}

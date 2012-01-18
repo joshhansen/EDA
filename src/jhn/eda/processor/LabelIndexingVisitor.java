@@ -2,7 +2,7 @@ package jhn.eda.processor;
 
 import cc.mallet.types.LabelAlphabet;
 
-class LabelIndexingVisitor extends IndexingVisitor {
+public class LabelIndexingVisitor extends IndexingVisitor {
 	public LabelIndexingVisitor(String outputFilename) {
 		super(outputFilename);
 	}

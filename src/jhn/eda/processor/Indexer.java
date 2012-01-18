@@ -19,10 +19,10 @@ public class Indexer {
 		
 		final String abstractsFilename = "/home/jjfresh/Data/dbpedia.org/3.7/short_abstracts_en.nt.bz2";
 		AbstractsProcessor ap = new AbstractsProcessor(abstractsFilename, stopwords);
-		ap.visitors.add(new LabelIndexingVisitor(outputDir+"/labelAlphabet.ser"));
-		ap.visitors.add(new WordIndexingVisitor(outputDir+"/alphabet.ser"));
-//		ap.visitors.add(new LabelCountingVisitor());
-//		ap.visitors.add(new WordCountingVisitor());
+		ap.addVisitor(new LabelIndexingVisitor(outputDir+"/labelAlphabet.ser"));
+		ap.addVisitor(new WordIndexingVisitor(outputDir+"/alphabet.ser"));
+//		ap.addVisitor(new LabelCountingVisitor());
+//		ap.addVisitor(new WordCountingVisitor());
 		ap.process();
 	}
 }

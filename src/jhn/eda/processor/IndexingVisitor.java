@@ -3,7 +3,7 @@ package jhn.eda.processor;
 import jhn.eda.Util;
 import cc.mallet.types.Alphabet;
 
-class IndexingVisitor extends Visitor {
+public class IndexingVisitor extends Visitor {
 	protected Alphabet index;
 	private final String outputFilename;
 	

@@ -3,7 +3,7 @@ package jhn.eda.processor;
 import java.util.HashSet;
 import java.util.Set;
 
-class WordCountingVisitor extends Visitor {
+public class WordCountingVisitor extends Visitor {
 	private Set<String> words = new HashSet<String>();
 	public WordCountingVisitor() {
 	}

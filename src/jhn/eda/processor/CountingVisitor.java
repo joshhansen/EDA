@@ -1,6 +1,6 @@
 package jhn.eda.processor;
 
-class CountingVisitor extends Visitor {
+public class CountingVisitor extends Visitor {
 	private int count;
 	private final String name;
 	

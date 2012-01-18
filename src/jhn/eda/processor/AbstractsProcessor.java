@@ -2,6 +2,7 @@ package jhn.eda.processor;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -16,7 +17,7 @@ import org.semanticweb.yars.nx.parser.NxParser;
 public class AbstractsProcessor {
 	private String triplesFilename;
 	private Set<String> stopwords;
-	List<Visitor> visitors = new ArrayList<Visitor>();
+	private List<Visitor> visitors = new ArrayList<Visitor>();
 	private static final Pattern subjectRgx = Pattern.compile("^http://dbpedia\\.org/resource/(.+)$");
 	
 	public AbstractsProcessor(String triplesFilename, Set<String> stopwords) {
@@ -59,5 +60,10 @@ public class AbstractsProcessor {
 	private static final Pattern tokenSplitRgx = Pattern.compile("[^a-z\\-]");
 	protected String[] tokenize(final String abstrakt) {
 		return tokenSplitRgx.split(abstrakt.toLowerCase());
+	}
+	
+	public void addVisitor(Visitor v) { visitors.add(v); }
+	public List<Visitor> visitors() {
+		return Collections.unmodifiableList(visitors);
 	}
 }
