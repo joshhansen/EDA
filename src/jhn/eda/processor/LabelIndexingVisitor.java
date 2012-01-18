@@ -2,7 +2,7 @@ package jhn.eda.processor;
 
 import cc.mallet.types.LabelAlphabet;
 
-public class LabelIndexingVisitor extends IndexingVisitor {
+public class LabelIndexingVisitor extends AbstractIndexingVisitor {
 	public LabelIndexingVisitor(String outputFilename) {
 		super(outputFilename);
 	}
@@ -12,8 +12,6 @@ public class LabelIndexingVisitor extends IndexingVisitor {
 	}
 	
 	public void visitLabel(String label) {
-		int idx = index.lookupIndex(label, true);
-		if(idx % 10000 == 0 && idx > 0)
-			System.out.println(idx + " " + label);
+		index.lookupIndex(label, true);
 	}
 }

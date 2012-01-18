@@ -3,6 +3,8 @@ package jhn.eda.processor;
 import java.util.HashSet;
 import java.util.Set;
 
+import cern.colt.matrix.DoubleMatrix2D;
+
 import jhn.eda.Util;
 
 
@@ -12,6 +14,7 @@ public class Indexer {
 	private static final int WORD_TYPE_COUNT = 1978075;
 	
 	public static void main(String[] args) {
+		DoubleMatrix2D m;
 		final String outputDir = "/home/jjfresh/Projects/eda_output";
 		final Set<String> stopwords = new HashSet<String>();
 		for(String stopword : Util.stopwords) stopwords.add(stopword);

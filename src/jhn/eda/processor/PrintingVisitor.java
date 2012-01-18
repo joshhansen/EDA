@@ -1,0 +1,36 @@
+package jhn.eda.processor;
+
+public class PrintingVisitor extends AbstractCountingVisitor {
+
+//	@Override
+//	public void beforeEverything() {
+//		System.out.println("beforeEverything()");
+//	}
+
+//	@Override
+//	public void beforeLabel() {
+//		System.out.println("beforeLabel()");
+//	}
+
+	@Override
+	public void visitLabel(String label) {
+		increment();
+		if(count() % 10000 == 0) System.out.println("visitLabel(" + label + ")");
+	}
+
+//	@Override
+//	public void visitWord(String word) {
+//		System.out.println("visitWord(" + word + ")");
+//	}
+
+//	@Override
+//	public void afterLabel() {
+//		System.out.println("afterLabel()");
+//	}
+
+	@Override
+	public void afterEverything() {
+//		System.out.println("afterEverything()");
+	}
+
+}
