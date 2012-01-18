@@ -6,21 +6,33 @@ version 1.0, as published by http://www.opensource.org.	For further
 information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
-
-
-
-
-
-import java.util.*;
-import java.util.logging.*;
-import java.util.zip.*;
-
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Serializable;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 
-import cc.mallet.topics.*;
-import cc.mallet.types.*;
-import cc.mallet.util.*;
+import cc.mallet.topics.SimpleLDA;
+import cc.mallet.topics.TopicAssignment;
+import cc.mallet.types.Alphabet;
+import cc.mallet.types.Dirichlet;
+import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.IDSorter;
+import cc.mallet.types.Instance;
+import cc.mallet.types.InstanceList;
+import cc.mallet.types.LabelAlphabet;
+import cc.mallet.types.LabelSequence;
+import cc.mallet.util.MalletLogger;
+import cc.mallet.util.Randoms;
 
 
 /**
@@ -64,7 +76,7 @@ public class EDA implements Serializable {
 	protected int[] oneDocTopicCounts; // indexed by <document index, topic index>
 
 	// Statistics needed for sampling.
-	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
+//	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
 	protected int[] tokensPerTopic; // indexed by <topic index>
 
 	public int showTopicsInterval = 50;
@@ -118,6 +130,10 @@ public class EDA implements Serializable {
 	public int getNumTopics() { return numTopics; }
 	public ArrayList<TopicAssignment> getData() { return data; }
 	
+	protected int typeTopicCount(int featureIdx, int topicIdx) {
+		
+	}
+	
 	public void setTopicDisplay(int interval, int n) {
 		this.showTopicsInterval = interval;
 		this.wordsPerTopic = n;
@@ -127,7 +143,7 @@ public class EDA implements Serializable {
 		random = new Randoms(seed);
 	}
 	
-	public int[][] getTypeTopicCounts() { return typeTopicCounts; }
+//	public int[][] getTypeTopicCounts() { return typeTopicCounts; }
 	public int[] getTopicTotals() { return tokensPerTopic; }
 
 	public void addInstances (InstanceList training) {
