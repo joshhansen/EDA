@@ -10,6 +10,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.tools.bzip2.CBZip2InputStream;
 import org.apache.tools.bzip2.CBZip2OutputStream;
@@ -58,7 +60,12 @@ public final class Util {
 	}
 	
 	/** From Mallet 2.0.7 */
-	public static final String[] stopwords = { "a", "able", "about", "above",
+	public static Set<String> stopwords() {
+		final Set<String> stopwords = new HashSet<String>();
+		for(String stopword : Util.stopwords) stopwords.add(stopword);
+		return stopwords;
+	}
+	private static final String[] stopwords = { "a", "able", "about", "above",
 			"according", "accordingly", "across", "actually", "after",
 			"afterwards", "again", "against", "all", "allow", "allows",
 			"almost", "alone", "along", "already", "also", "although",

@@ -1,5 +1,8 @@
 package jhn.eda.processor;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import jhn.eda.Util;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.LabelAlphabet;
@@ -14,9 +17,22 @@ public class TopicWordMatrixVisitor extends Visitor {
 	private DoubleMatrix2D matrix;
 	private int currentLabelIdx;
 
-	public TopicWordMatrixVisitor(final LabelAlphabet labelAlphabet, final Alphabet alphabet, final String outputFilename) {
-		this.labelAlphabet = labelAlphabet;
-		this.alphabet = alphabet;
+	public TopicWordMatrixVisitor(final String labelAlphFilename, final String alphFilename, final String outputFilename) {
+		LabelAlphabet la = null;
+		Alphabet a = null;
+		try {
+			la = (LabelAlphabet) Util.deserialize(labelAlphFilename);
+			a = (Alphabet) Util.deserialize(alphFilename);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		this.labelAlphabet = la;
+		this.alphabet = a;
 		this.outputFilename = outputFilename;
 	}
 	

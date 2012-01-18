@@ -1,29 +1,28 @@
 package jhn.eda.processor;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import cern.colt.matrix.DoubleMatrix2D;
-
 import jhn.eda.Util;
 
 
-
 public class Indexer {
-	private static final int LABEL_COUNT = 3550567;
-	private static final int WORD_TYPE_COUNT = 1978075;
+//	private static final int LABEL_COUNT = 3550567;
+//	private static final int WORD_TYPE_COUNT = 1978075;
 	
 	public static void main(String[] args) {
-		DoubleMatrix2D m;
-		final String outputDir = "/home/jjfresh/Projects/eda_output";
-		final Set<String> stopwords = new HashSet<String>();
-		for(String stopword : Util.stopwords) stopwords.add(stopword);
+		final String srcDir = System.getenv("HOME") + "/Data/dbpedia.org/3.7";
+		final String destDir = System.getenv("HOME") + "/Projects/eda_output";
 		
 		
-		final String abstractsFilename = "/home/jjfresh/Data/dbpedia.org/3.7/short_abstracts_en.nt.bz2";
-		AbstractsProcessor ap = new AbstractsProcessor(abstractsFilename, stopwords);
-		ap.addVisitor(new LabelIndexingVisitor(outputDir+"/labelAlphabet.ser"));
-		ap.addVisitor(new WordIndexingVisitor(outputDir+"/alphabet.ser"));
+		final String abstractsFilename = srcDir + "/short_abstracts_en.nt.bz2";
+		final String wordIdxFilename = destDir + "/alphabet.ser";
+		final String topicIdxFilename = destDir + "/labelAlphabet.ser";
+		
+		final String matrixFilename = destDir + "/topicWordMatrix.ser";
+		
+		AbstractsProcessor ap = new AbstractsProcessor(abstractsFilename, Util.stopwords());
+		ap.addVisitor(new PrintingVisitor());//Provide some console output
+		ap.addVisitor(new TopicWordMatrixVisitor(topicIdxFilename, wordIdxFilename, matrixFilename));
+//		ap.addVisitor(new LabelIndexingVisitor(destDir+"/labelAlphabet.ser"));
+//		ap.addVisitor(new WordIndexingVisitor(destDir+"/alphabet.ser"));
 //		ap.addVisitor(new LabelCountingVisitor());
 //		ap.addVisitor(new WordCountingVisitor());
 		ap.process();
