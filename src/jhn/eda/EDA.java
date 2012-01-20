@@ -76,7 +76,7 @@ public class EDA implements Serializable {
 	protected int[] oneDocTopicCounts; // indexed by <document index, topic index>
 
 	// Statistics needed for sampling.
-//	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
+	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
 	protected int[] tokensPerTopic; // indexed by <topic index>
 
 	public int showTopicsInterval = 50;
@@ -130,9 +130,9 @@ public class EDA implements Serializable {
 	public int getNumTopics() { return numTopics; }
 	public ArrayList<TopicAssignment> getData() { return data; }
 	
-	protected int typeTopicCount(int featureIdx, int topicIdx) {
-		
-	}
+//	protected int typeTopicCount(int featureIdx, int topicIdx) {
+//		
+//	}
 	
 	public void setTopicDisplay(int interval, int n) {
 		this.showTopicsInterval = interval;

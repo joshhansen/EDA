@@ -15,7 +15,7 @@ public class PrintingVisitor extends AbstractCountingVisitor {
 	@Override
 	public void visitLabel(String label) {
 		increment();
-		if(count() % 10000 == 0) System.out.println("visitLabel(" + label + ")");
+		if(count() % 10000 == 0) System.out.println(count() + " " + label);
 	}
 
 //	@Override
