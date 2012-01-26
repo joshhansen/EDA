@@ -37,7 +37,7 @@ public class App {
 		final String destDir = System.getenv("HOME") + "/Projects/eda_output";
 		
 		
-		final String abstractsFilename = srcDir + "/short_abstracts_en.nt.bz2";
+		final String abstractsFilename = srcDir + "/long_abstracts_en.nt.bz2";
 		final String wordIdxFilename = destDir + "/alphabet.ser";
 		final String topicIdxFilename = destDir + "/labelAlphabet.ser";
 		

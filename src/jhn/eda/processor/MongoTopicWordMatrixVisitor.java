@@ -19,6 +19,11 @@ import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 
 public class MongoTopicWordMatrixVisitor extends Visitor {
+	private static final String server = "localhost";
+	private static final int port = 27017;
+	private static final String dbName = "dbpedia37";
+	private static final String collectionName = "long_abstracts";
+	
 	private final Alphabet alphabet;
 	private final LabelAlphabet labelAlphabet;
 	
@@ -53,9 +58,9 @@ public class MongoTopicWordMatrixVisitor extends Visitor {
 	@Override
 	public void beforeEverything() {
 		try {
-			m = new Mongo( "localhost" , 27017 );
-			DB db = m.getDB("dbpedia37");
-			c = db.getCollection("topicwords");
+			m = new Mongo(server, port);
+			DB db = m.getDB(dbName);
+			c = db.getCollection(collectionName);
 		} catch(UnknownHostException e) {
 			e.printStackTrace();
 		}
