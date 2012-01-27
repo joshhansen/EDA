@@ -19,10 +19,10 @@ import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 
 public class MongoTopicWordMatrixVisitor extends Visitor {
-	private static final String server = "localhost";
-	private static final int port = 27017;
-	private static final String dbName = "dbpedia37";
-	private static final String collectionName = "long_abstracts";
+	public static final String server = "localhost";
+	public static final int port = 27017;
+	public static final String dbName = "dbpedia37";
+	public static final String collectionName = "long_abstracts";
 	
 	private final Alphabet alphabet;
 	private final LabelAlphabet labelAlphabet;

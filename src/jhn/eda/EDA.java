@@ -15,12 +15,17 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.net.UnknownHostException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
+import jhn.eda.processor.MongoTopicWordMatrixVisitor;
 import cc.mallet.topics.SimpleLDA;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
@@ -34,6 +39,13 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
+
 
 /**
 * A simple implementation of Latent Dirichlet Allocation using Gibbs sampling.
@@ -46,16 +58,18 @@ import cc.mallet.util.Randoms;
 
 public class EDA implements Serializable {
 
-	private static Logger logger = MalletLogger.getLogger(SimpleLDA.class.getName());
+	
+
+	private static Logger logger = MalletLogger.getLogger(EDA.class.getName());
 	
 	// the training instances and their topic assignments
-	protected ArrayList<TopicAssignment> data;  
+	protected List<TopicAssignment> data;
 
 	// the alphabet for the input data
-	protected Alphabet alphabet; 
+	protected Alphabet alphabet;
 
 	// the alphabet for the topics
-	protected LabelAlphabet topicAlphabet; 
+	protected LabelAlphabet topicAlphabet;
 	
 	// The number of topics requested
 	protected int numTopics;
@@ -64,9 +78,9 @@ public class EDA implements Serializable {
 	protected int numTypes;
 
 	// Prior parameters
-	protected double alpha;	 // Dirichlet(alpha,alpha,...) is the distribution over topics
+	protected double alpha; // Dirichlet(alpha,alpha,...) is the distribution over topics
 	protected double alphaSum;
-	protected double beta;   // Prior on per-topic multinomial distribution over words
+	protected double beta; // Prior on per-topic multinomial distribution over words
 	protected double betaSum;
 	public static final double DEFAULT_BETA = 0.01;
 	
@@ -76,7 +90,7 @@ public class EDA implements Serializable {
 	protected int[] oneDocTopicCounts; // indexed by <document index, topic index>
 
 	// Statistics needed for sampling.
-	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
+//	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
 	protected int[] tokensPerTopic; // indexed by <topic index>
 
 	public int showTopicsInterval = 50;
@@ -86,12 +100,15 @@ public class EDA implements Serializable {
 	protected NumberFormat formatter;
 	protected boolean printLogLikelihood = false;
 	
-	public EDA (int numberOfTopics) {
-		this (numberOfTopics, numberOfTopics, DEFAULT_BETA);
+	
+	private DBCollection c;
+	
+	public EDA (DBCollection c, int numberOfTopics) {
+		this (c, numberOfTopics, numberOfTopics, DEFAULT_BETA);
 	}
 	
-	public EDA (int numberOfTopics, double alphaSum, double beta) {
-		this (numberOfTopics, alphaSum, beta, new Randoms());
+	public EDA (DBCollection c, int numberOfTopics, double alphaSum, double beta) {
+		this (c, numberOfTopics, alphaSum, beta, new Randoms());
 	}
 	
 	private static LabelAlphabet newLabelAlphabet (int numTopics) {
@@ -101,12 +118,13 @@ public class EDA implements Serializable {
 		return ret;
 	}
 	
-	public EDA (int numberOfTopics, double alphaSum, double beta, Randoms random) {
-		this (newLabelAlphabet (numberOfTopics), alphaSum, beta, random);
+	public EDA (DBCollection c, int numberOfTopics, double alphaSum, double beta, Randoms random) {
+		this (c, newLabelAlphabet (numberOfTopics), alphaSum, beta, random);
 	}
 	
-	public EDA (LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random)
+	public EDA (DBCollection c, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random)
 	{
+		this.c = c;
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		this.numTopics = topicAlphabet.size();
@@ -128,11 +146,22 @@ public class EDA implements Serializable {
 	public Alphabet getAlphabet() { return alphabet; }
 	public LabelAlphabet getTopicAlphabet() { return topicAlphabet; }
 	public int getNumTopics() { return numTopics; }
-	public ArrayList<TopicAssignment> getData() { return data; }
+	public List<TopicAssignment> getData() { return data; }
 	
-//	protected int typeTopicCount(int featureIdx, int topicIdx) {
-//		
-//	}
+	protected int typeTopicCount(int featureIdx, int topicIdx) {
+		BasicDBObject query = new BasicDBObject();
+		query.put("labelidx", topicIdx);
+		DBObject result = c.findOne(query);
+		Map<String,List<Integer>> counts = (Map<String, List<Integer>>) result.get("wordcounts");
+		final Integer featurIdxI = Integer.valueOf(featureIdx);
+		for(Entry<String,List<Integer>> entry : counts.entrySet()) {
+			if(entry.getValue().contains(featurIdxI))
+				return Integer.parseInt(entry.getKey());
+		}
+		System.err.print('.');
+		return 0;
+//		throw new IllegalArgumentException();
+	}
 	
 	public void setTopicDisplay(int interval, int n) {
 		this.showTopicsInterval = interval;
@@ -153,7 +182,7 @@ public class EDA implements Serializable {
 		
 		betaSum = beta * numTypes;
 		
-		typeTopicCounts = new int[numTypes][numTopics];
+//		typeTopicCounts = new int[numTypes][numTopics];
 
 		int doc = 0;
 
@@ -171,10 +200,16 @@ public class EDA implements Serializable {
 				topics[position] = topic;
 				tokensPerTopic[topic]++;
 				
-				int type = tokens.getIndexAtPosition(position);
-				typeTopicCounts[type][topic]++;
+//				int type = tokens.getIndexAtPosition(position);
+//				typeTopicCounts[type][topic]++;
 			}
 
+			
+			
+			System.out.println(instance.getName());
+			System.out.println(instance.getData().getClass());
+			
+			
 			TopicAssignment t = new TopicAssignment (instance, topicSequence);
 			data.add (t);
 		}
@@ -214,7 +249,7 @@ public class EDA implements Serializable {
 
 		int[] oneDocTopics = topicSequence.getFeatures();
 
-		int[] currentTypeTopicCounts;
+//		int[] currentTypeTopicCounts;
 		int type, oldTopic, newTopic;
 		double topicWeightsSum;
 		int docLength = tokenSequence.getLength();
@@ -231,17 +266,19 @@ public class EDA implements Serializable {
 
 		//	Iterate over the positions (words) in the document 
 		for (int position = 0; position < docLength; position++) {
+			System.out.println(tokenSequence.get(position));
 			type = tokenSequence.getIndexAtPosition(position);
 			oldTopic = oneDocTopics[position];
 
 			// Grab the relevant row from our two-dimensional array
-			currentTypeTopicCounts = typeTopicCounts[type];
+//			currentTypeTopicCounts = typeTopicCounts[type];
+			
 
 			//	Remove this token from all counts. 
 			localTopicCounts[oldTopic]--;
 			tokensPerTopic[oldTopic]--;
 			assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
-			currentTypeTopicCounts[oldTopic]--;
+//			currentTypeTopicCounts[oldTopic]--;
 
 			// Now calculate and add up the scores for each topic for this word
 			sum = 0.0;
@@ -249,9 +286,11 @@ public class EDA implements Serializable {
 			// Here's where the math happens! Note that overall performance is 
 			//  dominated by what you do in this loop.
 			for (int topic = 0; topic < numTopics; topic++) {
+				int count = typeTopicCount(type, topic) - (topic==oldTopic ? 1 : 0);
+				
 				score =
 					(alpha + localTopicCounts[topic]) *
-					((beta + currentTypeTopicCounts[topic]) /
+					((beta + count) /
 					 (betaSum + tokensPerTopic[topic]));
 				sum += score;
 				topicTermScores[topic] = score;
@@ -276,7 +315,7 @@ public class EDA implements Serializable {
 			oneDocTopics[position] = newTopic;
 			localTopicCounts[newTopic]++;
 			tokensPerTopic[newTopic]++;
-			currentTypeTopicCounts[newTopic]++;
+//			currentTypeTopicCounts[newTopic]++;
 		}
 	}
 	
@@ -340,16 +379,15 @@ public class EDA implements Serializable {
 		for (int type=0; type < numTypes; type++) {
 			// reuse this array as a pointer
 
-			topicCounts = typeTopicCounts[type];
-
 			for (int topic = 0; topic < numTopics; topic++) {
-				if (topicCounts[topic] == 0) { continue; }
+				int count = typeTopicCount(type, topic);
+				if (count == 0) { continue; }
 				
 				nonZeroTypeTopics++;
-				logLikelihood += Dirichlet.logGamma(beta + topicCounts[topic]);
+				logLikelihood += Dirichlet.logGamma(beta + count);
 
 				if (Double.isNaN(logLikelihood)) {
-					System.out.println(topicCounts[topic]);
+					System.out.println(count);
 					System.exit(1);
 				}
 			}
@@ -391,7 +429,8 @@ public class EDA implements Serializable {
 
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) {
-				sortedWords[type] = new IDSorter(type, typeTopicCounts[type][topic]);
+				
+				sortedWords[type] = new IDSorter(type, typeTopicCount(type, topic));
 			}
 
 			Arrays.sort(sortedWords);
@@ -540,7 +579,7 @@ public class EDA implements Serializable {
 		out.writeObject(formatter);
 		out.writeBoolean(printLogLikelihood);
 
-		out.writeObject (typeTopicCounts);
+//		out.writeObject (typeTopicCounts);
 
 		for (int ti = 0; ti < numTopics; ti++) {
 			out.writeInt (tokensPerTopic[ti]);
@@ -571,7 +610,7 @@ public class EDA implements Serializable {
 		int numDocs = data.size();
 		this.numTypes = alphabet.size();
 
-		typeTopicCounts = (int[][]) in.readObject();
+//		typeTopicCounts = (int[][]) in.readObject();
 		tokensPerTopic = new int[numTopics];
 		for (int ti = 0; ti < numTopics; ti++) {
 			tokensPerTopic[ti] = in.readInt();
@@ -579,14 +618,38 @@ public class EDA implements Serializable {
 	}
 
 	public static void main (String[] args) throws IOException {
+		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
+//		final String alphabetFilename = outputDir + "/state_of_the_union-alphabet.ser";
+		final String labelAlphabetFilename = outputDir + "/labelAlphabet.ser";
+		
+		final String datasetFilename = System.getenv("HOME") + "/Projects/topicalguide/datasets/state_of_the_union/imported_data.mallet";
+		
+		try {
+//			Alphabet alphabet = (Alphabet) Util.deserialize(alphabetFilename);
+			System.out.print("Loading label alphabet...");
+			LabelAlphabet labelAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
+			System.out.println("done.");
+			
+			Mongo m = new Mongo(MongoTopicWordMatrixVisitor.server, MongoTopicWordMatrixVisitor.port);
+			DB db = m.getDB(MongoTopicWordMatrixVisitor.dbName);
+			DBCollection c = db.getCollection(MongoTopicWordMatrixVisitor.collectionName);
+			
+			InstanceList training = InstanceList.load(new File(datasetFilename));
 
-		InstanceList training = InstanceList.load (new File(args[0]));
+//			int numTopics = args.length > 1 ? Integer.parseInt(args[1]) : 200;
 
-		int numTopics = args.length > 1 ? Integer.parseInt(args[1]) : 200;
-
-		SimpleLDA lda = new SimpleLDA (numTopics, 50.0, 0.01);
-		lda.addInstances(training);
-		lda.sample(1000);
+			
+			EDA eda = new EDA (c, labelAlphabet, 50.0, 0.01, new Randoms());
+			eda.addInstances(training);
+			eda.sample(1000);
+			
+			m.close();
+		} catch(UnknownHostException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 }
