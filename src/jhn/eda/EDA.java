@@ -57,9 +57,6 @@ import com.mongodb.Mongo;
 */
 
 public class EDA implements Serializable {
-
-	
-
 	private static Logger logger = MalletLogger.getLogger(EDA.class.getName());
 	
 	// the training instances and their topic assignments
@@ -67,6 +64,8 @@ public class EDA implements Serializable {
 
 	// the alphabet for the input data
 	protected Alphabet alphabet;
+	
+	protected Alphabet targetAlphabet;
 
 	// the alphabet for the topics
 	protected LabelAlphabet topicAlphabet;
@@ -103,28 +102,29 @@ public class EDA implements Serializable {
 	
 	private DBCollection c;
 	
-	public EDA (DBCollection c, int numberOfTopics) {
-		this (c, numberOfTopics, numberOfTopics, DEFAULT_BETA);
-	}
+//	public EDA (DBCollection c, int numberOfTopics) {
+//		this (c, numberOfTopics, numberOfTopics, DEFAULT_BETA);
+//	}
+//	
+//	public EDA (DBCollection c, int numberOfTopics, double alphaSum, double beta) {
+//		this (c, numberOfTopics, alphaSum, beta, new Randoms());
+//	}
+//	
+//	private static LabelAlphabet newLabelAlphabet (int numTopics) {
+//		LabelAlphabet ret = new LabelAlphabet();
+//		for (int i = 0; i < numTopics; i++)
+//			ret.lookupIndex("topic"+i);
+//		return ret;
+//	}
+//	
+//	public EDA (DBCollection c, int numberOfTopics, double alphaSum, double beta, Randoms random) {
+//		this (c, newLabelAlphabet (numberOfTopics), alphaSum, beta, random);
+//	}
 	
-	public EDA (DBCollection c, int numberOfTopics, double alphaSum, double beta) {
-		this (c, numberOfTopics, alphaSum, beta, new Randoms());
-	}
-	
-	private static LabelAlphabet newLabelAlphabet (int numTopics) {
-		LabelAlphabet ret = new LabelAlphabet();
-		for (int i = 0; i < numTopics; i++)
-			ret.lookupIndex("topic"+i);
-		return ret;
-	}
-	
-	public EDA (DBCollection c, int numberOfTopics, double alphaSum, double beta, Randoms random) {
-		this (c, newLabelAlphabet (numberOfTopics), alphaSum, beta, random);
-	}
-	
-	public EDA (DBCollection c, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random)
+	public EDA (DBCollection c, final Alphabet targetAlphabet, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random)
 	{
 		this.c = c;
+		this.targetAlphabet = targetAlphabet;
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		this.numTopics = topicAlphabet.size();
@@ -149,16 +149,30 @@ public class EDA implements Serializable {
 	public List<TopicAssignment> getData() { return data; }
 	
 	protected int typeTopicCount(int featureIdx, int topicIdx) {
+//		System.out.println("typeTopicCount(word:"+featureIdx+",topic:"+topicIdx+")");
+		
 		BasicDBObject query = new BasicDBObject();
 		query.put("labelidx", topicIdx);
 		DBObject result = c.findOne(query);
 		Map<String,List<Integer>> counts = (Map<String, List<Integer>>) result.get("wordcounts");
-		final Integer featurIdxI = Integer.valueOf(featureIdx);
+		
+		
+		
+		String originalType = alphabet.lookupObject(featureIdx).toString();
+		final Integer featureIdxI = targetAlphabet.lookupIndex(originalType);
+		
 		for(Entry<String,List<Integer>> entry : counts.entrySet()) {
-			if(entry.getValue().contains(featurIdxI))
+//			System.out.println("\t"+entry.getKey());
+//			for(Integer i : entry.getValue())
+//				System.out.println("\t\t" + i);
+			
+			if(entry.getValue().contains(featureIdxI)) {
+				System.err.print('+');
+//				System.out.println("Contains");
 				return Integer.parseInt(entry.getKey());
+			}
 		}
-		System.err.print('.');
+//		System.err.println("No match");
 		return 0;
 //		throw new IllegalArgumentException();
 	}
@@ -267,7 +281,7 @@ public class EDA implements Serializable {
 		//	Iterate over the positions (words) in the document 
 		for (int position = 0; position < docLength; position++) {
 			System.out.println(tokenSequence.get(position));
-			type = tokenSequence.getIndexAtPosition(position);
+			type = tokenSequence.getIndexAtPosition(position);//FIXME
 			oldTopic = oneDocTopics[position];
 
 			// Grab the relevant row from our two-dimensional array
@@ -308,7 +322,7 @@ public class EDA implements Serializable {
 
 			// Make sure we actually sampled a topic
 			if (newTopic == -1) {
-				throw new IllegalStateException ("SimpleLDA: New topic not sampled.");
+				throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
 			}
 
 			// Put that new topic into the counts
@@ -620,14 +634,15 @@ public class EDA implements Serializable {
 	public static void main (String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 //		final String alphabetFilename = outputDir + "/state_of_the_union-alphabet.ser";
-		final String labelAlphabetFilename = outputDir + "/labelAlphabet.ser";
+		final String targetLabelAlphabetFilename = outputDir + "/dbpedia37_longabstracts_label_alphabet.ser";
+		final String targetAlphabetFilename = outputDir + "/dbpedia37_longabstracts_alphabet.ser";
 		
 		final String datasetFilename = System.getenv("HOME") + "/Projects/topicalguide/datasets/state_of_the_union/imported_data.mallet";
 		
 		try {
-//			Alphabet alphabet = (Alphabet) Util.deserialize(alphabetFilename);
+			Alphabet targetAlphabet = (Alphabet) Util.deserialize(targetAlphabetFilename);
 			System.out.print("Loading label alphabet...");
-			LabelAlphabet labelAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
+			LabelAlphabet targetLabelAlphabet = (LabelAlphabet) Util.deserialize(targetLabelAlphabetFilename);
 			System.out.println("done.");
 			
 			Mongo m = new Mongo(MongoTopicWordMatrixVisitor.server, MongoTopicWordMatrixVisitor.port);
@@ -639,7 +654,7 @@ public class EDA implements Serializable {
 //			int numTopics = args.length > 1 ? Integer.parseInt(args[1]) : 200;
 
 			
-			EDA eda = new EDA (c, labelAlphabet, 50.0, 0.01, new Randoms());
+			EDA eda = new EDA (c, targetAlphabet, targetLabelAlphabet, 50.0, 0.01, new Randoms());
 			eda.addInstances(training);
 			eda.sample(1000);
 			
