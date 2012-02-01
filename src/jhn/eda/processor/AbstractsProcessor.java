@@ -57,7 +57,7 @@ public class AbstractsProcessor {
 	protected void afterLabel() { for(Visitor v : visitors) v.afterLabel(); }
 	protected void afterEverything() { for(Visitor v : visitors) v.afterEverything(); }
 	
-	private static final Pattern tokenSplitRgx = Pattern.compile("[^a-z\\-]");
+	private static final Pattern tokenSplitRgx = Pattern.compile("[^a-z]");
 	protected String[] tokenize(final String abstrakt) {
 		return tokenSplitRgx.split(abstrakt.toLowerCase());
 	}

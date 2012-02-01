@@ -38,14 +38,16 @@ public class App {
 		
 		
 		final String abstractsFilename = srcDir + "/long_abstracts_en.nt.bz2";
-		final String wordIdxFilename = destDir + "/alphabet.ser";
-		final String topicIdxFilename = destDir + "/labelAlphabet.ser";
+		final String wordIdxFilename = destDir + "/dbpedia37_longabstracts_alphabet.ser";
+		final String topicIdxFilename = destDir + "/dbpedia37_longabstracts_label_alphabet.ser";
 		
 //		final String matrixFilename = destDir + "/topicWordMatrix.ser";
 		
 		AbstractsProcessor ap = new AbstractsProcessor(abstractsFilename, Util.stopwords());
 		ap.addVisitor(new PrintingVisitor());//Provide some console output
-		ap.addVisitor(new MongoTopicWordMatrixVisitor(topicIdxFilename, wordIdxFilename));
+//		ap.addVisitor(new MongoTopicWordMatrixVisitor(topicIdxFilename, wordIdxFilename));
+//		ap.addVisitor(new MongoTopicWordMatrixVisitor2(topicIdxFilename, wordIdxFilename));
+		ap.addVisitor(new MongoTopicWordMatrixVisitor3(topicIdxFilename, wordIdxFilename));
 //		ap.addVisitor(new ColtTopicWordMatrixVisitor(topicIdxFilename, wordIdxFilename, matrixFilename));
 //		ap.addVisitor(new LabelIndexingVisitor(destDir+"/labelAlphabet.ser"));
 //		ap.addVisitor(new WordIndexingVisitor(destDir+"/alphabet.ser"));

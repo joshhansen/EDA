@@ -16,13 +16,14 @@ import cc.mallet.types.LabelAlphabet;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 
 public class MongoTopicWordMatrixVisitor extends Visitor {
 	public static final String server = "localhost";
 	public static final int port = 27017;
 	public static final String dbName = "dbpedia37";
-	public static final String collectionName = "long_abstracts";
+	public static final String collectionName = "long_abstracts3";
 	
 	private final Alphabet alphabet;
 	private final LabelAlphabet labelAlphabet;
@@ -31,7 +32,8 @@ public class MongoTopicWordMatrixVisitor extends Visitor {
 	private DBCollection c;
 	private String label;
 	private int currentLabelIdx;
-	private Map<Integer,Integer> labelWordCounts;
+//	private Map<Integer,Integer> labelWordCounts;
+	private Map<String,Integer> labelWordCounts;
 
 	public MongoTopicWordMatrixVisitor(final String labelAlphFilename, final String alphFilename) {
 		LabelAlphabet la = null;
@@ -70,50 +72,63 @@ public class MongoTopicWordMatrixVisitor extends Visitor {
 	public void visitLabel(String label) {
 		this.label = label;
 		currentLabelIdx = labelAlphabet.lookupIndex(label);
-		labelWordCounts = new HashMap<Integer,Integer>();
+//		labelWordCounts = new HashMap<Integer,Integer>();
+		labelWordCounts = new HashMap<String,Integer>();
 	}
 
 	@Override
 	public void visitWord(String word) {
-		final Integer wordIdx = alphabet.lookupIndex(word);
+//		final Integer wordIdx = alphabet.lookupIndex(word);
+		final String wordIdx = String.valueOf(alphabet.lookupIndex(word));
 		Integer count = labelWordCounts.get(wordIdx);
-		count = count==null? 1 : count+1;
+		if(count == null) {
+			ensureIdx(wordIdx);
+			count = 1;
+		} else {
+			count++;
+		}
 		labelWordCounts.put(wordIdx, count);
 	}
 
+	private static final DBObject sparse = new BasicDBObject("sparse", true);
+	private void ensureIdx(String wordIdx) {
+		c.ensureIndex(new BasicDBObject(wordIdx, 1), sparse);
+	}
 	@Override
 	public void afterLabel() {
 		BasicDBObject doc = new BasicDBObject();
 		doc.put("label", label);
 		doc.put("labelidx", Integer.valueOf(currentLabelIdx));
 		
-		List<Integer> topicWordCounts = new ArrayList<Integer>(2*labelWordCounts.size());
-		for(Entry<Integer,Integer> entry : labelWordCounts.entrySet()) {
-			topicWordCounts.add(entry.getKey());
-			topicWordCounts.add(entry.getValue());
-		}
+//		List<Integer> topicWordCounts = new ArrayList<Integer>(2*labelWordCounts.size());
+//		for(Entry<Integer,Integer> entry : labelWordCounts.entrySet()) {
+//			topicWordCounts.add(entry.getKey());
+//			topicWordCounts.add(entry.getValue());
+//		}
+//		
+//		doc.put("wordcounts", groupedCounts());
 		
-		doc.put("wordcounts", groupedCounts());
+		doc.put("wordcounts", labelWordCounts);
 		
 		c.insert(doc);
 	}
 	
-	private Map<String,List<Integer>> groupedCounts() {
-		Map<String,List<Integer>> groupedCounts = new HashMap<String,List<Integer>>();
-		
-		for(Entry<Integer,Integer> entry : labelWordCounts.entrySet()) {
-			final Integer wordIdx = entry.getKey();
-			final String count = entry.getValue().toString();
-			List<Integer> group = groupedCounts.get(count);
-			if(group == null){
-				group = new ArrayList<Integer>();
-				groupedCounts.put(count, group);
-			}
-			group.add(wordIdx);
-		}
-		
-		return groupedCounts;
-	}
+//	private Map<String,List<Integer>> groupedCounts() {
+//		Map<String,List<Integer>> groupedCounts = new HashMap<String,List<Integer>>();
+//		
+//		for(Entry<Integer,Integer> entry : labelWordCounts.entrySet()) {
+//			final Integer wordIdx = entry.getKey();
+//			final String count = entry.getValue().toString();
+//			List<Integer> group = groupedCounts.get(count);
+//			if(group == null){
+//				group = new ArrayList<Integer>();
+//				groupedCounts.put(count, group);
+//			}
+//			group.add(wordIdx);
+//		}
+//		
+//		return groupedCounts;
+//	}
 
 	@Override
 	public void afterEverything() {
