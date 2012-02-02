@@ -47,7 +47,8 @@ public class App {
 		ap.addVisitor(new PrintingVisitor());//Provide some console output
 //		ap.addVisitor(new MongoTopicWordMatrixVisitor(topicIdxFilename, wordIdxFilename));
 //		ap.addVisitor(new MongoTopicWordMatrixVisitor2(topicIdxFilename, wordIdxFilename));
-		ap.addVisitor(new MongoTopicWordMatrixVisitor3(topicIdxFilename, wordIdxFilename));
+//		ap.addVisitor(new MongoTopicWordMatrixVisitor3(topicIdxFilename, wordIdxFilename));
+		ap.addVisitor(new MongoTopicWordMapReduceVisitor(topicIdxFilename, wordIdxFilename));
 //		ap.addVisitor(new ColtTopicWordMatrixVisitor(topicIdxFilename, wordIdxFilename, matrixFilename));
 //		ap.addVisitor(new LabelIndexingVisitor(destDir+"/labelAlphabet.ser"));
 //		ap.addVisitor(new WordIndexingVisitor(destDir+"/alphabet.ser"));
