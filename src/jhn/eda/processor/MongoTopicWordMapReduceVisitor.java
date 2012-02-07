@@ -23,6 +23,13 @@ public class MongoTopicWordMapReduceVisitor extends AbstractMongoTopicWordVisito
 		super(labelAlphFilename, alphFilename, MongoConf.server, MongoConf.port, MongoConf.dbName, "topic_word_counts_unreduced");
 	}
 
+	
+	@Override
+	public void beforeEverything() {
+		super.beforeEverything();
+		c.ensureIndex("db.w");
+	}
+	
 	@Override
 	protected void _afterLabel() {
 		DBObject[] objs = new DBObject[currentLabelWordCounts.size()];

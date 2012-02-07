@@ -103,9 +103,9 @@ public abstract class AbstractMongoTopicWordVisitor extends Visitor{
 	private void assignWordIndexes() {
 		System.out.print("Assigning word indexes...");
 		for(DBObject wordObj : c.find()) {
-			final String word = wordObj.get("_word").toString();
+			final String word = wordObj.get("w").toString();
 			final Integer wordIdx = alphabet.lookupIndex(word);
-			wordObj.put("_wordidx", wordIdx);
+			wordObj.put("_widx", wordIdx);
 			c.save(wordObj);
 		}
 		System.out.println("done.");
