@@ -1,4 +1,4 @@
-package jhn.eda.processor;
+package jhn.wp.visitors;
 
 public class LabelCountingVisitor extends AbstractCountingVisitor {
 	public void visitLabel(String label) {

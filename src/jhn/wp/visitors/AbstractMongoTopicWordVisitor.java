@@ -1,4 +1,4 @@
-package jhn.eda.processor;
+package jhn.wp.visitors;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,7 +30,9 @@ public abstract class AbstractMongoTopicWordVisitor extends Visitor{
 	protected DB db;
 	protected DBCollection c;
 	
+	protected String currentLabel;
 	protected int currentLabelIdx;
+	protected int wordsInLabel = 0;
 	protected Map<String,Integer> currentLabelWordCounts;
 	protected final Set<String> stopwords = Util.stopwords();
 
@@ -80,7 +82,9 @@ public abstract class AbstractMongoTopicWordVisitor extends Visitor{
 	
 	@Override
 	public void visitLabel(String label) {
+		currentLabel = label;
 		currentLabelIdx = labelAlphabet.lookupIndex(label);
+		wordsInLabel = 0;
 	}
 	
 	@Override
@@ -90,6 +94,7 @@ public abstract class AbstractMongoTopicWordVisitor extends Visitor{
 		Integer count = currentLabelWordCounts.get(word);
 		count = count==null? 1 : count+1;
 		currentLabelWordCounts.put(word, count);
+		wordsInLabel++;
 	}
 	
 	@Override
@@ -100,20 +105,20 @@ public abstract class AbstractMongoTopicWordVisitor extends Visitor{
 	
 	protected abstract void _afterLabel();
 	
-	private void assignWordIndexes() {
-		System.out.print("Assigning word indexes...");
-		for(DBObject wordObj : c.find()) {
-			final String word = wordObj.get("w").toString();
-			final Integer wordIdx = alphabet.lookupIndex(word);
-			wordObj.put("_widx", wordIdx);
-			c.save(wordObj);
-		}
-		System.out.println("done.");
-	}
+//	private void assignWordIndexes() {
+//		System.out.print("Assigning word indexes...");
+//		for(DBObject wordObj : c.find()) {
+//			final String word = wordObj.get("w").toString();
+//			final Integer wordIdx = alphabet.lookupIndex(word);
+//			wordObj.put("_widx", wordIdx);
+//			c.save(wordObj);
+//		}
+//		System.out.println("done.");
+//	}
 
 	@Override
 	public void afterEverything() {
-		assignWordIndexes();
+//		assignWordIndexes();
 		m.close();
 	}
 }

@@ -1,4 +1,4 @@
-package jhn.eda.processor;
+package jhn.wp.visitors;
 
 import jhn.eda.Util;
 import cc.mallet.types.Alphabet;
