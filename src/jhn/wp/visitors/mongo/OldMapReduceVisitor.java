@@ -1,4 +1,4 @@
-package jhn.wp.visitors;
+package jhn.wp.visitors.mongo;
 
 import java.util.Collections;
 import java.util.Map.Entry;
@@ -16,21 +16,21 @@ import com.mongodb.DBObject;
  * }
  *
  */
-public class MongoTopicWordMapReduceVisitor extends AbstractMongoTopicWordVisitor {
+public class OldMapReduceVisitor extends MongoAlphabeticalVisitor {
 	
+	public OldMapReduceVisitor(String labelAlphFilename, String alphFilename) {
+		super(labelAlphFilename, alphFilename);
+	}
+	
+	public OldMapReduceVisitor(String labelAlphFilename, String alphFilename,
+			String server, int port, String dbName, String collectionName) {
+		super(labelAlphFilename, alphFilename, server, port, dbName, collectionName);
+	}
+
 	@Override
 	public void beforeEverything() {
 		super.beforeEverything();
 		c.ensureIndex("db.w");
-	}
-	
-	public MongoTopicWordMapReduceVisitor(String labelAlphFilename, String alphFilename, String server, int port,
-			String dbName, String collectionName) {
-		super(labelAlphFilename, alphFilename, server, port, dbName, collectionName);
-	}
-
-	public MongoTopicWordMapReduceVisitor(String labelAlphFilename, String alphFilename) {
-		super(labelAlphFilename, alphFilename);
 	}
 
 	private boolean isOK() {
@@ -43,7 +43,7 @@ public class MongoTopicWordMapReduceVisitor extends AbstractMongoTopicWordVisito
 	}
 	
 	@Override
-	protected void _afterLabel() {
+	public void afterLabel() {
 		if(isOK()) {
 			DBObject[] objs = new DBObject[currentLabelWordCounts.size()];
 			int i = 0;
@@ -60,6 +60,8 @@ public class MongoTopicWordMapReduceVisitor extends AbstractMongoTopicWordVisito
 		} else {
 			System.out.println("Skipping " + currentLabel);
 		}
+		
+		super.afterLabel();
 	}
 
 }

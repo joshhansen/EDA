@@ -1,6 +1,8 @@
-package jhn.wp.visitors;
+package jhn.wp.visitors.counting;
 
-public abstract class AbstractCountingVisitor extends Visitor {
+import jhn.wp.visitors.Visitor;
+
+public abstract class CountingVisitor extends Visitor {
 
 	private int count;
 	

@@ -1,6 +1,8 @@
 package jhn.wp.visitors;
 
-public class PrintingVisitor extends AbstractCountingVisitor {
+import jhn.wp.visitors.counting.CountingVisitor;
+
+public class PrintingVisitor extends CountingVisitor {
 
 //	@Override
 //	public void beforeEverything() {

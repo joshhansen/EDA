@@ -1,8 +1,9 @@
-package jhn.wp.visitors;
+package jhn.wp.visitors.indexing;
 
+import jhn.wp.visitors.SerializingVisitor;
 import cc.mallet.types.Alphabet;
 
-public class WordIndexingVisitor extends AbstractIndexingVisitor {
+public class WordIndexingVisitor extends SerializingVisitor<Alphabet> {
 	public WordIndexingVisitor(String outputFilename) {
 		super(outputFilename);
 	}

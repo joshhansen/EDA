@@ -1,7 +1,9 @@
-package jhn.wp.visitors;
+package jhn.wp.visitors.counting;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import jhn.wp.visitors.Visitor;
 
 public class WordCountingVisitor extends Visitor {
 	private Set<String> words = new HashSet<String>();

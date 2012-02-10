@@ -1,7 +1,7 @@
 package jhn.wp;
 
-import jhn.wp.visitors.MongoTopicWordMapReduceVisitor;
 import jhn.wp.visitors.PrintingVisitor;
+import jhn.wp.visitors.mongo.OldMapReduceVisitor;
 
 /*
  * http://code.google.com/p/java-matrix-benchmark/
@@ -43,7 +43,7 @@ public class CountAbstracts {
 		
 		AbstractsCounter ac = new AbstractsCounter(abstractsFilename);
 		ac.addVisitor(new PrintingVisitor());//Provide some console output
-		ac.addVisitor(new MongoTopicWordMapReduceVisitor(topicIdxFilename, wordIdxFilename));
+		ac.addVisitor(new OldMapReduceVisitor(topicIdxFilename, wordIdxFilename));
 //		ap.addVisitor(new LabelIndexingVisitor(destDir+"/labelAlphabet.ser"));
 //		ap.addVisitor(new WordIndexingVisitor(destDir+"/alphabet.ser"));
 //		ap.addVisitor(new LabelCountingVisitor());
