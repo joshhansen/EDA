@@ -153,18 +153,21 @@ public class EDA implements Serializable {
 	}
 	
 	
-	private String originalType;
 	private final DBObject query = new BasicDBObject();
 	private DBObject result;
 	
-	protected Map<String,List<Integer>> typeTopicCounts(int featureIdx) {
-		originalType = alphabet.lookupObject(featureIdx).toString();
+	protected Map<String,List<Integer>> typeTopicCounts(String originalType) {
 		query.put("_id", originalType);
 		result = c.findOne(query);
 		
 		if(result == null) throw new IllegalArgumentException("\nFound no counts for type '" + originalType + "'");
 		
 		return (Map<String, List<Integer>>) result.get("value");
+	}
+	
+	@Deprecated
+	protected Map<String,List<Integer>> typeTopicCounts(int typeIdx) {
+		return typeTopicCounts(alphabet.lookupObject(typeIdx).toString());
 	}
 
 	public void addInstances (InstanceList training) {
@@ -221,8 +224,9 @@ public class EDA implements Serializable {
 			if (showTopicsInterval != 0 && iteration % showTopicsInterval == 0) {
 //				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
 //							topWords (wordsPerTopic));
-				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
-						topTopics (20));
+//				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
+//						topTopics (20));
+				logger.info("<" + iteration + ">\n" + topTopics(20));
 			}
 			System.out.println();
 		}
@@ -231,7 +235,7 @@ public class EDA implements Serializable {
 	protected void sampleTopicsForOneDoc (FeatureSequence tokenSequence, FeatureSequence topicSequence) {
 		int[] oneDocTopics = topicSequence.getFeatures();
 		
-		int type, oldTopic, newTopic;
+		int typeIdx, oldTopic, newTopic;
 		int docLength = tokenSequence.getLength();
 
 		int[] localTopicCounts = new int[numTopics];
@@ -256,10 +260,11 @@ public class EDA implements Serializable {
 		for (int position = 0; position < docLength; position++) {
 			if(position % 100 == 0 && position > 0) System.out.print('.');
 			
-			type = tokenSequence.getIndexAtPosition(position);//FIXME
+			
+			typeIdx = tokenSequence.getIndexAtPosition(position);//FIXME
 			
 			try {
-				typeTopicCounts = typeTopicCounts(type);
+				typeTopicCounts = typeTopicCounts(typeIdx);
 
 				oldTopic = oneDocTopics[position];
 	
@@ -324,7 +329,7 @@ public class EDA implements Serializable {
 				scores = new ArrayList<Double>();
 			} catch(IllegalArgumentException e) {
 				// Words that occur in none of the topics will lead us here
-				System.err.print(alphabet.lookupObject(type).toString() + " ");
+				System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
 			}
 		}
 		System.out.println();
@@ -389,20 +394,25 @@ public class EDA implements Serializable {
 		double count;
 		Object value;
 		for (int type=0; type < numTypes; type++) {
-			typeTopicCounts = typeTopicCounts(type);
-			nonZeroTypeTopics += typeTopicCounts.size();
-			for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
-				// This nastiness is needed because the Mongo database has some values of type Integer, and some of type
-				// List<Integer> (an unfortunate consequence of how I did the MapReduce)
-				value = entry.getValue();
-				count = Double.valueOf(entry.getKey());
-				double size = value instanceof Integer ? ((Integer)value).doubleValue() : (double) ((List<Integer>)value).size();
-				
-				logLikelihood += size * Dirichlet.logGamma(beta + count);
-				if (Double.isNaN(logLikelihood)) {
-					System.out.println(count);
-					System.exit(1);
+			try {
+				typeTopicCounts = typeTopicCounts(type);
+//				nonZeroTypeTopics += typeTopicCounts.size();
+				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
+					// This nastiness is needed because the Mongo database has some values of type Integer, and some of type
+					// List<Integer> (an unfortunate consequence of how I did the MapReduce)
+					value = entry.getValue();
+					count = Double.valueOf(entry.getKey());
+					double size = value instanceof Integer ? ((Integer)value).doubleValue() : (double) ((List<Integer>)value).size();
+					nonZeroTypeTopics += size;
+					logLikelihood += size * Dirichlet.logGamma(beta + count);
+					if (Double.isNaN(logLikelihood)) {
+						System.out.println(count);
+						System.exit(1);
+					}
 				}
+			} catch(IllegalArgumentException e) {
+				// Words that occur in none of the topics will lead us here
+				// Do nothing
 			}
 		}
 	
@@ -690,8 +700,9 @@ public class EDA implements Serializable {
 		final String targetLabelAlphabetFilename = outputDir + "/dbpedia37_longabstracts_label_alphabet.ser";
 		final String targetAlphabetFilename = outputDir + "/dbpedia37_longabstracts_alphabet.ser";
 		
-		final String datasetFilename = System.getenv("HOME") + "/Projects/topicalguide/datasets/state_of_the_union/imported_data.mallet";
-//		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/toy_dataset.mallet";
+//		final String datasetFilename = System.getenv("HOME") + "/Projects/topicalguide/datasets/state_of_the_union/imported_data.mallet";
+//		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/toy_dataset2.mallet";
+		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/sotu_obama4.mallet";
 		
 		try {
 			Alphabet targetAlphabet = (Alphabet) Util.deserialize(targetAlphabetFilename);
@@ -699,19 +710,11 @@ public class EDA implements Serializable {
 			LabelAlphabet targetLabelAlphabet = (LabelAlphabet) Util.deserialize(targetLabelAlphabetFilename);
 			System.out.println("done.");
 			
-//			public static final String server = "localhost";
-//			public static final int port = 27017;
-//			public static final String dbName = "dbpedia37";
-//			public static final String collectionName = "type_topic_counts";
-			
 			Mongo m = new Mongo(MongoConf.server, MongoConf.port);
 			DB db = m.getDB(MongoConf.dbName);
 			DBCollection c = db.getCollection("topic_word_counts_redux");
 			
 			InstanceList training = InstanceList.load(new File(datasetFilename));
-
-//			int numTopics = args.length > 1 ? Integer.parseInt(args[1]) : 200;
-
 			
 			EDA eda = new EDA (c, targetAlphabet, targetLabelAlphabet, 50.0, 0.01, new Randoms());
 			eda.addInstances(training);
