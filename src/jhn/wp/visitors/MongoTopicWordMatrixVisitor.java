@@ -1,93 +1,30 @@
 package jhn.wp.visitors;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import jhn.eda.Util;
-import cc.mallet.types.Alphabet;
-import cc.mallet.types.LabelAlphabet;
-
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
 
-public class MongoTopicWordMatrixVisitor extends Visitor {
-	public static final String server = "localhost";
-	public static final int port = 27017;
-	public static final String dbName = "dbpedia37";
-	public static final String collectionName = "long_abstracts3";
-	
-	private final Alphabet alphabet;
-	private final LabelAlphabet labelAlphabet;
-	
-	private Mongo m;
-	private DBCollection c;
-	private String label;
-	private int currentLabelIdx;
-//	private Map<Integer,Integer> labelWordCounts;
-	private Map<String,Integer> labelWordCounts;
-
-	public MongoTopicWordMatrixVisitor(final String labelAlphFilename, final String alphFilename) {
-		LabelAlphabet la = null;
-		Alphabet a = null;
-		try {
-			System.out.print("Loading label index...");
-			la = (LabelAlphabet) Util.deserialize(labelAlphFilename);
-			System.out.println("done.");
-			System.out.print("Loading word index...");
-			a = (Alphabet) Util.deserialize(alphFilename);
-			System.out.println("done.");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		this.labelAlphabet = la;
-		this.alphabet = a;
+public class MongoTopicWordMatrixVisitor extends AbstractMongoTopicWordVisitor {
+	public MongoTopicWordMatrixVisitor(String labelAlphFilename, String alphFilename) {
+		super(labelAlphFilename, alphFilename);
 	}
 	
-	@Override
-	public void beforeEverything() {
-		try {
-			m = new Mongo(server, port);
-			DB db = m.getDB(dbName);
-			c = db.getCollection(collectionName);
-		} catch(UnknownHostException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public void visitLabel(String label) {
-		this.label = label;
-		currentLabelIdx = labelAlphabet.lookupIndex(label);
-//		labelWordCounts = new HashMap<Integer,Integer>();
-		labelWordCounts = new HashMap<String,Integer>();
+	public MongoTopicWordMatrixVisitor(String labelAlphFilename, String alphFilename, String server, int port,
+			String dbName, String collectionName) {
+		super(labelAlphFilename, alphFilename, server, port, dbName, collectionName);
 	}
 
 	@Override
 	public void visitWord(String word) {
 //		final Integer wordIdx = alphabet.lookupIndex(word);
 		final String wordIdx = String.valueOf(alphabet.lookupIndex(word));
-		Integer count = labelWordCounts.get(wordIdx);
+		Integer count = currentLabelWordCounts.get(wordIdx);
 		if(count == null) {
 			ensureIdx(wordIdx);
 			count = 1;
 		} else {
 			count++;
 		}
-		labelWordCounts.put(wordIdx, count);
+		currentLabelWordCounts.put(wordIdx, count);
 	}
 
 	private static final DBObject sparse = new BasicDBObject("sparse", true);
@@ -95,9 +32,9 @@ public class MongoTopicWordMatrixVisitor extends Visitor {
 		c.ensureIndex(new BasicDBObject(wordIdx, 1), sparse);
 	}
 	@Override
-	public void afterLabel() {
+	public void _afterLabel() {
 		BasicDBObject doc = new BasicDBObject();
-		doc.put("label", label);
+		doc.put("label", currentLabel);
 		doc.put("labelidx", Integer.valueOf(currentLabelIdx));
 		
 //		List<Integer> topicWordCounts = new ArrayList<Integer>(2*labelWordCounts.size());
@@ -108,7 +45,7 @@ public class MongoTopicWordMatrixVisitor extends Visitor {
 //		
 //		doc.put("wordcounts", groupedCounts());
 		
-		doc.put("wordcounts", labelWordCounts);
+		doc.put("wordcounts", currentLabelWordCounts);
 		
 		c.insert(doc);
 	}

@@ -14,7 +14,6 @@ import cc.mallet.types.LabelAlphabet;
 
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 
 public abstract class AbstractMongoTopicWordVisitor extends Visitor{
@@ -104,21 +103,9 @@ public abstract class AbstractMongoTopicWordVisitor extends Visitor{
 	}
 	
 	protected abstract void _afterLabel();
-	
-//	private void assignWordIndexes() {
-//		System.out.print("Assigning word indexes...");
-//		for(DBObject wordObj : c.find()) {
-//			final String word = wordObj.get("w").toString();
-//			final Integer wordIdx = alphabet.lookupIndex(word);
-//			wordObj.put("_widx", wordIdx);
-//			c.save(wordObj);
-//		}
-//		System.out.println("done.");
-//	}
 
 	@Override
 	public void afterEverything() {
-//		assignWordIndexes();
 		m.close();
 	}
 }

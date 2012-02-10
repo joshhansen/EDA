@@ -3,8 +3,6 @@ package jhn.wp.visitors;
 import java.util.Collections;
 import java.util.Map.Entry;
 
-import jhn.eda.MongoConf;
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -19,11 +17,6 @@ import com.mongodb.DBObject;
  *
  */
 public class MongoTopicWordMapReduceVisitor extends AbstractMongoTopicWordVisitor {
-
-	public MongoTopicWordMapReduceVisitor(String labelAlphFilename, String alphFilename) {
-		super(labelAlphFilename, alphFilename, MongoConf.server, MongoConf.port, MongoConf.dbName, "topic_word_counts_unreduced2");
-	}
-
 	
 	@Override
 	public void beforeEverything() {
@@ -31,6 +24,15 @@ public class MongoTopicWordMapReduceVisitor extends AbstractMongoTopicWordVisito
 		c.ensureIndex("db.w");
 	}
 	
+	public MongoTopicWordMapReduceVisitor(String labelAlphFilename, String alphFilename, String server, int port,
+			String dbName, String collectionName) {
+		super(labelAlphFilename, alphFilename, server, port, dbName, collectionName);
+	}
+
+	public MongoTopicWordMapReduceVisitor(String labelAlphFilename, String alphFilename) {
+		super(labelAlphFilename, alphFilename);
+	}
+
 	private boolean isOK() {
 		if(wordsInLabel <= 3) return false;
 		if(currentLabel.startsWith("List_of_")) return false;
