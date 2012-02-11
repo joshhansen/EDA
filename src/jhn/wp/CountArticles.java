@@ -1,21 +1,18 @@
 package jhn.wp;
 
+import jhn.eda.MongoConf;
 import jhn.wp.visitors.PrintingVisitor;
-import jhn.wp.visitors.mongo.OldMapReduceVisitor;
+import jhn.wp.visitors.mongo.MapReduceVisitor;
 
 
 public class CountArticles {
 	public static void main(String[] args) {
-		final String srcDir = System.getenv("HOME") + "/Data/dbpedia.org/3.7";
-		final String destDir = System.getenv("HOME") + "/Projects/eda_output";
+		final String srcDir = System.getenv("HOME") + "/Data/wikipedia.org";
+		final String articlesFilename = srcDir + "/enwiki-20121122-pages-articles.xml.bz2";
 		
-		final String abstractsFilename = srcDir + "/long_abstracts_en.nt.bz2";
-		final String wordIdxFilename = destDir + "/dbpedia37_longabstracts_alphabet.ser";
-		final String topicIdxFilename = destDir + "/dbpedia37_longabstracts_label_alphabet.ser";
-		
-		AbstractsCounter ac = new AbstractsCounter(abstractsFilename);
+		CorpusCounter ac = new ArticlesCounter(articlesFilename);
 		ac.addVisitor(new PrintingVisitor());
-		ac.addVisitor(new OldMapReduceVisitor(topicIdxFilename, wordIdxFilename));
+		ac.addVisitor(new MapReduceVisitor(MongoConf.server, MongoConf.port, "wp"));
 		ac.count();
 	}
 }

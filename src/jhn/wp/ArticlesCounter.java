@@ -1,5 +1,9 @@
 package jhn.wp;
 
+import info.bliki.wiki.filter.ITextConverter;
+import info.bliki.wiki.filter.PlainTextConverter;
+import info.bliki.wiki.model.WikiModel;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -25,12 +29,29 @@ public class ArticlesCounter extends CorpusCounter {
 
 	@Override
 	public void count() {
+		super.beforeEverything();
+		
 		WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(wpdumpFilename);
 
 		try {
 			wxsp.setPageCallback(new PageCallbackHandler() {
 				public void process(WikiPage page) {
-					System.out.println(page.getTitle());
+					ArticlesCounter.this.beforeLabel();
+					String label = page.getTitle();
+					ArticlesCounter.this.visitLabel(label);
+					System.out.println(label);
+					
+					String text = wikiToText3(page.getText());
+					System.out.println(text);
+					String[] words = tokenize(text);
+					System.out.println();
+					for(String word : words) {
+						ArticlesCounter.this.visitWord(word);
+//						System.out.print(word);
+//						System.out.print(' ');
+					}
+					
+					ArticlesCounter.this.afterLabel();
 				}
 			});
 
@@ -38,47 +59,76 @@ public class ArticlesCounter extends CorpusCounter {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		super.afterEverything();
 	}
 	
 	
 
-	protected String wikiToText(String markup) {
-//    public static void main(String[] args) throws Exception {
+//	protected String wikiToText(String markup) {
+//		StringWriter writer = new StringWriter();
 //
-//        String markup = "This is ''italic'' and '''that''' is bold. \n"+
-//                "=Header 1=\n"+
-//                "a list: \n* item A \n* item B \n* item C";
-
-        StringWriter writer = new StringWriter();
-
-        HtmlDocumentBuilder builder = new HtmlDocumentBuilder(writer);
-        builder.setEmitAsDocument(false);
-
-        MarkupParser parser = new MarkupParser(new MediaWikiDialect());
-        parser.setBuilder(builder);
-        parser.parse(markup);
-
-        final String html = writer.toString();
-        final StringBuilder cleaned = new StringBuilder();
-
-        HTMLEditorKit.ParserCallback callback = new HTMLEditorKit.ParserCallback() {
-                public void handleText(char[] data, int pos) {
-                    cleaned.append(new String(data)).append(' ');
-                }
-        };
-        
-        try {
-			new ParserDelegator().parse(new StringReader(html), callback, false);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-        System.out.println(markup);
-        System.out.println("---------------------------");
-        System.out.println(html);
-        System.out.println("---------------------------");
-        System.out.println(cleaned);
-        
-        return cleaned.toString();
-    }
+//		HtmlDocumentBuilder builder = new HtmlDocumentBuilder(writer);
+//		builder.setEmitAsDocument(false);
+//
+//		MarkupParser parser = new MarkupParser(new MediaWikiDialect());
+//		parser.setBuilder(builder);
+//		parser.parse(markup);
+//
+//		final String html = writer.toString();
+//		String text = htmlToText(html);
+//		
+//		System.out.println();
+//		System.out.println();
+//		System.out.println(markup);
+//		System.out.println("---------------------------");
+//		System.out.println(html);
+//		System.out.println("---------------------------");
+//		System.out.println(text);
+//		System.out.println();
+//		System.out.println();
+//
+//		return text;
+//	}
+//	
+//	private String wikiToText2(String markup) {
+//		String html = be.devijver.wikipedia.Parser.toHtml(markup, null);
+//		
+//		String text = htmlToText(html);
+//		System.out.println();
+//		System.out.println();
+//		System.out.println(markup);
+//		System.out.println("---------------------------");
+//		System.out.println(html);
+//		System.out.println("---------------------------");
+//		System.out.println(text);
+//		System.out.println();
+//		System.out.println();
+//
+//		return text;
+//	}
+	
+	private static final WikiModel wikiModel = new WikiModel("http://www.mywiki.com/wiki/${image}", "http://www.mywiki.com/wiki/${title}");
+	private static final ITextConverter conv = new PlainTextConverter();
+	private String wikiToText3(String markup) {
+        return wikiModel.render(conv, markup);
+	}
+	
+//	private String htmlToText(String html) {
+//		final StringBuilder cleaned = new StringBuilder();
+//
+//		HTMLEditorKit.ParserCallback callback = new HTMLEditorKit.ParserCallback() {
+//			public void handleText(char[] data, int pos) {
+//				cleaned.append(new String(data)).append(' ');
+//			}
+//		};
+//
+//		try {
+//			new ParserDelegator().parse(new StringReader(html), callback, false);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//
+//		return cleaned.toString();
+//	}
 }
