@@ -8,9 +8,6 @@ function r(key, listofcounts) {
 	listofcounts.forEach(function(counts) {
 		for(var count in counts) {
 			var topics = counts[count];
-			if(!(topics instanceof Array)) {
-				topics = [topics];
-			}
 			if(count in result) {
 				result[count] = result[count].concat(topics);
 			} else {
@@ -22,4 +19,4 @@ function r(key, listofcounts) {
 	print(totalAggregated + "\t-> " + key);
 	return result;
 }
-db.topic_word_counts_unreduced.mapReduce(m, r, {out:{replace:'topic_word_counts_redux'},jsMode:false,verbose:true});
+db.word_label_counts_raw.mapReduce(m, r, {out:{replace:'word_label_counts'},jsMode:false,verbose:true});

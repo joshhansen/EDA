@@ -3,6 +3,7 @@ package jhn.wp.visitors.mongo;
 import java.net.UnknownHostException;
 
 import jhn.eda.MongoConf;
+import jhn.wp.exceptions.SkipException;
 import jhn.wp.visitors.LabelAggregatingVisitor;
 
 import com.mongodb.DB;
@@ -41,7 +42,7 @@ public abstract class MongoVisitor extends LabelAggregatingVisitor {
 	}
 
 	@Override
-	public void visitLabel(String label) {
+	public void visitLabel(String label) throws SkipException {
 		super.visitLabel(label);
 		currentLabel = label;
 		currentLabelIdx = labelIdx(label);

@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jhn.eda.Util;
+import jhn.wp.exceptions.SkipException;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.semanticweb.yars.nx.Node;
@@ -29,13 +30,17 @@ public class AbstractsCounter extends CorpusCounter {
 				m.matches();
 				final String label = m.group(1);
 				
-				visitLabel(label);
-				
-				final String abstrakt = StringEscapeUtils.unescapeHtml4(ns[2].toString());
-				for(String word : tokenize(abstrakt))
-					if(!isStopword(word))
-						visitWord(word);
-				afterLabel();
+				try {
+					visitLabel(label);
+					
+					final String abstrakt = StringEscapeUtils.unescapeHtml4(ns[2].toString());
+					for(String word : tokenize(abstrakt))
+						if(!isStopword(word))
+							visitWord(word);
+					afterLabel();
+				} catch(SkipException e) {
+					System.err.write('s');
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

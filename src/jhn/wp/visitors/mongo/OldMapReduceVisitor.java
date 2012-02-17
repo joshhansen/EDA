@@ -3,6 +3,8 @@ package jhn.wp.visitors.mongo;
 import java.util.Collections;
 import java.util.Map.Entry;
 
+import jhn.wp.exceptions.SkipException;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -43,7 +45,7 @@ public class OldMapReduceVisitor extends MongoAlphabeticalVisitor {
 	}
 	
 	@Override
-	public void afterLabel() {
+	public void afterLabel() throws SkipException {
 		if(isOK()) {
 			DBObject[] objs = new DBObject[currentLabelWordCounts.size()];
 			int i = 0;

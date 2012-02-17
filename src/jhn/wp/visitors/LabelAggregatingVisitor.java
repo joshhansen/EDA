@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jhn.eda.Util;
+import jhn.wp.exceptions.SkipException;
 
 public class LabelAggregatingVisitor extends Visitor {
 	protected int wordsInLabel = 0;
@@ -18,7 +19,7 @@ public class LabelAggregatingVisitor extends Visitor {
 	}
 	
 	@Override
-	public void visitLabel(String label) {
+	public void visitLabel(String label) throws SkipException {
 		super.visitLabel(label);
 		wordsInLabel = 0;
 	}
@@ -35,7 +36,7 @@ public class LabelAggregatingVisitor extends Visitor {
 	}
 
 	@Override
-	public void afterLabel() {
+	public void afterLabel() throws SkipException {
 		currentLabelWordCounts.clear();
 		super.afterLabel();
 	}

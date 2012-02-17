@@ -3,6 +3,10 @@ package jhn.wp.visitors.mongo;
 import java.util.Collections;
 import java.util.Map.Entry;
 
+import jhn.wp.exceptions.SkipException;
+import jhn.wp.exceptions.TooShortException;
+
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -10,13 +14,13 @@ import com.mongodb.DBObject;
 
 public class MapReduceVisitor extends MongoVisitor {
 	
+	private static final int MIN_LENGTH = 100;
 	private DBCollection words;
 	private DBCollection labels;
 	private DBCollection wordLabelCounts;
 	
 	private int nextWordIdx = 0;
 	private int nextLabelIdx = 0;
-	
 	
 	
 	public MapReduceVisitor() {
@@ -59,35 +63,25 @@ public class MapReduceVisitor extends MongoVisitor {
 		return (Integer) r.get("idx");
 	}
 
-	
-	private boolean isOK() {
-		if(wordsInLabel <= 3) return false;
-		if(currentLabel.startsWith("List_of_")) return false;
-		if(currentLabel.startsWith("Portal:")) return false;
-		if(currentLabel.startsWith("Glossary_of_")) return false;
-		if(currentLabel.startsWith("Index_of_")) return false;
-		
-		return true;
+	private void assertOK() throws TooShortException {
+		if(wordsInLabel < MIN_LENGTH) throw new TooShortException(currentLabel, wordsInLabel);
 	}
 	
 	@Override
-	public void afterLabel() {
-		if(isOK()) {
-			DBObject[] objs = new DBObject[currentLabelWordCounts.size()];
-			int i = 0;
-			for(Entry<String,Integer> entry : currentLabelWordCounts.entrySet()) {
-				final String word = entry.getKey();
-				final String count = entry.getValue().toString();
-				
-				final DBObject o = new BasicDBObject("w", word);
-				o.put("c", new BasicDBObject(count, Collections.nCopies(1, currentLabelIdx)));
-				
-				objs[i++] = o;
-			}
-			wordLabelCounts.insert(objs);
-		} else {
-			System.out.println("Skipping " + currentLabel);
+	public void afterLabel() throws SkipException {
+		assertOK();
+		DBObject[] objs = new DBObject[currentLabelWordCounts.size()];
+		int i = 0;
+		for(Entry<String,Integer> entry : currentLabelWordCounts.entrySet()) {
+			final String word = entry.getKey();
+			final String count = entry.getValue().toString();
+			
+			final DBObject o = new BasicDBObject("w", word);
+			o.put("c", new BasicDBObject(count, Collections.nCopies(1, currentLabelIdx)));
+			
+			objs[i++] = o;
 		}
+		wordLabelCounts.insert(objs);
 		
 		super.afterLabel();
 	}
