@@ -20,8 +20,8 @@ public class AbstractsCounter extends CorpusCounter {
 	}
 	
 	public void count() {
-		beforeEverything();
 		try {
+			beforeEverything();
 			NxParser nxp = new NxParser(Util.smartInputStream(triplesFilename));
 			for(Node[] ns : nxp) {
 				beforeLabel();
@@ -43,6 +43,8 @@ public class AbstractsCounter extends CorpusCounter {
 				}
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		afterEverything();

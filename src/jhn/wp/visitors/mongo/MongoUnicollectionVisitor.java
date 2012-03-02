@@ -18,7 +18,7 @@ public abstract class MongoUnicollectionVisitor extends MongoVisitor {
 	}
 
 	@Override
-	public void beforeEverything() {
+	public void beforeEverything() throws Exception {
 		super.beforeEverything();
 		c = db.getCollection(collectionName);
 	}

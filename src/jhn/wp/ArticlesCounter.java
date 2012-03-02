@@ -22,11 +22,11 @@ public class ArticlesCounter extends CorpusCounter {
 
 	@Override
 	public void count() {
-		super.beforeEverything();
-		
-		WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(wpdumpFilename);
-		
 		try {
+			super.beforeEverything();
+			
+			WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(wpdumpFilename);
+			
 			wxsp.setPageCallback(new PageCallbackHandler() {
 				int badLabel = 0;
 				int redirect = 0;
@@ -91,6 +91,8 @@ public class ArticlesCounter extends CorpusCounter {
 						System.err.print('s');
 						tooShort++;
 					} catch (SkipException e) {
+						e.printStackTrace();
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}

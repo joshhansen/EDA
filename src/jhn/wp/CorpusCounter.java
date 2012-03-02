@@ -21,7 +21,7 @@ public abstract class CorpusCounter {
 		return stopwords.contains(s);
 	}
 	
-	protected void beforeEverything() {
+	protected void beforeEverything() throws Exception {
 		for (Visitor v : visitors)
 			v.beforeEverything();
 	}
@@ -53,7 +53,7 @@ public abstract class CorpusCounter {
 			v.visitWord(word);
 	}
 
-	protected void afterLabel() throws SkipException {
+	protected void afterLabel() throws Exception {
 		for (Visitor v : visitors) {
 			v.afterLabel();
 		}

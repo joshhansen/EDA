@@ -3,9 +3,7 @@ package jhn.wp.visitors.mongo;
 import java.util.Collections;
 import java.util.Map.Entry;
 
-import jhn.wp.exceptions.SkipException;
 import jhn.wp.exceptions.TooShortException;
-
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -32,7 +30,7 @@ public class MapReduceVisitor extends MongoVisitor {
 	}
 
 	@Override
-	public void beforeEverything() {
+	public void beforeEverything() throws Exception {
 		super.beforeEverything();
 		words = db.getCollection("words");
 		labels = db.getCollection("labels");
@@ -68,7 +66,7 @@ public class MapReduceVisitor extends MongoVisitor {
 	}
 	
 	@Override
-	public void afterLabel() throws SkipException {
+	public void afterLabel() throws Exception {
 		assertOK();
 		DBObject[] objs = new DBObject[currentLabelWordCounts.size()];
 		int i = 0;

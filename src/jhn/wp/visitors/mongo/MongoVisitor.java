@@ -1,7 +1,5 @@
 package jhn.wp.visitors.mongo;
 
-import java.net.UnknownHostException;
-
 import jhn.eda.MongoConf;
 import jhn.wp.exceptions.SkipException;
 import jhn.wp.visitors.LabelAggregatingVisitor;
@@ -31,14 +29,10 @@ public abstract class MongoVisitor extends LabelAggregatingVisitor {
 	}
 
 	@Override
-	public void beforeEverything() {
+	public void beforeEverything() throws Exception {
 		super.beforeEverything();
-		try {
-			m = new Mongo(server, port);
-			db = m.getDB(dbName);
-		} catch(UnknownHostException e) {
-			e.printStackTrace();
-		}
+		m = new Mongo(server, port);
+		db = m.getDB(dbName);
 	}
 
 	@Override

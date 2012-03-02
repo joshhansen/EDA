@@ -13,7 +13,7 @@ public class LabelAggregatingVisitor extends Visitor {
 	protected final Set<String> stopwords = Util.stopwords();
 	
 	@Override
-	public void beforeEverything() {
+	public void beforeEverything() throws Exception {
 		super.beforeEverything();
 		currentLabelWordCounts = new HashMap<String,Integer>();
 	}
@@ -36,7 +36,7 @@ public class LabelAggregatingVisitor extends Visitor {
 	}
 
 	@Override
-	public void afterLabel() throws SkipException {
+	public void afterLabel() throws Exception {
 		currentLabelWordCounts.clear();
 		super.afterLabel();
 	}
