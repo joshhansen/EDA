@@ -15,7 +15,6 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.net.UnknownHostException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,12 +39,6 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
-import com.mongodb.Mongo;
-
 
 /**
 * A simple implementation of Latent Dirichlet Allocation using Gibbs sampling.
@@ -56,7 +49,7 @@ import com.mongodb.Mongo;
 * @author David Mimno, Andrew McCallum
 */
 
-public class EDA implements Serializable {
+public abstract class EDA implements Serializable {
 	private static Logger logger = MalletLogger.getLogger(EDA.class.getName());
 	
 	// the training instances and their topic assignments
@@ -99,10 +92,7 @@ public class EDA implements Serializable {
 	protected boolean printLogLikelihood = false;
 	
 	
-	private DBCollection c;
-	
-	public EDA (DBCollection c, final Alphabet targetAlphabet, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
-		this.c = c;
+	public EDA (final Alphabet targetAlphabet, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
 		this.targetAlphabet = targetAlphabet;
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
@@ -153,22 +143,10 @@ public class EDA implements Serializable {
 	}
 	
 	
-	private final DBObject query = new BasicDBObject();
-	private DBObject result;
-	
-	protected Map<String,List<Integer>> typeTopicCounts(String originalType) {
-		query.put("_id", originalType);
-		result = c.findOne(query);
-		
-		if(result == null) throw new IllegalArgumentException("\nFound no counts for type '" + originalType + "'");
-		
-		return (Map<String, List<Integer>>) result.get("value");
-	}
+	protected abstract Map<String,List<Integer>> typeTopicCounts(String originalType);
 	
 	@Deprecated
-	protected Map<String,List<Integer>> typeTopicCounts(int typeIdx) {
-		return typeTopicCounts(alphabet.lookupObject(typeIdx).toString());
-	}
+	protected abstract Map<String,List<Integer>> typeTopicCounts(int typeIdx);
 
 	public void addInstances (InstanceList training) {
 		alphabet = training.getDataAlphabet();
@@ -694,39 +672,6 @@ public class EDA implements Serializable {
 		}
 	}
 
-	public static void main (String[] args) throws IOException {
-		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
-//		final String alphabetFilename = outputDir + "/state_of_the_union-alphabet.ser";
-		final String targetLabelAlphabetFilename = outputDir + "/dbpedia37_longabstracts_label_alphabet.ser";
-		final String targetAlphabetFilename = outputDir + "/dbpedia37_longabstracts_alphabet.ser";
-		
-//		final String datasetFilename = System.getenv("HOME") + "/Projects/topicalguide/datasets/state_of_the_union/imported_data.mallet";
-//		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/toy_dataset2.mallet";
-		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/sotu_obama4.mallet";
-		
-		try {
-			Alphabet targetAlphabet = (Alphabet) Util.deserialize(targetAlphabetFilename);
-			System.out.print("Loading label alphabet...");
-			LabelAlphabet targetLabelAlphabet = (LabelAlphabet) Util.deserialize(targetLabelAlphabetFilename);
-			System.out.println("done.");
-			
-			Mongo m = new Mongo(MongoConf.server, MongoConf.port);
-			DB db = m.getDB(MongoConf.dbName);
-			DBCollection c = db.getCollection("topic_word_counts_redux");
-			
-			InstanceList training = InstanceList.load(new File(datasetFilename));
-			
-			EDA eda = new EDA (c, targetAlphabet, targetLabelAlphabet, 50.0, 0.01, new Randoms());
-			eda.addInstances(training);
-			eda.sample(1000);
-			
-			m.close();
-		} catch(UnknownHostException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-	}
+
 	
 }
