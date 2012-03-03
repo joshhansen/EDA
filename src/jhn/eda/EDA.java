@@ -41,12 +41,10 @@ import cc.mallet.util.Randoms;
 
 
 /**
-* A simple implementation of Latent Dirichlet Allocation using Gibbs sampling.
-* This code is slower than the regular Mallet LDA implementation, but provides a 
-*  better starting place for understanding how sampling works and for 
-*  building new topic models.
+* An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew
+* McCallum.
 * 
-* @author David Mimno, Andrew McCallum
+* @author Josh Hansen
 */
 
 public abstract class EDA implements Serializable {
@@ -58,8 +56,6 @@ public abstract class EDA implements Serializable {
 	// the alphabet for the input data
 	protected Alphabet alphabet;
 	
-//	protected Alphabet targetAlphabet;
-
 	// the alphabet for the topics
 	protected LabelAlphabet topicAlphabet;
 	
@@ -93,7 +89,6 @@ public abstract class EDA implements Serializable {
 	
 	
 	public EDA (final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
-//		this.targetAlphabet = targetAlphabet;
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		this.numTopics = topicAlphabet.size();
@@ -141,7 +136,6 @@ public abstract class EDA implements Serializable {
 	public int[] getTopicTotals() {
 		return tokensPerTopic;
 	}
-	
 	
 	protected abstract Map<String,List<Integer>> typeTopicCounts(String originalType);
 	
