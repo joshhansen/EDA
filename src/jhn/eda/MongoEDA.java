@@ -3,8 +3,12 @@ package jhn.eda;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
@@ -28,21 +32,26 @@ public class MongoEDA extends EDA {
 		super(topicAlphabet, alphaSum, beta, random);
 		this.c = c;
 	}
-
+	
 	@Override
-	protected Map<String,List<Integer>> typeTopicCounts(String originalType) {
-		query.put("_id", originalType);
+	protected Iterator<TopicCount> typeTopicCounts(int typeIdx) {
+		Collection<TopicCount> counts = new ArrayList<TopicCount>();
+		
+		String type = alphabet.lookupObject(typeIdx).toString();
+		query.put("_id", type);
 		result = c.findOne(query);
 		
-		if(result == null) throw new IllegalArgumentException("\nFound no counts for type '" + originalType + "'");
+		if(result == null) throw new IllegalArgumentException("\nFound no counts for type '" + type + "'");
 		
-		return (Map<String, List<Integer>>) result.get("value");
-	}
-
-	@Deprecated
-	@Override
-	protected Map<String,List<Integer>> typeTopicCounts(int typeIdx) {
-		return typeTopicCounts(alphabet.lookupObject(typeIdx).toString());
+		Map<String,List<Integer>> map = (Map<String, List<Integer>>) result.get("value");
+		for(Entry<String,List<Integer>> entry : map.entrySet()) {
+			int count = Integer.parseInt(entry.getKey());
+			for(Integer topicIdx : entry.getValue()) {
+				counts.add(new TopicCount(topicIdx, count));
+			}
+		}
+		
+		return counts.iterator();
 	}
 	
 	public static void main (String[] args) throws IOException {
@@ -79,4 +88,5 @@ public class MongoEDA extends EDA {
 		}
 		
 	}
+
 }

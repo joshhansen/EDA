@@ -19,9 +19,9 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.logging.Logger;
@@ -88,7 +88,11 @@ public abstract class EDA implements Serializable {
 	protected boolean printLogLikelihood = false;
 	
 	
-	public EDA (final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
+	public EDA (final LabelAlphabet topicAlphabet, double alphaSum, double beta) {
+		this(topicAlphabet, alphaSum, beta, new Randoms());
+	}
+	
+	public EDA(final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		this.numTopics = topicAlphabet.size();
@@ -137,10 +141,22 @@ public abstract class EDA implements Serializable {
 		return tokensPerTopic;
 	}
 	
-	protected abstract Map<String,List<Integer>> typeTopicCounts(String originalType);
+//	protected abstract Map<String,List<Integer>> typeTopicCounts(String originalType);
+//	
+//	@Deprecated
+//	protected abstract Map<String,List<Integer>> typeTopicCounts(int typeIdx);
 	
-	@Deprecated
-	protected abstract Map<String,List<Integer>> typeTopicCounts(int typeIdx);
+	public static class TopicCount {
+		final int topic;
+		final int count;
+		public TopicCount(int topic, int count) {
+			this.topic = topic;
+			this.count = count;
+		}
+		
+	}
+	
+	protected abstract Iterator<TopicCount> typeTopicCounts(int typeIdx);
 
 	public void addInstances (InstanceList training) {
 		alphabet = training.getDataAlphabet();
@@ -221,11 +237,11 @@ public abstract class EDA implements Serializable {
 		
 		List<Integer> topics = new ArrayList<Integer>();
 		List<Double> scores = new ArrayList<Double>();
-		Map<String,List<Integer>> typeTopicCounts;
-		int count;
-		int topic;
-		List<Double> valueList;
-		Object values;
+//		Map<String,List<Integer>> typeTopicCounts;
+//		int count;
+//		int topic;
+//		List<Double> valueList;
+//		Object values;
 		int i;
 		
 		//	Iterate over the positions (words) in the document 
@@ -236,7 +252,7 @@ public abstract class EDA implements Serializable {
 			typeIdx = tokenSequence.getIndexAtPosition(position);//FIXME
 			
 			try {
-				typeTopicCounts = typeTopicCounts(typeIdx);
+//				typeTopicCounts = typeTopicCounts(typeIdx);
 
 				oldTopic = oneDocTopics[position];
 	
@@ -248,29 +264,44 @@ public abstract class EDA implements Serializable {
 				// Now calculate and add up the scores for each topic for this word
 				sum = 0.0;
 	
-				// Here's where the math happens! Note that overall performance is 
-				//  dominated by what you do in this loop.
-				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
-					count = Integer.valueOf(entry.getKey());
+//				// Here's where the math happens! Note that overall performance is 
+//				//  dominated by what you do in this loop.
+//				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
+//					count = Integer.valueOf(entry.getKey());
+//					
+//					values = entry.getValue();
+//					
+//					//FIXME
+//					if(values instanceof Integer)
+//						valueList = Collections.nCopies(1, ((Integer)values).doubleValue());
+//					else if(values instanceof List)
+//						valueList = (List<Double>) values;
+//					else throw new IllegalArgumentException("Values had type " + values.getClass().getName());
+//					
+//					for(i = 0; i < valueList.size(); i++) {
+//						topic = valueList.get(i).intValue();
+//						score =
+//							(alpha + localTopicCounts[topic]) *
+//							((beta + count - (topic==oldTopic ? 1 : 0)) /
+//							 (betaSum + tokensPerTopic[topic]));
+//						sum += score;
+//						
+//						topics.add(topic);
+//						scores.add(score);
+//					}
+//				}
+				
+				Iterator<TopicCount> tcIt = typeTopicCounts(typeIdx);
+				while(tcIt.hasNext()) {
+					TopicCount tc = tcIt.next();
+					score =
+						(alpha + localTopicCounts[tc.topic]) *
+						((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
+						 (betaSum + tokensPerTopic[tc.topic]));
+					sum += score;
 					
-					values = entry.getValue();
-					if(values instanceof Integer)
-						valueList = Collections.nCopies(1, ((Integer)values).doubleValue());
-					else if(values instanceof List)
-						valueList = (List<Double>) values;
-					else throw new IllegalArgumentException("Values had type " + values.getClass().getName());
-					
-					for(i = 0; i < valueList.size(); i++) {
-						topic = valueList.get(i).intValue();
-						score =
-							(alpha + localTopicCounts[topic]) *
-							((beta + count - (topic==oldTopic ? 1 : 0)) /
-							 (betaSum + tokensPerTopic[topic]));
-						sum += score;
-						
-						topics.add(topic);
-						scores.add(score);
-					}
+					topics.add(tc.topic);
+					scores.add(score);
 				}
 				
 				// Choose a random point between 0 and the sum of all topic scores
@@ -363,22 +394,33 @@ public abstract class EDA implements Serializable {
 		// Count the number of type-topic pairs
 		int nonZeroTypeTopics = 0;
 
-		double count;
-		Object value;
+//		double count;
+//		Object value;
 		for (int type=0; type < numTypes; type++) {
 			try {
-				typeTopicCounts = typeTopicCounts(type);
-//				nonZeroTypeTopics += typeTopicCounts.size();
-				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
-					// This nastiness is needed because the Mongo database has some values of type Integer, and some of type
-					// List<Integer> (an unfortunate consequence of how I did the MapReduce)
-					value = entry.getValue();
-					count = Double.valueOf(entry.getKey());
-					double size = value instanceof Integer ? ((Integer)value).doubleValue() : (double) ((List<Integer>)value).size();
-					nonZeroTypeTopics += size;
-					logLikelihood += size * Dirichlet.logGamma(beta + count);
+//				typeTopicCounts = typeTopicCounts(type);
+////				nonZeroTypeTopics += typeTopicCounts.size();
+//				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
+//					// This nastiness is needed because the Mongo database has some values of type Integer, and some of type
+//					// List<Integer> (an unfortunate consequence of how I did the MapReduce)
+//					value = entry.getValue();
+//					count = Double.valueOf(entry.getKey());
+//					double size = value instanceof Integer ? ((Integer)value).doubleValue() : (double) ((List<Integer>)value).size();
+//					nonZeroTypeTopics += size;
+//					logLikelihood += size * Dirichlet.logGamma(beta + count);
+//					if (Double.isNaN(logLikelihood)) {
+//						System.out.println(count);
+//						System.exit(1);
+//					}
+//				}
+				
+				Iterator<TopicCount> tcIt = typeTopicCounts(type);
+				while(tcIt.hasNext()) {
+					TopicCount tc = tcIt.next();
+					nonZeroTypeTopics++;
+					logLikelihood += Dirichlet.logGamma(beta + tc.count);
 					if (Double.isNaN(logLikelihood)) {
-						System.out.println(count);
+						System.out.println(tc.count);
 						System.exit(1);
 					}
 				}
