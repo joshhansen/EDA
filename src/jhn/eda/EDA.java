@@ -141,11 +141,6 @@ public abstract class EDA implements Serializable {
 		return tokensPerTopic;
 	}
 	
-//	protected abstract Map<String,List<Integer>> typeTopicCounts(String originalType);
-//	
-//	@Deprecated
-//	protected abstract Map<String,List<Integer>> typeTopicCounts(int typeIdx);
-	
 	public static class TopicCount {
 		final int topic;
 		final int count;
@@ -220,6 +215,10 @@ public abstract class EDA implements Serializable {
 		}
 	}
 	
+	protected boolean topicCountOK(TopicCount tc) {
+		return true;
+	}
+	
 	protected void sampleTopicsForOneDoc (FeatureSequence tokenSequence, FeatureSequence topicSequence) {
 		int[] oneDocTopics = topicSequence.getFeatures();
 		
@@ -237,11 +236,7 @@ public abstract class EDA implements Serializable {
 		
 		List<Integer> topics = new ArrayList<Integer>();
 		List<Double> scores = new ArrayList<Double>();
-//		Map<String,List<Integer>> typeTopicCounts;
-//		int count;
-//		int topic;
-//		List<Double> valueList;
-//		Object values;
+		
 		int i;
 		
 		//	Iterate over the positions (words) in the document 
@@ -252,8 +247,6 @@ public abstract class EDA implements Serializable {
 			typeIdx = tokenSequence.getIndexAtPosition(position);//FIXME
 			
 			try {
-//				typeTopicCounts = typeTopicCounts(typeIdx);
-
 				oldTopic = oneDocTopics[position];
 	
 				//	Remove this token from all counts. 
@@ -266,70 +259,50 @@ public abstract class EDA implements Serializable {
 	
 //				// Here's where the math happens! Note that overall performance is 
 //				//  dominated by what you do in this loop.
-//				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
-//					count = Integer.valueOf(entry.getKey());
-//					
-//					values = entry.getValue();
-//					
-//					//FIXME
-//					if(values instanceof Integer)
-//						valueList = Collections.nCopies(1, ((Integer)values).doubleValue());
-//					else if(values instanceof List)
-//						valueList = (List<Double>) values;
-//					else throw new IllegalArgumentException("Values had type " + values.getClass().getName());
-//					
-//					for(i = 0; i < valueList.size(); i++) {
-//						topic = valueList.get(i).intValue();
-//						score =
-//							(alpha + localTopicCounts[topic]) *
-//							((beta + count - (topic==oldTopic ? 1 : 0)) /
-//							 (betaSum + tokensPerTopic[topic]));
-//						sum += score;
-//						
-//						topics.add(topic);
-//						scores.add(score);
-//					}
-//				}
-				
 				Iterator<TopicCount> tcIt = typeTopicCounts(typeIdx);
 				while(tcIt.hasNext()) {
 					TopicCount tc = tcIt.next();
-					score =
-						(alpha + localTopicCounts[tc.topic]) *
-						((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
-						 (betaSum + tokensPerTopic[tc.topic]));
-					sum += score;
+					if(topicCountOK(tc)) {
+						score =
+							(alpha + localTopicCounts[tc.topic]) *
+							((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
+							 (betaSum + tokensPerTopic[tc.topic]));
+						sum += score;
+						
+						topics.add(tc.topic);
+						scores.add(score);
+					}
+				}
+				
+				if(sum <= 0.0) {
+//					String type = alphabet.lookupObject(typeIdx).toString();
+//					System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
+				} else {
+					// Choose a random point between 0 and the sum of all topic scores
+					double sample = random.nextUniform() * sum;
+		
+					// Figure out which topic contains that point
+					i = -1;
+					newTopic = -1;
+					while (sample > 0.0) {
+						i++;
+						newTopic = topics.get(i);
+						sample -= scores.get(i);
+					}
+		
+					// Make sure we actually sampled a topic
+					if (newTopic == -1) {
+						throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
+					}
+	
+					// Put that new topic into the counts
+					oneDocTopics[position] = newTopic;
+					localTopicCounts[newTopic]++;
+					tokensPerTopic[newTopic]++;
 					
-					topics.add(tc.topic);
-					scores.add(score);
+					topics = new ArrayList<Integer>();
+					scores = new ArrayList<Double>();
 				}
-				
-				// Choose a random point between 0 and the sum of all topic scores
-				double sample = random.nextUniform() * sum;
-	
-				// Figure out which topic contains that point
-				i = -1;
-				newTopic = -1;
-				while (sample > 0.0) {
-					i++;
-					newTopic = topics.get(i);
-					sample -= scores.get(i);
-				}
-	
-				// Make sure we actually sampled a topic
-				if (newTopic == -1) {
-					throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
-				}
-
-				// Put that new topic into the counts
-				oneDocTopics[position] = newTopic;
-				localTopicCounts[newTopic]++;
-				tokensPerTopic[newTopic]++;
-				
-//				topics.clear();
-//				scores.clear();
-				topics = new ArrayList<Integer>();
-				scores = new ArrayList<Double>();
 			} catch(IllegalArgumentException e) {
 				// Words that occur in none of the topics will lead us here
 				System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");

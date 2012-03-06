@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
@@ -16,7 +15,7 @@ import cc.mallet.types.LabelAlphabet;
 
 public class LuceneEDA extends EDA {
 	private static final long serialVersionUID = 1L;
-	
+	private static final int TYPE_TOPIC_MIN_COUNT = 5;
 	private static final String TEXT_FIELD = "text";
 	
 	private IndexReader r;
@@ -52,17 +51,6 @@ public class LuceneEDA extends EDA {
 		@Override
 		public TopicCount next() {
 			return new TopicCount(termDocs.doc(), termDocs.freq());
-//			TopicCount tc = null;
-//			try {
-//				Document d = r.document(termDocs.doc());
-//				String label = d.get("label");
-//				int topicIdx = topicAlphabet.lookupIndex(label);
-//				int count = termDocs.freq();
-//				tc = new TopicCount(topicIdx, count);
-//			} catch(IOException e) {
-//				e.printStackTrace();
-//			}
-//			return tc;
 		}
 
 		@Override
@@ -84,20 +72,26 @@ public class LuceneEDA extends EDA {
 		return it;
 	}
 	
+	@Override
+	protected boolean topicCountOK(TopicCount tc) {
+		return super.topicCountOK(tc) && tc.count >= TYPE_TOPIC_MIN_COUNT;
+	}
+	
 	public static void main (String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		
 		final String luceneDir = outputDir + "/wp_lucene";
 		
-		final String targetLabelAlphabetFilename = outputDir + "/dbpedia37_longabstracts_label_alphabet.ser";
+		final String alphaFilename = outputDir + "/lucene_label_alphabet.ser";
 		
-//		final String datasetFilename = System.getenv("HOME") + "/Projects/topicalguide/datasets/state_of_the_union/imported_data.mallet";
-		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/toy_dataset2.mallet";
-//		final String datasetFilename = System.getenv("HOME") + "/Projects/eda_java/sotu_obama4.mallet";
+		final String datasetsDir = System.getenv("HOME") + "/Projects/eda/datasets";
+		final String datasetFilename = datasetsDir + "/state_of_the_union.mallet";
+//		final String datasetFilename = datasetsDir + "/toy_dataset2.mallet";
+//		final String datasetFilename = datasetsDir + "/sotu_obama4.mallet";
 		
 		try {
 			System.out.print("Loading label alphabet...");
-			LabelAlphabet targetLabelAlphabet = (LabelAlphabet) Util.deserialize(targetLabelAlphabetFilename);
+			LabelAlphabet targetLabelAlphabet = (LabelAlphabet) Util.deserialize(alphaFilename);
 			System.out.println("done.");
 			
 			InstanceList training = InstanceList.load(new File(datasetFilename));
