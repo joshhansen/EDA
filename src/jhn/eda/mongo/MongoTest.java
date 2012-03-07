@@ -1,4 +1,4 @@
-package jhn.eda;
+package jhn.eda.mongo;
 
 import java.net.UnknownHostException;
 

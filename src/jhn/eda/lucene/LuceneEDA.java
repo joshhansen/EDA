@@ -1,9 +1,13 @@
-package jhn.eda;
+package jhn.eda.lucene;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+
+import jhn.eda.EDA;
+import jhn.eda.Util;
+import jhn.eda.EDA.TopicCount;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;

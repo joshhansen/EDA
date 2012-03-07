@@ -1,6 +1,6 @@
 package jhn.wp.visitors.mongo;
 
-import jhn.eda.MongoConf;
+import jhn.eda.mongo.MongoConf;
 import jhn.wp.exceptions.SkipException;
 import jhn.wp.visitors.LabelAggregatingVisitor;
 

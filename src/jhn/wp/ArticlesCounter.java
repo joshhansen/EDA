@@ -115,7 +115,14 @@ public class ArticlesCounter extends CorpusCounter {
 	
 	private static String[] dontStartWithThese = {
 		"List of ", "Portal:", "Glossary of ", "Index of ", "Wikipedia:",
-		"Category:", "File:", "Template:"
+		"Category:", "File:", "Template:",
+		"Book:", /* collections of pages */
+		"MediaWiki:", /* wiki software info */
+//		"UN/LOCODE:", /* redirects to locations */
+		"Help:", /* wikipedia help */
+		"P:", /* redirects to portals */
+//		"ISO:", /* redirects to ISO standards */
+//		"ISO 639:" /* redirects to languages */
 	};
 	private void assertLabelOK(String label) throws BadLabelException {
 		boolean notOK = false;

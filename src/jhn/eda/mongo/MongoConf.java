@@ -1,4 +1,4 @@
-package jhn.eda;
+package jhn.eda.mongo;
 
 public final class MongoConf {
 	public static final String server = "localhost";

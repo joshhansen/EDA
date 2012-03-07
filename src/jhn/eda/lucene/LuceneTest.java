@@ -1,4 +1,4 @@
-package jhn.eda;
+package jhn.eda.lucene;
 
 import java.io.File;
 import java.io.IOException;

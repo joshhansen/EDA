@@ -113,7 +113,7 @@ public abstract class EDA implements Serializable {
 		formatter = NumberFormat.getInstance();
 		formatter.setMaximumFractionDigits(5);
 
-		logger.info("Simple LDA: " + numTopics + " topics");
+		logger.info(EDA.class.getName() + ": " + numTopics + " topics");
 	}
 	
 	// Accessors
