@@ -15,7 +15,7 @@ import cc.mallet.types.LabelAlphabet;
 
 public class LuceneEDA extends EDA {
 	private static final long serialVersionUID = 1L;
-	private static final int TYPE_TOPIC_MIN_COUNT = 5;
+	
 	private static final String TEXT_FIELD = "text";
 	
 	private IndexReader r;
@@ -25,9 +25,7 @@ public class LuceneEDA extends EDA {
 		
 		FSDirectory dir = FSDirectory.open(new File(luceneDir));
 		
-		r = IndexReader.open(dir);
-	
-		
+		this.r = IndexReader.open(dir);
 	}
 	
 	private class TypeTopicCountIterator implements Iterator<TopicCount> {
@@ -59,8 +57,7 @@ public class LuceneEDA extends EDA {
 		}
 		
 	}
-
-	@Override
+	
 	protected Iterator<TopicCount> typeTopicCounts(int typeIdx) {
 		String type = alphabet.lookupObject(typeIdx).toString();
 		Iterator<TopicCount> it = null;
@@ -70,11 +67,6 @@ public class LuceneEDA extends EDA {
 			e.printStackTrace();
 		}
 		return it;
-	}
-	
-	@Override
-	protected boolean topicCountOK(TopicCount tc) {
-		return super.topicCountOK(tc) && tc.count >= TYPE_TOPIC_MIN_COUNT;
 	}
 	
 	public static void main (String[] args) throws IOException {

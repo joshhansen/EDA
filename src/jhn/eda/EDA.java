@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 
@@ -49,6 +53,7 @@ import cc.mallet.util.Randoms;
 
 public abstract class EDA implements Serializable {
 	private static Logger logger = MalletLogger.getLogger(EDA.class.getName());
+	private static final int TYPE_TOPIC_MIN_COUNT = 3;
 	
 	// the training instances and their topic assignments
 	protected List<TopicAssignment> data;
@@ -188,20 +193,34 @@ public abstract class EDA implements Serializable {
 	}
 
 	public void sample (int iterations) throws IOException {
+		final int minThreads = Runtime.getRuntime().availableProcessors()*2;
+		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
+		
 		for (int iteration = 1; iteration <= iterations; iteration++) {
 			System.out.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
 			
-			// Loop over every document in the corpus
+			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
+			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
+			
+//			// Loop over every document in the corpus
 			for (int doc = 0; doc < data.size(); doc++) {
-				System.out.print("[" + data.get(doc).instance.getSource() + "]");
-				FeatureSequence tokenSequence = (FeatureSequence) data.get(doc).instance.getData();
-				LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
-				sampleTopicsForOneDoc (tokenSequence, topicSequence);
+				exec.execute(new DocumentSampler(doc));
 			}
+			
+			exec.shutdown();
+			
+			try {
+				while(!exec.awaitTermination(500L, TimeUnit.MILLISECONDS)) {
+					
+				}
+			} catch(InterruptedException e) {
+				e.printStackTrace();
+			}
+			System.out.println();
 		
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
-			logger.fine(iteration + "\t" + elapsedMillis + "ms\t");
+			System.out.println(iteration + "\t" + elapsedMillis + "ms\t");
 			
 			// Occasionally print more information
 			if (showTopicsInterval != 0 && iteration % showTopicsInterval == 0) {
@@ -215,101 +234,118 @@ public abstract class EDA implements Serializable {
 		}
 	}
 	
-	protected boolean topicCountOK(TopicCount tc) {
-		return true;
+	private class DocumentSampler implements Runnable {
+		private final int docNum;
+		public DocumentSampler(int docNum) {
+			this.docNum = docNum;
+		}
+		
+		@Override
+		public void run() {
+			final TopicAssignment ta = data.get(docNum);
+			final FeatureSequence tokenSequence = (FeatureSequence) ta.instance.getData();
+			final LabelSequence topicSequence = (LabelSequence) ta.topicSequence;
+
+			int[] oneDocTopics = topicSequence.getFeatures();
+			
+			int typeIdx, oldTopic, newTopic;
+			int docLength = tokenSequence.getLength();
+
+			int[] localTopicCounts = new int[numTopics];
+
+			// populate topic counts
+			for (int position = 0; position < docLength; position++) {
+				localTopicCounts[oneDocTopics[position]]++;
+			}
+
+			
+			
+			List<Integer> topics = new ArrayList<Integer>();
+			List<Double> scores = new ArrayList<Double>();
+			
+			int i;
+			double score, sum, sample;
+			TopicCount tc;
+			Iterator<TopicCount> tcIt;
+			
+			//	Iterate over the positions (words) in the document 
+			for (int position = 0; position < docLength; position++) {
+				typeIdx = tokenSequence.getIndexAtPosition(position);
+				
+				try {
+					oldTopic = oneDocTopics[position];
+		
+					//	Remove this token from all counts. 
+					localTopicCounts[oldTopic]--;
+					tokensPerTopic[oldTopic]--; //SYNCH???
+					assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
+		
+					// Now calculate and add up the scores for each topic for this word
+					sum = 0.0;
+		
+//					// Here's where the math happens! Note that overall performance is 
+//					//  dominated by what you do in this loop.
+					tcIt = typeTopicCounts(typeIdx);
+					while(tcIt.hasNext()) {
+						tc = tcIt.next();
+						if(tc.count >= TYPE_TOPIC_MIN_COUNT) {
+							score =
+								(alpha + localTopicCounts[tc.topic]) *
+								((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
+								 (betaSum + tokensPerTopic[tc.topic]));
+							sum += score;
+							
+							topics.add(tc.topic);
+							scores.add(score);
+						}
+					}
+					
+					if(sum <= 0.0) {
+//						String type = alphabet.lookupObject(typeIdx).toString();
+//						System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
+					} else {
+						// Choose a random point between 0 and the sum of all topic scores
+						sample = random.nextUniform() * sum;
+			
+						// Figure out which topic contains that point
+						i = -1;
+						newTopic = -1;
+						while (sample > 0.0) {
+							i++;
+							newTopic = topics.get(i);
+							sample -= scores.get(i);
+						}
+			
+						// Make sure we actually sampled a topic
+						if (newTopic == -1) {
+							throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
+						}
+		
+						// Put that new topic into the counts
+						oneDocTopics[position] = newTopic;
+						localTopicCounts[newTopic]++;
+						tokensPerTopic[newTopic]++; //SYNCH???
+						
+						topics = new ArrayList<Integer>();
+						scores = new ArrayList<Double>();
+					}
+				} catch(IllegalArgumentException e) {
+					// Words that occur in none of the topics will lead us here
+					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
+				}
+			}
+			charout('.');
+		}
 	}
 	
-	protected void sampleTopicsForOneDoc (FeatureSequence tokenSequence, FeatureSequence topicSequence) {
-		int[] oneDocTopics = topicSequence.getFeatures();
-		
-		int typeIdx, oldTopic, newTopic;
-		int docLength = tokenSequence.getLength();
-
-		int[] localTopicCounts = new int[numTopics];
-
-		//		populate topic counts
-		for (int position = 0; position < docLength; position++) {
-			localTopicCounts[oneDocTopics[position]]++;
+	private Integer charCount = 0;
+	private final int CHAROUT_NEWLINE_INTERVAL = 120;
+	protected void charout(char c) {
+		System.out.print(c);
+		synchronized(charCount) {
+			charCount++;
+			if(charCount % CHAROUT_NEWLINE_INTERVAL == 0) System.out.println();
 		}
-
-		double score, sum;
-		
-		List<Integer> topics = new ArrayList<Integer>();
-		List<Double> scores = new ArrayList<Double>();
-		
-		int i;
-		
-		//	Iterate over the positions (words) in the document 
-		for (int position = 0; position < docLength; position++) {
-			if(position % 100 == 0 && position > 0) System.out.print('.');
-			
-			
-			typeIdx = tokenSequence.getIndexAtPosition(position);//FIXME
-			
-			try {
-				oldTopic = oneDocTopics[position];
-	
-				//	Remove this token from all counts. 
-				localTopicCounts[oldTopic]--;
-				tokensPerTopic[oldTopic]--;
-				assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
-	
-				// Now calculate and add up the scores for each topic for this word
-				sum = 0.0;
-	
-//				// Here's where the math happens! Note that overall performance is 
-//				//  dominated by what you do in this loop.
-				Iterator<TopicCount> tcIt = typeTopicCounts(typeIdx);
-				while(tcIt.hasNext()) {
-					TopicCount tc = tcIt.next();
-					if(topicCountOK(tc)) {
-						score =
-							(alpha + localTopicCounts[tc.topic]) *
-							((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
-							 (betaSum + tokensPerTopic[tc.topic]));
-						sum += score;
-						
-						topics.add(tc.topic);
-						scores.add(score);
-					}
-				}
-				
-				if(sum <= 0.0) {
-//					String type = alphabet.lookupObject(typeIdx).toString();
-//					System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
-				} else {
-					// Choose a random point between 0 and the sum of all topic scores
-					double sample = random.nextUniform() * sum;
-		
-					// Figure out which topic contains that point
-					i = -1;
-					newTopic = -1;
-					while (sample > 0.0) {
-						i++;
-						newTopic = topics.get(i);
-						sample -= scores.get(i);
-					}
-		
-					// Make sure we actually sampled a topic
-					if (newTopic == -1) {
-						throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
-					}
-	
-					// Put that new topic into the counts
-					oneDocTopics[position] = newTopic;
-					localTopicCounts[newTopic]++;
-					tokensPerTopic[newTopic]++;
-					
-					topics = new ArrayList<Integer>();
-					scores = new ArrayList<Double>();
-				}
-			} catch(IllegalArgumentException e) {
-				// Words that occur in none of the topics will lead us here
-				System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
-			}
-		}
-		System.out.println();
-//		System.out.print('.');
 	}
 	
 	/**
@@ -330,7 +366,6 @@ public abstract class EDA implements Serializable {
 		double logLikelihood = 0.0;
 
 		// Do the documents first
-
 		int[] topicCounts = new int[numTopics];
 		double[] topicLogGammas = new double[numTopics];
 		int[] docTopics;
@@ -367,26 +402,8 @@ public abstract class EDA implements Serializable {
 		// Count the number of type-topic pairs
 		int nonZeroTypeTopics = 0;
 
-//		double count;
-//		Object value;
 		for (int type=0; type < numTypes; type++) {
 			try {
-//				typeTopicCounts = typeTopicCounts(type);
-////				nonZeroTypeTopics += typeTopicCounts.size();
-//				for(Entry<String,List<Integer>> entry : typeTopicCounts.entrySet()) {
-//					// This nastiness is needed because the Mongo database has some values of type Integer, and some of type
-//					// List<Integer> (an unfortunate consequence of how I did the MapReduce)
-//					value = entry.getValue();
-//					count = Double.valueOf(entry.getKey());
-//					double size = value instanceof Integer ? ((Integer)value).doubleValue() : (double) ((List<Integer>)value).size();
-//					nonZeroTypeTopics += size;
-//					logLikelihood += size * Dirichlet.logGamma(beta + count);
-//					if (Double.isNaN(logLikelihood)) {
-//						System.out.println(count);
-//						System.exit(1);
-//					}
-//				}
-				
 				Iterator<TopicCount> tcIt = typeTopicCounts(type);
 				while(tcIt.hasNext()) {
 					TopicCount tc = tcIt.next();
