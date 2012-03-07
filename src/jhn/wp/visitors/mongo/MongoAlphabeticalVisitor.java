@@ -3,8 +3,8 @@ package jhn.wp.visitors.mongo;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import jhn.eda.Util;
 import jhn.eda.mongo.MongoConf;
+import jhn.util.Util;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.LabelAlphabet;
 

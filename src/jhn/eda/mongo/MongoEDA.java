@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import jhn.eda.EDA;
-import jhn.eda.Util;
 import jhn.eda.EDA.TopicCount;
+import jhn.util.Util;
 
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;

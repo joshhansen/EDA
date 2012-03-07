@@ -2,6 +2,8 @@ package jhn.eda;
 
 import java.io.File;
 
+import jhn.util.Util;
+
 import cc.mallet.types.InstanceList;
 
 public class AlphabetExtractor {

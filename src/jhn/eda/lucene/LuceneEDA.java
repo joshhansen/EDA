@@ -6,8 +6,8 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 
 import jhn.eda.EDA;
-import jhn.eda.Util;
 import jhn.eda.EDA.TopicCount;
+import jhn.util.Util;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;

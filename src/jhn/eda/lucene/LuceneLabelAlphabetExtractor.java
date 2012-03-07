@@ -3,7 +3,7 @@ package jhn.eda.lucene;
 import java.io.File;
 import java.io.IOException;
 
-import jhn.eda.Util;
+import jhn.util.Util;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
