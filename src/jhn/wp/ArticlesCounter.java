@@ -12,13 +12,33 @@ import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
 import edu.jhu.nlp.wikipedia.WikiXMLParser;
 import edu.jhu.nlp.wikipedia.WikiXMLParserFactory;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class ArticlesCounter extends CorpusCounter {
 	private final String wpdumpFilename;
+	private BufferedWriter errorLogWriter;
 	
-	public ArticlesCounter(String wpdumpFilename) {
+	public ArticlesCounter(String wpdumpFilename, String errorLogFilename) {
 		this.wpdumpFilename = wpdumpFilename;
+		try {
+			errorLogWriter = new BufferedWriter(new FileWriter(errorLogFilename));
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
+
+	private void err(String s) {
+		System.err.println(s);
+		try {
+			errorLogWriter.write(s);
+			errorLogWriter.flush();
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+		
 
 	@Override
 	public void count() {
@@ -35,8 +55,8 @@ public class ArticlesCounter extends CorpusCounter {
 				int total = 0;
 				public void process(WikiPage page) {
 					total++;
+					final String label = page.getTitle().trim();
 					try {
-						final String label = page.getTitle().trim();
 						assertLabelOK(label);
 						
 						final String wikiText = page.getText();
@@ -86,6 +106,7 @@ public class ArticlesCounter extends CorpusCounter {
 						System.err.print('t');
 					} catch(BadLabelException e) {
 						System.err.print('l');
+						err("\nSkipping label: " + label);
 						badLabel++;
 					} catch (TooShortException e) {
 						System.err.print('s');
@@ -104,6 +125,11 @@ public class ArticlesCounter extends CorpusCounter {
 		}
 		
 		super.afterEverything();
+		try {
+			errorLogWriter.close();
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
@@ -130,7 +156,7 @@ public class ArticlesCounter extends CorpusCounter {
 			notOK |= label.startsWith(badStart);
 		}
 		notOK |= label.contains("(disambiguation)");
-		
+			
 		if(notOK) throw new BadLabelException(label);
 	}
 	
