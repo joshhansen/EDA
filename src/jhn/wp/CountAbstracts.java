@@ -35,13 +35,16 @@ public class CountAbstracts {
 	
 	public static void main(String[] args) {
 		final String srcDir = System.getenv("HOME") + "/Data/dbpedia.org/3.7";
-		final String destDir = System.getenv("HOME") + "/Projects/eda_output";
+		final String name = "eda_output";
+		final String destDir = System.getenv("HOME") + "/Projects/" + name;
+		final String logFilename = destDir + "/" + name + ".log";
+		final String errLogFilename = destDir + "/" + name + ".error.log";
 		
 		final String abstractsFilename = srcDir + "/long_abstracts_en.nt.bz2";
 		final String wordIdxFilename = destDir + "/dbpedia37_longabstracts_alphabet.ser";
 		final String topicIdxFilename = destDir + "/dbpedia37_longabstracts_label_alphabet.ser";
 		
-		AbstractsCounter ac = new AbstractsCounter(abstractsFilename);
+		AbstractsCounter ac = new AbstractsCounter(abstractsFilename, logFilename, errLogFilename);
 		ac.addVisitor(new PrintingVisitor());//Provide some console output
 		ac.addVisitor(new OldMapReduceVisitor(topicIdxFilename, wordIdxFilename));
 //		ap.addVisitor(new LabelIndexingVisitor(destDir+"/labelAlphabet.ser"));
