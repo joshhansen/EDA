@@ -12,45 +12,19 @@ import org.apache.lucene.store.FSDirectory;
 import cc.mallet.types.LabelAlphabet;
 
 public class LuceneLabelAlphabetExtractor {
-//	public static void main(String[] args) throws IOException {
-//		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
-//		final String luceneDir = outputDir + "/wp_lucene";
-//		final String alphaFilename = outputDir + "/lucene_label_alphabet.ser";
-//		
-//		FSDirectory dir = FSDirectory.open(new File(luceneDir));
-//		IndexReader r = IndexReader.open(dir);
-//		LabelAlphabet la = new LabelAlphabet();
-//		
-//		for(int docNum = 0; docNum < r.numDocs(); docNum++) {
-//			Document doc = r.document(docNum);
-//			la.lookupIndex(doc.get("label"));
-//			if(docNum % 1000 == 0 && docNum > 0) {
-//				System.out.print('.');
-//				if(docNum % 120000 == 0) {
-//					System.out.print(docNum);
-//					System.out.println();
-//				}
-//			}
-//		}
-//		
-//		Util.serialize(la, alphaFilename);
-//		
-//	}
-	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
-		final String luceneDir = outputDir + "/wp_lucene";
-		final String alphaFilename = outputDir + "/lucene_label_alphabet.ser";
-		
-		System.out.println("Deserializing...");
-		LabelAlphabet la = (LabelAlphabet) Util.deserialize(alphaFilename);
-		System.out.println("Done");
+		final String name = "wp_lucene3";
+		final String luceneDir = outputDir + "/" + name;
+		final String alphaFilename = outputDir + "/" + name + "_label_alphabet.ser";
 		
 		FSDirectory dir = FSDirectory.open(new File(luceneDir));
 		IndexReader r = IndexReader.open(dir);
+		LabelAlphabet la = new LabelAlphabet();
+		
 		for(int docNum = 0; docNum < r.numDocs(); docNum++) {
 			Document doc = r.document(docNum);
-			int indexedDocNum = la.lookupIndex(doc.get("label"));
+			la.lookupIndex(doc.get("label"));
 			if(docNum % 1000 == 0 && docNum > 0) {
 				System.out.print('.');
 				if(docNum % 120000 == 0) {
@@ -58,11 +32,8 @@ public class LuceneLabelAlphabetExtractor {
 					System.out.println();
 				}
 			}
-			if(docNum != indexedDocNum) {
-				throw new IllegalArgumentException(docNum+" != " + indexedDocNum);
-			}
 		}
-		r.close();
 		
+		Util.serialize(la, alphaFilename);
 	}
 }

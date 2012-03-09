@@ -76,9 +76,10 @@ public class LuceneEDA extends EDA {
 	public static void main (String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		
-		final String luceneDir = outputDir + "/wp_lucene";
+		final String name = "wp_lucene3";
+		final String luceneDir = outputDir + "/" + name;
 		
-		final String alphaFilename = outputDir + "/lucene_label_alphabet.ser";
+		final String alphaFilename = outputDir + "/" + name + "_label_alphabet.ser";
 		
 		final String datasetsDir = System.getenv("HOME") + "/Projects/eda/datasets";
 		final String datasetFilename = datasetsDir + "/state_of_the_union.mallet";
