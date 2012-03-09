@@ -3,7 +3,7 @@ package jhn.wp.visitors.mongo;
 import java.util.Collections;
 import java.util.Map.Entry;
 
-import jhn.wp.exceptions.TooShortException;
+import jhn.wp.exceptions.ArticleTooShort;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -19,11 +19,6 @@ public class MapReduceVisitor extends MongoVisitor {
 	
 	private int nextWordIdx = 0;
 	private int nextLabelIdx = 0;
-	
-	
-	public MapReduceVisitor() {
-		super();
-	}
 
 	public MapReduceVisitor(String server, int port, String dbName) {
 		super(server, port, dbName);
@@ -61,8 +56,8 @@ public class MapReduceVisitor extends MongoVisitor {
 		return (Integer) r.get("idx");
 	}
 
-	private void assertOK() throws TooShortException {
-		if(wordsInLabel < MIN_LENGTH) throw new TooShortException(currentLabel, wordsInLabel);
+	private void assertOK() throws ArticleTooShort {
+		if(wordsInLabel < MIN_LENGTH) throw new ArticleTooShort(currentLabel, wordsInLabel);
 	}
 	
 	@Override

@@ -3,7 +3,7 @@ package jhn.wp.visitors.lucene;
 import java.io.File;
 import java.io.IOException;
 
-import jhn.wp.exceptions.SkipException;
+import jhn.wp.exceptions.CountException;
 import jhn.wp.visitors.Visitor;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -77,7 +77,7 @@ public class LuceneVisitor extends Visitor {
 	}
 
 	@Override
-	public void visitLabel(String label) throws SkipException {
+	public void visitLabel(String label) throws CountException {
 		super.visitLabel(label);
 		this.label = label;
 	}
