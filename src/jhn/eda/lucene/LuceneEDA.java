@@ -82,7 +82,8 @@ public class LuceneEDA extends EDA {
 		final String alphaFilename = outputDir + "/" + name + "_label_alphabet.ser";
 		
 		final String datasetsDir = System.getenv("HOME") + "/Projects/eda/datasets";
-		final String datasetFilename = datasetsDir + "/state_of_the_union.mallet";
+		final String datasetFilename = datasetsDir + "/debates2012.mallet";
+//		final String datasetFilename = datasetsDir + "/state_of_the_union.mallet";
 //		final String datasetFilename = datasetsDir + "/toy_dataset2.mallet";
 //		final String datasetFilename = datasetsDir + "/sotu_obama4.mallet";
 		

@@ -228,7 +228,7 @@ public abstract class EDA implements Serializable {
 //							topWords (wordsPerTopic));
 //				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
 //						topTopics (20));
-				logger.info("<" + iteration + ">\n" + topTopics(20));
+				logger.info("<" + iteration + ">\n" + topTopics(100));
 			}
 			System.out.println();
 		}
