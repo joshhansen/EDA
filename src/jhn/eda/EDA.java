@@ -6,7 +6,6 @@ version 1.0, as published by http://www.opensource.org.	For further
 information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,8 +27,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.util.zip.GZIPOutputStream;
 
+import jhn.util.Util;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
@@ -89,7 +87,6 @@ public abstract class EDA implements Serializable {
 	public int wordsPerTopic = 10;
 	
 	protected Randoms random;
-	protected NumberFormat formatter;
 	protected boolean printLogLikelihood = false;
 	
 	
@@ -109,9 +106,6 @@ public abstract class EDA implements Serializable {
 		
 		oneDocTopicCounts = new int[numTopics];
 		tokensPerTopic = new int[numTopics];
-		
-		formatter = NumberFormat.getInstance();
-		formatter.setMaximumFractionDigits(5);
 
 		logger.info(EDA.class.getName() + ": " + numTopics + " topics");
 	}
@@ -153,7 +147,6 @@ public abstract class EDA implements Serializable {
 			this.topic = topic;
 			this.count = count;
 		}
-		
 	}
 	
 	protected abstract Iterator<TopicCount> typeTopicCounts(int typeIdx);
@@ -226,8 +219,9 @@ public abstract class EDA implements Serializable {
 			if (showTopicsInterval != 0 && iteration % showTopicsInterval == 0) {
 //				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
 //							topWords (wordsPerTopic));
-//				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
-//						topTopics (20));
+				if(printLogLikelihood) {
+					logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n");
+				}
 				logger.info("<" + iteration + ">\n" + topTopics(100));
 			}
 			System.out.println();
@@ -334,19 +328,11 @@ public abstract class EDA implements Serializable {
 					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
 				}
 			}
-			charout('.');
+			Util.charout('.');
 		}
 	}
 	
-	private Integer charCount = 0;
-	private final int CHAROUT_NEWLINE_INTERVAL = 120;
-	protected void charout(char c) {
-		System.out.print(c);
-		synchronized(charCount) {
-			charCount++;
-			if(charCount % CHAROUT_NEWLINE_INTERVAL == 0) System.out.println();
-		}
-	}
+
 	
 	/**
 	 * The likelihood of the model is a combination of a Dirichlet-multinomial
@@ -590,8 +576,7 @@ public abstract class EDA implements Serializable {
 	}
 	
 	public void printState (File f) throws IOException {
-		PrintStream out =
-			new PrintStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(f))));
+		PrintStream out = new PrintStream(Util.smartOutputStream(f.getParent(), true));
 		printState(out);
 		out.close();
 	}
@@ -657,7 +642,6 @@ public abstract class EDA implements Serializable {
 		out.writeInt(wordsPerTopic);
 
 		out.writeObject(random);
-		out.writeObject(formatter);
 		out.writeBoolean(printLogLikelihood);
 
 //		out.writeObject (typeTopicCounts);
@@ -685,7 +669,6 @@ public abstract class EDA implements Serializable {
 		wordsPerTopic = in.readInt();
 
 		random = (Randoms) in.readObject();
-		formatter = (NumberFormat) in.readObject();
 		printLogLikelihood = in.readBoolean();
 		
 		int numDocs = data.size();
