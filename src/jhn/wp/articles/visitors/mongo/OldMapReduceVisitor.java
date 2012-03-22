@@ -1,4 +1,4 @@
-package jhn.wp.visitors.mongo;
+package jhn.wp.articles.visitors.mongo;
 
 import java.util.Collections;
 import java.util.Map.Entry;

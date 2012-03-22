@@ -1,4 +1,4 @@
-package jhn.wp.visitors.mongo;
+package jhn.wp.articles.visitors.mongo;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

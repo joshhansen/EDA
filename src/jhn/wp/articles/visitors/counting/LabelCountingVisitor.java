@@ -1,4 +1,6 @@
-package jhn.wp.visitors.counting;
+package jhn.wp.articles.visitors.counting;
+
+import jhn.wp.visitors.counting.CountingVisitor;
 
 public class LabelCountingVisitor extends CountingVisitor {
 	public void visitLabel(String label) {

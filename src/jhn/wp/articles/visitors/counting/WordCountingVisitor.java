@@ -1,4 +1,4 @@
-package jhn.wp.visitors.counting;
+package jhn.wp.articles.visitors.counting;
 
 import java.util.HashSet;
 import java.util.Set;

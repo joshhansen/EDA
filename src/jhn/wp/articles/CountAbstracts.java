@@ -1,7 +1,8 @@
-package jhn.wp;
+package jhn.wp.articles;
 
+import jhn.wp.AbstractsCounter;
+import jhn.wp.articles.visitors.mongo.OldMapReduceVisitor;
 import jhn.wp.visitors.PrintingVisitor;
-import jhn.wp.visitors.mongo.OldMapReduceVisitor;
 
 /*
  * http://code.google.com/p/java-matrix-benchmark/

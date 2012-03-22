@@ -14,7 +14,7 @@ import cc.mallet.types.LabelAlphabet;
 public class LuceneLabelAlphabetExtractor {
 	public static void main(String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
-		final String name = "wp_lucene3";
+		final String name = "wp_lucene4";
 		final String luceneDir = outputDir + "/" + name;
 		final String alphaFilename = outputDir + "/" + name + "_label_alphabet.ser";
 		

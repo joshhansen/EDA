@@ -1,4 +1,4 @@
-package jhn.wp.visitors.lucene;
+package jhn.wp.articles.visitors.lucene;
 
 import java.io.File;
 import java.io.IOException;

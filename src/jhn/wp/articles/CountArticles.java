@@ -1,12 +1,14 @@
-package jhn.wp;
+package jhn.wp.articles;
 
-import jhn.wp.visitors.lucene.LuceneVisitor;
+import jhn.wp.ArticlesCounter;
+import jhn.wp.CorpusCounter;
+import jhn.wp.articles.visitors.lucene.LuceneVisitor;
 
 
 public class CountArticles {
 	public static void main(String[] args) {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
-		final String name = "wp_lucene3";
+		final String name = "wp_lucene4";
 		final String luceneDir = outputDir + "/" + name;
 		final String logFilename = outputDir + "/" + name + ".log";
 		final String errLogFilename = outputDir + "/" + name + ".error.log";

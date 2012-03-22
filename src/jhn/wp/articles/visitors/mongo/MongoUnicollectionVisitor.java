@@ -1,6 +1,7 @@
-package jhn.wp.visitors.mongo;
+package jhn.wp.articles.visitors.mongo;
 
 import jhn.eda.mongo.MongoConf;
+import jhn.wp.visitors.mongo.MongoVisitor;
 
 import com.mongodb.DBCollection;
 

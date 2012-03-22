@@ -1,9 +1,10 @@
-package jhn.wp.visitors.mongo;
+package jhn.wp.articles.visitors.mongo;
 
 import java.util.Collections;
 import java.util.Map.Entry;
 
 import jhn.wp.exceptions.ArticleTooShort;
+import jhn.wp.visitors.mongo.MongoVisitor;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;

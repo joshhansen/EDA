@@ -1,4 +1,4 @@
-package jhn.wp.visitors.indexing;
+package jhn.wp.articles.visitors.indexing;
 
 import jhn.wp.visitors.SerializingVisitor;
 import cc.mallet.types.LabelAlphabet;
