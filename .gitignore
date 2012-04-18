@@ -1,5 +1,7 @@
 bin/
 datasets/
+output/
+indices/
 .classpath
 .project
 .settings/
