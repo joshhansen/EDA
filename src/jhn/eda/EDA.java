@@ -8,6 +8,7 @@ package jhn.eda;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -25,7 +26,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
@@ -36,7 +36,6 @@ import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -53,7 +52,37 @@ import jhn.util.Util;
 * @author Josh Hansen
 */
 public abstract class EDA implements Serializable {
-	private static Logger logger = MalletLogger.getLogger(EDA.class.getName());
+	private static class Log {
+		private PrintWriter log;
+		public Log(String filename) {
+			try {
+				log = new PrintWriter(new FileWriter(filename));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		public void print(Object o) {
+			System.out.print(o);
+			log.print(o);
+		}
+		public void println(Object o) {
+			System.out.println(o);
+			log.println(o);
+		}
+		public void println() {
+			System.out.println();
+			log.println();
+		}
+		
+		public void println(int x) {
+			System.out.println(x);
+			log.println(x);
+		}
+		
+		public void close() {
+			log.close();
+		}
+	}
 	private static final int TYPE_TOPIC_MIN_COUNT = 3;
 	
 	// the training instances and their topic assignments
@@ -70,6 +99,8 @@ public abstract class EDA implements Serializable {
 
 	// The size of the vocabulary
 	protected int numTypes;
+	
+	private Log log;
 
 	// Prior parameters
 	protected double alpha; // Dirichlet(alpha,alpha,...) is the distribution over topics
@@ -92,12 +123,11 @@ public abstract class EDA implements Serializable {
 	protected Randoms random;
 	protected boolean printLogLikelihood = false;
 	
-	
-	public EDA (final LabelAlphabet topicAlphabet, double alphaSum, double beta) {
-		this(topicAlphabet, alphaSum, beta, new Randoms());
+	public EDA (final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta) {
+		this(logFilename, topicAlphabet, alphaSum, beta, new Randoms());
 	}
 	
-	public EDA(final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
+	public EDA(final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		this.numTopics = topicAlphabet.size();
@@ -109,8 +139,10 @@ public abstract class EDA implements Serializable {
 		
 		oneDocTopicCounts = new int[numTopics];
 		tokensPerTopic = new int[numTopics];
+		
+		log = new Log(logFilename);
 
-		logger.info(EDA.class.getName() + ": " + numTopics + " topics");
+		log.println(EDA.class.getName() + ": " + numTopics + " topics");
 	}
 	
 	// Accessors
@@ -165,7 +197,7 @@ public abstract class EDA implements Serializable {
 		FeatureSequence tokens;
 		LabelSequence topicSequence;
 		
-		System.out.print("Loading: ");
+		log.print("Loading: ");
 		for (Instance instance : training) {
 			doc++;
 
@@ -179,13 +211,13 @@ public abstract class EDA implements Serializable {
 				tokensPerTopic[topic]++;
 			}
 			
-			System.out.print(instance.getSource());
-			System.out.print(" ");
+			log.print(instance.getSource());
+			log.print(" ");
 			
 			data.add (new TopicAssignment (instance, topicSequence));
 		}
-		System.out.println();
-		System.out.println();
+		log.println();
+		log.println();
 	}
 
 	public void sample (int iterations) throws IOException {
@@ -193,7 +225,7 @@ public abstract class EDA implements Serializable {
 		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
 		
 		for (int iteration = 1; iteration <= iterations; iteration++) {
-			System.out.println("Iteration " + iteration);
+			log.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
 			
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
@@ -213,22 +245,25 @@ public abstract class EDA implements Serializable {
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			}
-			System.out.println();
+			log.println();
 		
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
-			System.out.println(iteration + "\t" + elapsedMillis + "ms\t");
+			log.println(iteration + "\t" + elapsedMillis + "ms\t");
 			
 			// Occasionally print more information
 			if (showTopicsInterval != 0 && iteration % showTopicsInterval == 0) {
 //				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
 //							topWords (wordsPerTopic));
 				if(printLogLikelihood) {
-					logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n");
+					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
 				}
-				logger.info("<" + iteration + ">\n" + topTopics(100));
+				log.print("<" + iteration + ">\n" + topTopics(100));
 			}
-			System.out.println();
+			log.println();
 		}
+		
+		log.close();
+	}
 	}
 	
 	private class DocumentSampler implements Runnable {
@@ -398,7 +433,7 @@ public abstract class EDA implements Serializable {
 					nonZeroTypeTopics++;
 					logLikelihood += Dirichlet.logGamma(beta + tc.count);
 					if (Double.isNaN(logLikelihood)) {
-						System.out.println(tc.count);
+						log.println(tc.count);
 						System.exit(1);
 					}
 				}
@@ -413,7 +448,7 @@ public abstract class EDA implements Serializable {
 				Dirichlet.logGamma( (beta * numTopics) +
 											tokensPerTopic[ topic ] );
 			if (Double.isNaN(logLikelihood)) {
-				System.out.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
+				log.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
 				System.exit(1);
 			}
 
@@ -424,7 +459,7 @@ public abstract class EDA implements Serializable {
 			(Dirichlet.logGamma(beta) * nonZeroTypeTopics);
 
 		if (Double.isNaN(logLikelihood)) {
-			System.out.println("at the end");
+			log.println("at the end");
 			System.exit(1);
 		}
 

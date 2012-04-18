@@ -22,8 +22,8 @@ public class LuceneEDA extends EDA {
 	
 	private IndexReader r;
 	
-	public LuceneEDA(String luceneDir, LabelAlphabet topicAlphabet, double alphaSum, double beta) throws IOException {
-		super(topicAlphabet, alphaSum, beta);
+	public LuceneEDA(String luceneDir, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) throws IOException {
+		super(logFilename, topicAlphabet, alphaSum, beta);
 		
 		FSDirectory dir = FSDirectory.open(new File(luceneDir));
 		
@@ -71,9 +71,26 @@ public class LuceneEDA extends EDA {
 		return it;
 	}
 	
+	private static int nextLogNum(String logDir) {
+		int max = -1;
+		for(File f : new File(logDir).listFiles()) {
+			String[] parts = f.getName().split(".");
+			int value = Integer.parseInt(parts[0]);
+			if(value > max) {
+				max = value;
+			}
+		}
+		return max + 1;
+	}
+	
+	private static String logFilename(String logDir) {
+		return logDir + "/" + String.valueOf(nextLogNum(logDir)) + ".txt";
+	}
+	
 	public static void main (String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		
+		final String logFilename = logFilename(outputDir+"/runs");
 		final String name = "wp_lucene3";
 		final String luceneDir = outputDir + "/" + name;
 		
@@ -92,7 +109,7 @@ public class LuceneEDA extends EDA {
 			
 			InstanceList training = InstanceList.load(new File(datasetFilename));
 			
-			EDA eda = new LuceneEDA (luceneDir, targetLabelAlphabet, 50.0, 0.01);
+			EDA eda = new LuceneEDA (luceneDir, logFilename, targetLabelAlphabet, 50.0, 0.01);
 			eda.addInstances(training);
 			eda.sample(1000);
 		} catch(UnknownHostException e) {
