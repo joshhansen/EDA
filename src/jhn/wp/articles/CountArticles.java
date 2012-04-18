@@ -2,7 +2,7 @@ package jhn.wp.articles;
 
 import jhn.wp.ArticlesCounter;
 import jhn.wp.CorpusCounter;
-import jhn.wp.articles.visitors.lucene.LuceneVisitor;
+import jhn.wp.visitors.LuceneVisitor;
 
 
 public class CountArticles {
