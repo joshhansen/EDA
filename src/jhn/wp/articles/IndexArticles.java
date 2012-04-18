@@ -1,11 +1,11 @@
 package jhn.wp.articles;
 
-import jhn.wp.ArticlesCounter;
-import jhn.wp.CorpusCounter;
+import jhn.wp.ArticlesProcessor;
+import jhn.wp.CorpusProcessor;
 import jhn.wp.visitors.LuceneVisitor;
 
 
-public class CountArticles {
+public class IndexArticles {
 	public static void main(String[] args) {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		final String name = "wp_lucene4";
@@ -17,7 +17,7 @@ public class CountArticles {
 		final String articlesFilename = srcDir + "/enwiki-20121122-pages-articles.xml.bz2";
 		
 		
-		CorpusCounter ac = new ArticlesCounter(articlesFilename, logFilename, errLogFilename);
+		CorpusProcessor ac = new ArticlesProcessor(articlesFilename, logFilename, errLogFilename);
 //		ac.addVisitor(new PrintingVisitor());
 //		ac.addVisitor(new MapReduceVisitor(MongoConf.server, MongoConf.port, "wp"));
 		ac.addVisitor(new LuceneVisitor(luceneDir));

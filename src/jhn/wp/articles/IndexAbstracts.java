@@ -1,36 +1,14 @@
 package jhn.wp.articles;
 
-import jhn.wp.AbstractsCounter;
-import jhn.wp.articles.visitors.mongo.OldMapReduceVisitor;
+import jhn.wp.AbstractsProcessor;
+//import jhn.wp.articles.visitors.mongo.OldMapReduceVisitor;
 import jhn.wp.visitors.PrintingVisitor;
 
-/*
- * http://code.google.com/p/java-matrix-benchmark/
- * 
- * Reqs: sparse, serializable
- * Desired: low-bandwidth (float rather than double, etc.), native
- * 
- * Colt? rows*cols < Integer.MAX_VALUE
- * MTJ? not Serializable
- * JBLAS? Can use native libs. No sparse matrix suport
- * EJML? Dense only
- * Jama? Dense only
- * 
- * 
- * UJML
- * UJML-J
- * OjAlgo
- * Parallel Colt
- * http://code.google.com/p/la4j/
- * 
- * 
- * Apache Commons Math? Serializable. Sparse.
- * 
- * MongoDB
- * 
- */
 
-public class CountAbstracts {
+/**
+ * Index DBPedia article abstracts
+ */
+public class IndexAbstracts {
 //	private static final int LABEL_COUNT = 3550567;
 //	private static final int WORD_TYPE_COUNT = 1978075;
 	
@@ -45,9 +23,9 @@ public class CountAbstracts {
 		final String wordIdxFilename = destDir + "/dbpedia37_longabstracts_alphabet.ser";
 		final String topicIdxFilename = destDir + "/dbpedia37_longabstracts_label_alphabet.ser";
 		
-		AbstractsCounter ac = new AbstractsCounter(abstractsFilename, logFilename, errLogFilename);
+		AbstractsProcessor ac = new AbstractsProcessor(abstractsFilename, logFilename, errLogFilename);
 		ac.addVisitor(new PrintingVisitor());//Provide some console output
-		ac.addVisitor(new OldMapReduceVisitor(topicIdxFilename, wordIdxFilename));
+//		ac.addVisitor(new OldMapReduceVisitor(topicIdxFilename, wordIdxFilename));
 //		ap.addVisitor(new LabelIndexingVisitor(destDir+"/labelAlphabet.ser"));
 //		ap.addVisitor(new WordIndexingVisitor(destDir+"/alphabet.ser"));
 //		ap.addVisitor(new LabelCountingVisitor());
