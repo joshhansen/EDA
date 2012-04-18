@@ -5,10 +5,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 
-import jhn.eda.EDA;
-import jhn.util.Util;
-import jhn.wp.Fields;
-
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
@@ -16,6 +12,10 @@ import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
+
+import jhn.eda.EDA;
+import jhn.util.Util;
+import jhn.wp.Fields;
 
 public class LuceneEDA extends EDA {
 	private static final long serialVersionUID = 1L;
