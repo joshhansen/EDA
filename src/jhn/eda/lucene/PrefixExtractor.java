@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.Map.Entry;
 
 import jhn.util.Counter;
+import jhn.wp.Fields;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -26,7 +27,7 @@ public class PrefixExtractor {
 		
 		for(int docNum = 0; docNum < r.numDocs(); docNum++) {
 			Document doc = r.document(docNum);
-			String[] parts = doc.get("label").split(":");
+			String[] parts = doc.get(Fields.label).split(":");
 			if(parts.length > 1) {
 				prefixes.inc(parts[0]);
 			}

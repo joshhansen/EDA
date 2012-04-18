@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import jhn.util.Util;
+import jhn.wp.Fields;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -24,7 +25,7 @@ public class LuceneLabelAlphabetExtractor {
 		
 		for(int docNum = 0; docNum < r.numDocs(); docNum++) {
 			Document doc = r.document(docNum);
-			la.lookupIndex(doc.get("label"));
+			la.lookupIndex(doc.get(Fields.label));
 			if(docNum % 1000 == 0 && docNum > 0) {
 				System.out.print('.');
 				if(docNum % 120000 == 0) {
