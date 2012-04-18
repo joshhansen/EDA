@@ -26,6 +26,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
@@ -264,6 +265,21 @@ public abstract class EDA implements Serializable {
 		
 		log.close();
 	}
+	
+	
+	
+	private static final Pattern digits = Pattern.compile("\\d+");
+	private boolean shouldFilterType(int typeIdx) {
+		String type = alphabet.lookupObject(typeIdx).toString();
+		if(digits.matcher(type).matches()) {
+			return true;
+		}
+		return false;
+	}
+	
+	private static boolean shouldFilterTopic(TopicCount tc) {
+		if(tc.count >= TYPE_TOPIC_MIN_COUNT) return true;
+		return false;
 	}
 	
 	private class DocumentSampler implements Runnable {
@@ -303,68 +319,69 @@ public abstract class EDA implements Serializable {
 			//	Iterate over the positions (words) in the document 
 			for (int position = 0; position < docLength; position++) {
 				typeIdx = tokenSequence.getIndexAtPosition(position);
-				
-				try {
-					oldTopic = oneDocTopics[position];
-		
-					//	Remove this token from all counts. 
-					localTopicCounts[oldTopic]--;
-					tokensPerTopic[oldTopic]--; //SYNCH???
-					assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
-		
-					// Now calculate and add up the scores for each topic for this word
-					sum = 0.0;
-		
-//					// Here's where the math happens! Note that overall performance is 
-//					//  dominated by what you do in this loop.
-					tcIt = typeTopicCounts(typeIdx);
-					while(tcIt.hasNext()) {
-						tc = tcIt.next();
-						if(tc.count >= TYPE_TOPIC_MIN_COUNT) {
-							score =
-								(alpha + localTopicCounts[tc.topic]) *
-								((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
-								 (betaSum + tokensPerTopic[tc.topic]));
-							sum += score;
-							
-							topics.add(tc.topic);
-							scores.add(score);
-						}
-					}
-					
-					if(sum <= 0.0) {
-//						String type = alphabet.lookupObject(typeIdx).toString();
-//						System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
-					} else {
-						// Choose a random point between 0 and the sum of all topic scores
-						sample = random.nextUniform() * sum;
+				if(!shouldFilterType(typeIdx)) {
+					try {
+						oldTopic = oneDocTopics[position];
 			
-						// Figure out which topic contains that point
-						i = -1;
-						newTopic = -1;
-						while (sample > 0.0) {
-							i++;
-							newTopic = topics.getInt(i);
-							sample -= scores.getDouble(i);
-						}
+						//	Remove this token from all counts. 
+						localTopicCounts[oldTopic]--;
+						tokensPerTopic[oldTopic]--; //SYNCH???
+						assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
 			
-						// Make sure we actually sampled a topic
-						if (newTopic == -1) {
-							throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
+						// Now calculate and add up the scores for each topic for this word
+						sum = 0.0;
+			
+	//					// Here's where the math happens! Note that overall performance is 
+	//					//  dominated by what you do in this loop.
+						tcIt = typeTopicCounts(typeIdx);
+						while(tcIt.hasNext()) {
+							tc = tcIt.next();
+							if(!shouldFilterTopic(tc)) {
+								score =
+									(alpha + localTopicCounts[tc.topic]) *
+									((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
+									 (betaSum + tokensPerTopic[tc.topic]));
+								sum += score;
+								
+								topics.add(tc.topic);
+								scores.add(score);
+							}
 						}
-		
-						// Put that new topic into the counts
-						oneDocTopics[position] = newTopic;
-						localTopicCounts[newTopic]++;
-						tokensPerTopic[newTopic]++; //SYNCH???
 						
-						topics = new IntArrayList();
-						scores = new DoubleArrayList();
+						if(sum <= 0.0) {
+	//						String type = alphabet.lookupObject(typeIdx).toString();
+	//						System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
+						} else {
+							// Choose a random point between 0 and the sum of all topic scores
+							sample = random.nextUniform() * sum;
+				
+							// Figure out which topic contains that point
+							i = -1;
+							newTopic = -1;
+							while (sample > 0.0) {
+								i++;
+								newTopic = topics.getInt(i);
+								sample -= scores.getDouble(i);
+							}
+				
+							// Make sure we actually sampled a topic
+							if (newTopic == -1) {
+								throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
+							}
+			
+							// Put that new topic into the counts
+							oneDocTopics[position] = newTopic;
+							localTopicCounts[newTopic]++;
+							tokensPerTopic[newTopic]++; //SYNCH???
+							
+							topics = new IntArrayList();
+							scores = new DoubleArrayList();
+						}
+					} catch(IllegalArgumentException e) {
+						// Words that occur in none of the topics will lead us here
+						System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
 					}
-				} catch(IllegalArgumentException e) {
-					// Words that occur in none of the topics will lead us here
-					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
-				}
+				}//end if should filter type
 			}
 			Util.charout('.');
 		}
@@ -711,7 +728,4 @@ public abstract class EDA implements Serializable {
 			tokensPerTopic[ti] = in.readInt();
 		}
 	}
-
-
-	
 }
