@@ -88,19 +88,17 @@ public class LuceneEDA extends EDA {
 	}
 	
 	public static void main (String[] args) throws IOException {
-		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
+		final String outputDir = System.getenv("HOME") + "/Projects/eda/output";
 		
 		final String logFilename = logFilename(outputDir+"/runs");
-		final String name = "wp_lucene3";
-		final String luceneDir = outputDir + "/" + name;
 		
-		final String alphaFilename = outputDir + "/" + name + "_label_alphabet.ser";
+		final String topicWordIndexName = "wp_lucene3";
+		final String luceneDir = outputDir + "/" + topicWordIndexName;
 		
-		final String datasetsDir = System.getenv("HOME") + "/Projects/eda/datasets";
-		final String datasetFilename = datasetsDir + "/debates2012.mallet";
-//		final String datasetFilename = datasetsDir + "/state_of_the_union.mallet";
-//		final String datasetFilename = datasetsDir + "/toy_dataset2.mallet";
-//		final String datasetFilename = datasetsDir + "/sotu_obama4.mallet";
+		final String alphaFilename = outputDir + "/" + topicWordIndexName + "_label_alphabet.ser";
+		
+		final String datasetName = "debates2012";
+		final String datasetFilename = System.getenv("HOME") + "/Projects/eda/datasets/" + datasetName + ".mallet";
 		
 		try {
 			System.out.print("Loading label alphabet...");
@@ -117,6 +115,5 @@ public class LuceneEDA extends EDA {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		
-	}
+	}//end main
 }
