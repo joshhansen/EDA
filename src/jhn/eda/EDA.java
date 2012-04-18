@@ -6,6 +6,11 @@ version 1.0, as published by http://www.opensource.org.	For further
 information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -254,8 +259,8 @@ public abstract class EDA implements Serializable {
 
 			
 			
-			List<Integer> topics = new ArrayList<Integer>();
-			List<Double> scores = new ArrayList<Double>();
+			IntList topics = new IntArrayList();
+			DoubleList scores = new DoubleArrayList();
 			
 			int i;
 			double score, sum, sample;
@@ -306,8 +311,8 @@ public abstract class EDA implements Serializable {
 						newTopic = -1;
 						while (sample > 0.0) {
 							i++;
-							newTopic = topics.get(i);
-							sample -= scores.get(i);
+							newTopic = topics.getInt(i);
+							sample -= scores.getDouble(i);
 						}
 			
 						// Make sure we actually sampled a topic
@@ -320,8 +325,8 @@ public abstract class EDA implements Serializable {
 						localTopicCounts[newTopic]++;
 						tokensPerTopic[newTopic]++; //SYNCH???
 						
-						topics = new ArrayList<Integer>();
-						scores = new ArrayList<Double>();
+						topics = new IntArrayList();
+						scores = new DoubleArrayList();
 					}
 				} catch(IllegalArgumentException e) {
 					// Words that occur in none of the topics will lead us here
@@ -612,7 +617,7 @@ public abstract class EDA implements Serializable {
 	
 	private static final long serialVersionUID = 1;
 	private static final int CURRENT_SERIAL_VERSION = 0;
-	private static final int NULL_INTEGER = -1;
+//	private static final int NULL_INTEGER = -1;
 	
 	public void write (File f) {
 		try {
