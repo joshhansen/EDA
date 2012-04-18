@@ -8,6 +8,7 @@ import java.util.Iterator;
 import jhn.eda.EDA;
 import jhn.eda.EDA.TopicCount;
 import jhn.util.Util;
+import jhn.wp.Fields;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -19,8 +20,6 @@ import cc.mallet.types.LabelAlphabet;
 
 public class LuceneEDA extends EDA {
 	private static final long serialVersionUID = 1L;
-	
-	private static final String TEXT_FIELD = "text";
 	
 	private IndexReader r;
 	
@@ -36,7 +35,7 @@ public class LuceneEDA extends EDA {
 		private final TermDocs termDocs;
 
 		public TypeTopicCountIterator(String type) throws IOException {
-			termDocs = r.termDocs(new Term(TEXT_FIELD, type));
+			termDocs = r.termDocs(new Term(Fields.text, type));
 		}
 
 		@Override
