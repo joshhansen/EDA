@@ -52,7 +52,6 @@ import jhn.util.Util;
 * 
 * @author Josh Hansen
 */
-
 public abstract class EDA implements Serializable {
 	private static Logger logger = MalletLogger.getLogger(EDA.class.getName());
 	private static final int TYPE_TOPIC_MIN_COUNT = 3;
@@ -612,18 +611,15 @@ public abstract class EDA implements Serializable {
 	
 	
 	// Serialization
-	
 	private static final long serialVersionUID = 1;
 	private static final int CURRENT_SERIAL_VERSION = 0;
-//	private static final int NULL_INTEGER = -1;
 	
 	public void write (File f) {
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream (new FileOutputStream(f));
 			oos.writeObject(this);
 			oos.close();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			System.err.println("Exception writing file " + f + ": " + e);
 		}
 	}
@@ -637,7 +633,7 @@ public abstract class EDA implements Serializable {
 		out.writeObject (topicAlphabet);
 
 		out.writeInt (numTopics);
-		out.writeObject (alpha);
+		out.writeDouble (alpha);
 		out.writeDouble (beta);
 		out.writeDouble (betaSum);
 
@@ -647,15 +643,14 @@ public abstract class EDA implements Serializable {
 		out.writeObject(random);
 		out.writeBoolean(printLogLikelihood);
 
-//		out.writeObject (typeTopicCounts);
-
 		for (int ti = 0; ti < numTopics; ti++) {
 			out.writeInt (tokensPerTopic[ti]);
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void readObject (ObjectInputStream in) throws IOException, ClassNotFoundException {
-		int featuresLength;
+		@SuppressWarnings("unused")
 		int version = in.readInt ();
 
 		data = (ArrayList<TopicAssignment>) in.readObject ();
@@ -674,10 +669,8 @@ public abstract class EDA implements Serializable {
 		random = (Randoms) in.readObject();
 		printLogLikelihood = in.readBoolean();
 		
-		int numDocs = data.size();
-		this.numTypes = alphabet.size();
+		numTypes = alphabet.size();
 
-//		typeTopicCounts = (int[][]) in.readObject();
 		tokensPerTopic = new int[numTopics];
 		for (int ti = 0; ti < numTopics; ti++) {
 			tokensPerTopic[ti] = in.readInt();
