@@ -1,0 +1,24 @@
+Possible sparse matrix implementations
+
+http://code.google.com/p/java-matrix-benchmark/
+
+Reqs: sparse, serializable
+Desired: low-bandwidth (float rather than double, etc.), native
+
+Colt? rows*cols < Integer.MAX_VALUE
+MTJ? not Serializable
+JBLAS? Can use native libs. No sparse matrix suport
+EJML? Dense only
+Jama? Dense only
+
+
+UJML
+UJML-J
+OjAlgo
+Parallel Colt
+http://code.google.com/p/la4j/
+
+
+Apache Commons Math? Serializable. Sparse.
+
+MongoDB/
