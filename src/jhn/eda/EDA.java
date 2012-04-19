@@ -396,7 +396,7 @@ public abstract class EDA implements Serializable {
 					}
 				}//end if should filter type
 			}
-			Util.charout('.');
+			log.print('.');
 		}
 	}
 	
