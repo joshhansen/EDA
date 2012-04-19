@@ -281,12 +281,12 @@ public abstract class EDA implements Serializable {
 	
 	
 	
+	private static final Pattern months = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december");
 	private static final Pattern digits = Pattern.compile("\\d+");
 	private boolean shouldFilterType(int typeIdx) {
 		String type = alphabet.lookupObject(typeIdx).toString();
-		if(digits.matcher(type).matches()) {
-			return true;
-		}
+		if(digits.matcher(type).matches()) return true;
+		if(months.matcher(type).matches()) return true;
 		return false;
 	}
 	
