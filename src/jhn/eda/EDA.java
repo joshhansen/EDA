@@ -62,9 +62,22 @@ public abstract class EDA implements Serializable {
 				e.printStackTrace();
 			}
 		}
+		
+		public void flush() {
+			System.out.flush();
+			log.flush();
+		}
+		
+		public void print(char c) {
+			System.out.print(c);
+			log.print(c);
+			flush();
+		}
+		
 		public void print(Object o) {
 			System.out.print(o);
 			log.print(o);
+			flush();
 		}
 		public void println(Object o) {
 			System.out.println(o);
