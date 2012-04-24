@@ -74,10 +74,15 @@ public class LuceneEDA extends EDA {
 	private static int nextLogNum(String logDir) {
 		int max = -1;
 		for(File f : new File(logDir).listFiles()) {
-			String[] parts = f.getName().split(".");
-			int value = Integer.parseInt(parts[0]);
-			if(value > max) {
-				max = value;
+			final String fname = f.getName();
+			System.out.println(fname);
+			if(fname.endsWith(".txt")) {
+				String[] parts = fname.split("\\.");
+				
+				int value = Integer.parseInt(parts[0]);
+				if(value > max) {
+					max = value;
+				}
 			}
 		}
 		return max + 1;
