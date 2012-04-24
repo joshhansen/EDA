@@ -98,7 +98,7 @@ public class LuceneEDA extends EDA {
 		final String logFilename = logFilename(outputDir+"/runs");
 		
 		final String topicWordIndexName = "wp_lucene3";
-		final String luceneDir = outputDir + "/" + topicWordIndexName;
+		final String luceneDir = outputDir + "/topic_word_idx/" + topicWordIndexName;
 		
 		final String alphaFilename = outputDir + "/" + topicWordIndexName + "_label_alphabet.ser";
 		
