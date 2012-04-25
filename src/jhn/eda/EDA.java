@@ -53,50 +53,6 @@ import jhn.util.Util;
 * @author Josh Hansen
 */
 public abstract class EDA implements Serializable {
-	private static class Log {
-		private PrintWriter log;
-		public Log(String filename) {
-			try {
-				log = new PrintWriter(new FileWriter(filename));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		public void flush() {
-			System.out.flush();
-			log.flush();
-		}
-		
-		public void print(char c) {
-			System.out.print(c);
-			log.print(c);
-			flush();
-		}
-		
-		public void print(Object o) {
-			System.out.print(o);
-			log.print(o);
-			flush();
-		}
-		public void println(Object o) {
-			System.out.println(o);
-			log.println(o);
-		}
-		public void println() {
-			System.out.println();
-			log.println();
-		}
-		
-		public void println(int x) {
-			System.out.println(x);
-			log.println(x);
-		}
-		
-		public void close() {
-			log.close();
-		}
-	}
 	private static final int TYPE_TOPIC_MIN_COUNT = 3;
 	
 	// the training instances and their topic assignments
@@ -187,15 +143,6 @@ public abstract class EDA implements Serializable {
 	
 	public int[] getTopicTotals() {
 		return tokensPerTopic;
-	}
-	
-	public static class TopicCount {
-		final int topic;
-		final int count;
-		public TopicCount(int topic, int count) {
-			this.topic = topic;
-			this.count = count;
-		}
 	}
 	
 	protected abstract Iterator<TopicCount> typeTopicCounts(int typeIdx);
@@ -535,44 +482,6 @@ public abstract class EDA implements Serializable {
 //
 //		return output.toString();
 //	}
-	
-	private static class Value implements Comparable<Value> {
-		double value;
-		int position;
-		
-		public Value(double value, int position) {
-			this.value = value;
-			this.position = position;
-		}
-
-		@Override
-		public int compareTo(Value o) {
-			return Double.compare(value, o.value);
-		}
-	}
-	private static class TopNTracker {
-		private final Queue<Value> topNItems = new PriorityQueue<Value>();
-		private final int n;
-		public TopNTracker(final int n) {
-			this.n = n;
-		}
-		
-
-		
-		public void add(double value, int position) {
-			topNItems.add(new Value(value, position));
-			if(topNItems.size() > n) topNItems.remove();
-		}
-		
-		public List<Value> topN() {
-			List<Value> topN = new ArrayList<Value>(n);
-			while(!topNItems.isEmpty()) {
-				topN.add(topNItems.remove());
-			}
-			Collections.reverse(topN);
-			return topN;
-		}
-	}
 	
 	public String topTopics(int numTopics) {
 		TopNTracker topNtracker = new TopNTracker(numTopics);
