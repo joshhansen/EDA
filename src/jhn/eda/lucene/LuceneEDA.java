@@ -77,7 +77,7 @@ public class LuceneEDA extends EDA {
 		int max = -1;
 		for(File f : new File(logDir).listFiles()) {
 			final String fname = f.getName();
-			System.out.println(fname);
+			
 			if(fname.endsWith(".txt")) {
 				String[] parts = fname.split("\\.");
 				
@@ -91,7 +91,9 @@ public class LuceneEDA extends EDA {
 	}
 	
 	private static String logFilename(String logDir) {
-		return logDir + "/" + String.valueOf(nextLogNum(logDir)) + ".txt";
+		String filename = logDir + "/" + String.valueOf(nextLogNum(logDir)) + ".txt";
+		System.out.println("Writing to log file: " + filename);
+		return filename;
 	}
 	
 	public static void main (String[] args) throws IOException {
