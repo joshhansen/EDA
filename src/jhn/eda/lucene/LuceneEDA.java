@@ -97,14 +97,14 @@ public class LuceneEDA extends EDA {
 	}
 	
 	public static void main (String[] args) throws IOException {
-		final String outputDir = System.getenv("HOME") + "/Projects/eda/output";
+		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		
 		final String logFilename = logFilename(outputDir+"/runs");
 		
 		final String topicWordIndexName = "wp_lucene3";
-		final String luceneDir = outputDir + "/topic_word_idx/" + topicWordIndexName;
+		final String luceneDir = outputDir + "/indices/topic_word_idx/" + topicWordIndexName;
 		
-		final String alphaFilename = outputDir + "/" + topicWordIndexName + "_label_alphabet.ser";
+		final String alphaFilename = outputDir + "/indices/topic_word_idx/" + topicWordIndexName + "_label_alphabet.ser";
 		
 		final String datasetName = "debates2012";
 		final String datasetFilename = System.getenv("HOME") + "/Projects/eda/datasets/" + datasetName + ".mallet";
