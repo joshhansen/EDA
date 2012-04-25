@@ -14,6 +14,8 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 
 import jhn.eda.EDA;
+import jhn.eda.Options;
+import jhn.eda.TopicCount;
 import jhn.util.Util;
 import jhn.wp.Fields;
 
@@ -113,6 +115,10 @@ public class LuceneEDA extends EDA {
 			InstanceList training = InstanceList.load(new File(datasetFilename));
 			
 			EDA eda = new LuceneEDA (luceneDir, logFilename, targetLabelAlphabet, 50.0, 0.01);
+//			eda.config().put(Options.TYPE_TOPIC_MIN_COUNT, 3);
+			eda.config().put(Options.FILTER_DIGITS, false);
+			eda.config().put(Options.FILTER_MONTHS, false);
+			
 			eda.addInstances(training);
 			eda.sample(1000);
 		} catch(UnknownHostException e) {

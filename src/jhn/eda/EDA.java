@@ -53,8 +53,6 @@ import jhn.util.Util;
 * @author Josh Hansen
 */
 public abstract class EDA implements Serializable {
-	private static final int TYPE_TOPIC_MIN_COUNT = 3;
-	
 	// the training instances and their topic assignments
 	protected List<TopicAssignment> data;
 
@@ -71,6 +69,7 @@ public abstract class EDA implements Serializable {
 	protected int numTypes;
 	
 	private Log log;
+	protected final Config conf = new Config();
 
 	// Prior parameters
 	protected double alpha; // Dirichlet(alpha,alpha,...) is the distribution over topics
@@ -143,6 +142,10 @@ public abstract class EDA implements Serializable {
 	
 	public int[] getTopicTotals() {
 		return tokensPerTopic;
+	}
+	
+	public Config config() {
+		return conf;
 	}
 	
 	protected abstract Iterator<TopicCount> typeTopicCounts(int typeIdx);
@@ -237,19 +240,20 @@ public abstract class EDA implements Serializable {
 		log.close();
 	}
 	
+	// Topic and type filters
 	
 	
 	private static final Pattern months = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december");
 	private static final Pattern digits = Pattern.compile("\\d+");
-	private boolean shouldFilterType(int typeIdx) {
+	public boolean shouldFilterType(int typeIdx) {
 		String type = alphabet.lookupObject(typeIdx).toString();
-		if(digits.matcher(type).matches()) return true;
-		if(months.matcher(type).matches()) return true;
+		if(conf.containsKey(Options.FILTER_DIGITS) && conf.getBool(Options.FILTER_DIGITS) && digits.matcher(type).matches()) return true;
+		if(conf.containsKey(Options.FILTER_MONTHS) && conf.getBool(Options.FILTER_MONTHS) && months.matcher(type).matches()) return true;
 		return false;
 	}
 	
-	private static boolean shouldFilterTopic(TopicCount tc) {
-		if(tc.count >= TYPE_TOPIC_MIN_COUNT) return true;
+	public boolean shouldFilterTopic(TopicCount tc) {
+		if(conf.containsKey(Options.TYPE_TOPIC_MIN_COUNT) && tc.count < conf.getInt(Options.TYPE_TOPIC_MIN_COUNT)) return true;
 		return false;
 	}
 	
