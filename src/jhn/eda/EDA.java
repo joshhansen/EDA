@@ -64,7 +64,7 @@ public abstract class EDA implements Serializable {
 	// The size of the vocabulary
 	protected int numTypes;
 	
-	private Log log;
+	protected final Log log;
 	protected final Config conf = new Config();
 
 	// Prior parameters
@@ -237,8 +237,6 @@ public abstract class EDA implements Serializable {
 	}
 	
 	// Topic and type filters
-	
-	
 	private static final Pattern months = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december");
 	private static final Pattern digits = Pattern.compile("\\d+");
 	public boolean shouldFilterType(int typeIdx) {
