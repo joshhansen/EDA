@@ -2,6 +2,7 @@ package jhn.wp.articles;
 
 import jhn.wp.ArticlesProcessor;
 import jhn.wp.CorpusProcessor;
+import jhn.wp.Fields;
 import jhn.wp.visitors.LuceneVisitor;
 
 
@@ -20,7 +21,7 @@ public class IndexArticles {
 		CorpusProcessor ac = new ArticlesProcessor(articlesFilename, logFilename, errLogFilename);
 //		ac.addVisitor(new PrintingVisitor());
 //		ac.addVisitor(new MapReduceVisitor(MongoConf.server, MongoConf.port, "wp"));
-		ac.addVisitor(new LuceneVisitor(luceneDir));
+		ac.addVisitor(new LuceneVisitor(luceneDir, Fields.text));
 		ac.count();
 	}
 }
