@@ -40,6 +40,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
+import jhn.util.Config;
 import jhn.util.Util;
 
 /**
