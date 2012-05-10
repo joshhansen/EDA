@@ -2,7 +2,6 @@ package jhn.eda.lucene;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Iterator;
 
 import org.apache.lucene.index.IndexReader;
@@ -96,37 +95,40 @@ public class LuceneEDA extends EDA {
 		return filename;
 	}
 	
-	public static void main (String[] args) throws IOException {
+	private static final boolean LOAD_SERIALIZED_LABEL_ALPHABET = false;
+	public static void main (String[] args) throws IOException, ClassNotFoundException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
-		
+		final String indicesDir = outputDir + "/indices/topic_words";
 		final String logFilename = logFilename(outputDir+"/runs");
 		
-		final String topicWordIndexName = "wp_lucene3";
-		final String luceneDir = outputDir + "/indices/topic_word_idx/" + topicWordIndexName;
+		final String topicWordIndexName = "wp_lucene4"; /* "wp_lucene3" */
+		final String luceneDir = indicesDir + "/" + topicWordIndexName;
 		
-		final String alphaFilename = outputDir + "/indices/topic_word_idx/" + topicWordIndexName + "_label_alphabet.ser";
-		
-		final String datasetName = "debates2012";
+		final String datasetName = "toy_dataset2";/* debates2012 */ /*  */ /* state_of_the_union */
 		final String datasetFilename = System.getenv("HOME") + "/Projects/eda/datasets/" + datasetName + ".mallet";
 		
-		try {
+		
+		
+		IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(luceneDir)));
+
+		LabelAlphabet topicAlphabet;
+		if(LOAD_SERIALIZED_LABEL_ALPHABET) {
+			final String alphaFilename = indicesDir + "/" + topicWordIndexName + "_label_alphabet.ser";
 			System.out.print("Loading label alphabet...");
-			LabelAlphabet targetLabelAlphabet = (LabelAlphabet) Util.deserialize(alphaFilename);
+			topicAlphabet = (LabelAlphabet) Util.deserialize(alphaFilename);
 			System.out.println("done.");
-			
-			InstanceList training = InstanceList.load(new File(datasetFilename));
-			
-			EDA eda = new LuceneEDA (luceneDir, logFilename, targetLabelAlphabet, 50.0, 0.01);
-//			eda.config().put(Options.TYPE_TOPIC_MIN_COUNT, 3);
-			eda.config().put(Options.FILTER_DIGITS, false);
-			eda.config().put(Options.FILTER_MONTHS, false);
-			
-			eda.addInstances(training);
-			eda.sample(1000);
-		} catch(UnknownHostException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		} else {
+			topicAlphabet = new LuceneLabelAlphabet(topicWordIdx);
 		}
+		
+		EDA eda = new LuceneEDA (topicWordIdx, topicAlphabet, logFilename, 50.0, 0.01);
+		eda.config().put(Options.TYPE_TOPIC_MIN_COUNT, 3);
+		eda.config().put(Options.FILTER_DIGITS, true);
+//		eda.config().put(Options.FILTER_MONTHS, true);
+		
+		InstanceList training = InstanceList.load(new File(datasetFilename));
+		eda.addInstances(training);
+		
+		eda.sample(1000);
 	}//end main
 }
