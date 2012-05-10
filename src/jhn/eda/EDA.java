@@ -111,36 +111,6 @@ public abstract class EDA implements Serializable {
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
 	}
 	
-	// Accessors
-	public Alphabet getAlphabet() {
-		return alphabet;
-	}
-
-	public LabelAlphabet getTopicAlphabet() {
-		return topicAlphabet;
-	}
-
-	public int getNumTopics() {
-		return numTopics;
-	}
-
-	public List<TopicAssignment> getData() {
-		return data;
-	}
-	
-	public void setTopicDisplay(int interval, int n) {
-		this.showTopicsInterval = interval;
-		this.wordsPerTopic = n;
-	}
-
-	public void setRandomSeed(int seed) {
-		random = new Randoms(seed);
-	}
-	
-	public int[] getTopicTotals() {
-		return tokensPerTopic;
-	}
-	
 	public Config config() {
 		return conf;
 	}
