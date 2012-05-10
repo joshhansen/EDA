@@ -189,7 +189,7 @@ public abstract class EDA implements Serializable {
 		log.println("Loaded " + tokenCount + " tokens.");
 	}
 
-	public void sample (int iterations) throws IOException {
+	public void sample (int iterations) {
 		log.println("Going to sample " + iterations + " iterations with configuration:");
 		log.println(conf.toString());
 		
