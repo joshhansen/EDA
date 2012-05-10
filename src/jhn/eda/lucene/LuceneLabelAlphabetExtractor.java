@@ -15,9 +15,11 @@ import cc.mallet.types.LabelAlphabet;
 public class LuceneLabelAlphabetExtractor {
 	public static void main(String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
+		final String indicesDir = outputDir + "/indices/topic_words";
+		
 		final String name = "wp_lucene4";
-		final String luceneDir = outputDir + "/" + name;
-		final String alphaFilename = outputDir + "/" + name + "_label_alphabet.ser";
+		final String luceneDir = indicesDir + "/" + name;
+		final String alphaFilename = indicesDir + "/" + name + "_label_alphabet.ser";
 		
 		FSDirectory dir = FSDirectory.open(new File(luceneDir));
 		IndexReader r = IndexReader.open(dir);
