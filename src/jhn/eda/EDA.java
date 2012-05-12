@@ -83,6 +83,13 @@ public abstract class EDA implements Serializable {
 	// Statistics needed for sampling.
 	protected int[] tokensPerTopic; // indexed by <topic index>
 
+	protected synchronized void incTokensPerTopic(int topic) {
+		tokensPerTopic[topic]++;
+	}
+	
+	protected synchronized void decTokensPerTopic(int topic) {
+		tokensPerTopic[topic]--;
+	}
 	
 	protected Randoms random;
 	protected boolean printLogLikelihood = false;
@@ -266,7 +273,7 @@ public abstract class EDA implements Serializable {
 			
 						//	Remove this token from all counts. 
 						localTopicCounts[oldTopic]--;
-						tokensPerTopic[oldTopic]--; //SYNCH???
+						decTokensPerTopic(oldTopic);
 						assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
 			
 						// Now calculate and add up the scores for each topic for this word
@@ -313,7 +320,7 @@ public abstract class EDA implements Serializable {
 							// Put that new topic into the counts
 							oneDocTopics[position] = newTopic;
 							localTopicCounts[newTopic]++;
-							tokensPerTopic[newTopic]++; //SYNCH???
+							incTokensPerTopic(newTopic);
 						}
 					} catch(IllegalArgumentException e) {
 						// Words that occur in none of the topics will lead us here
