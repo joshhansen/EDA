@@ -251,8 +251,6 @@ public abstract class EDA implements Serializable {
 			for (int position = 0; position < docLength; position++) {
 				localTopicCounts[oneDocTopics[position]]++;
 			}
-
-			
 			
 			IntList topics;
 			DoubleList scores;
@@ -327,7 +325,7 @@ public abstract class EDA implements Serializable {
 						System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
 					}
 				}//end if should filter type
-			}
+			}//end for
 			log.print('.');
 		}
 	}
