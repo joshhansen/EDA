@@ -7,7 +7,9 @@ import java.util.Iterator;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
-import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.Directory;
+//import org.apache.lucene.store.MMapDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
 
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
@@ -109,8 +111,10 @@ public class LuceneEDA extends EDA {
 		final String datasetFilename = System.getenv("HOME") + "/Projects/eda/datasets/" + datasetName + ".mallet";
 		
 		
-		
-		IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(luceneDir)));
+		File luceneDirF = new File(luceneDir);
+		Directory dir = NIOFSDirectory.open(luceneDirF);
+//		Directory dir = MMapDirectory.open(luceneDirF);
+		IndexReader topicWordIdx = IndexReader.open(dir);
 
 		LabelAlphabet topicAlphabet;
 		if(LOAD_SERIALIZED_LABEL_ALPHABET) {
