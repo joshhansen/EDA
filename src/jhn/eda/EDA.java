@@ -247,8 +247,8 @@ public abstract class EDA implements Serializable {
 
 			
 			
-			IntList topics = new IntArrayList();
-			DoubleList scores = new DoubleArrayList();
+			IntList topics;
+			DoubleList scores;
 			
 			int i;
 			double score, sum, sample;
@@ -259,6 +259,8 @@ public abstract class EDA implements Serializable {
 			for (int position = 0; position < docLength; position++) {
 				typeIdx = tokenSequence.getIndexAtPosition(position);
 				if(!shouldFilterType(typeIdx)) {
+					topics = new IntArrayList();
+					scores = new DoubleArrayList();
 					try {
 						oldTopic = oneDocTopics[position];
 			
@@ -312,9 +314,6 @@ public abstract class EDA implements Serializable {
 							oneDocTopics[position] = newTopic;
 							localTopicCounts[newTopic]++;
 							tokensPerTopic[newTopic]++; //SYNCH???
-							
-							topics = new IntArrayList();
-							scores = new DoubleArrayList();
 						}
 					} catch(IllegalArgumentException e) {
 						// Words that occur in none of the topics will lead us here
