@@ -66,7 +66,7 @@ public abstract class EDA implements Serializable {
 	protected int numTypes;
 	
 	protected final Log log;
-	protected final Config conf = new Config();
+	protected Config conf = new Config();
 
 	// Prior parameters
 	protected double alpha; // Dirichlet(alpha,alpha,...) is the distribution over topics
@@ -83,8 +83,6 @@ public abstract class EDA implements Serializable {
 	// Statistics needed for sampling.
 	protected int[] tokensPerTopic; // indexed by <topic index>
 
-	public int showTopicsInterval = 1;
-	public int wordsPerTopic = 10;
 	
 	protected Randoms random;
 	protected boolean printLogLikelihood = false;
@@ -193,6 +191,7 @@ public abstract class EDA implements Serializable {
 			log.println(iteration + "\t" + elapsedMillis + "ms\t");
 			
 			// Occasionally print more information
+			int showTopicsInterval = conf.getInt(Options.SHOW_TOPICS_INTERVAL);
 			if (showTopicsInterval != 0 && iteration % showTopicsInterval == 0) {
 //				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
 //							topWords (wordsPerTopic));

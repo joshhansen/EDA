@@ -133,6 +133,11 @@ public class LuceneEDA extends EDA {
 		}
 		
 		EDA eda = new LuceneEDA (topicWordIdx, topicAlphabet, logFilename, 50.0, 0.01);
+		
+		// Cosmetic options:
+		eda.config().put(Options.SHOW_TOPICS_INTERVAL, 10);
+		
+		// Algorithm options:
 		eda.config().put(Options.TYPE_TOPIC_MIN_COUNT, 3);
 		eda.config().put(Options.FILTER_DIGITS, true);
 //		eda.config().put(Options.FILTER_MONTHS, true);
