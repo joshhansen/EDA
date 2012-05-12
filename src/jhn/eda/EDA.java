@@ -580,6 +580,9 @@ public abstract class EDA implements Serializable {
 	private void writeObject (ObjectOutputStream out) throws IOException {
 		out.writeInt (CURRENT_SERIAL_VERSION);
 
+		// Config
+		out.writeObject(conf);
+		
 		// Instance lists
 		out.writeObject (data);
 		out.writeObject (alphabet);
@@ -589,9 +592,6 @@ public abstract class EDA implements Serializable {
 		out.writeDouble (alpha);
 		out.writeDouble (beta);
 		out.writeDouble (betaSum);
-
-		out.writeInt(showTopicsInterval);
-		out.writeInt(wordsPerTopic);
 
 		out.writeObject(random);
 		out.writeBoolean(printLogLikelihood);
@@ -606,6 +606,8 @@ public abstract class EDA implements Serializable {
 		@SuppressWarnings("unused")
 		int version = in.readInt ();
 
+		conf = (Config) in.readObject();
+		
 		data = (ArrayList<TopicAssignment>) in.readObject ();
 		alphabet = (Alphabet) in.readObject();
 		topicAlphabet = (LabelAlphabet) in.readObject();
@@ -615,9 +617,6 @@ public abstract class EDA implements Serializable {
 		alphaSum = alpha * numTopics;
 		beta = in.readDouble();
 		betaSum = in.readDouble();
-
-		showTopicsInterval = in.readInt();
-		wordsPerTopic = in.readInt();
 
 		random = (Randoms) in.readObject();
 		printLogLikelihood = in.readBoolean();
