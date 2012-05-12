@@ -23,21 +23,29 @@ import jhn.wp.Fields;
 public class LuceneEDA extends EDA {
 	private static final long serialVersionUID = 1L;
 	
-	private IndexReader topicWordIdx;
+	private final TermDocsTopicCountIterator typeTopicCountsIt;
 	
 	public LuceneEDA(IndexReader topicWordIdx, LabelAlphabet topicAlphabet, String logFilename, double alphaSum, double beta) {
 		super(logFilename, topicAlphabet, alphaSum, beta);
-		this.topicWordIdx = topicWordIdx;
+		this.typeTopicCountsIt = new TermDocsTopicCountIterator(topicWordIdx);
 	}
 	
 	private static class TermDocsTopicCountIterator implements Iterator<TopicCount> {
-		private final TermDocs termDocs;
-		private final TopicCount topicCount = new TopicCount(); //Reuse this instance to save on gc overhead
+		private final IndexReader topicWordIdx;
+		private final TopicCount topicCount = new TopicCount();
+		private final Term typeTopicTerm = new Term(Fields.text);
+		
+		private TermDocs termDocs;
 
-		public TermDocsTopicCountIterator(TermDocs termDocs) {
-			this.termDocs = termDocs;
+		public TermDocsTopicCountIterator(IndexReader topicWordIdx) {
+			this.topicWordIdx = topicWordIdx;
 		}
 
+		public void setTerm(String term) throws IOException {
+			typeTopicTerm.createTerm(term);
+			termDocs = topicWordIdx.termDocs(typeTopicTerm);
+		}
+		
 		@Override
 		public boolean hasNext() {
 			boolean hasNext = false;
@@ -64,15 +72,13 @@ public class LuceneEDA extends EDA {
 	
 	protected Iterator<TopicCount> typeTopicCounts(int typeIdx) {
 		String type = alphabet.lookupObject(typeIdx).toString();
-		
-		Iterator<TopicCount> it = null;
 		try {
-			TermDocs termDocs = topicWordIdx.termDocs(new Term(Fields.text, type));
-			it = new TermDocsTopicCountIterator(termDocs);
+			typeTopicCountsIt.setTerm(type);
+			return typeTopicCountsIt;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return it;
+		throw new IllegalArgumentException();
 	}
 	
 	private static int nextLogNum(String logDir) {
