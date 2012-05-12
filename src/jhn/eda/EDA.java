@@ -171,7 +171,7 @@ public abstract class EDA implements Serializable {
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
 			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
 			
-//			// Loop over every document in the corpus
+			// Loop over every document in the corpus
 			for (int doc = 0; doc < data.size(); doc++) {
 				exec.execute(new DocumentSampler(doc));
 			}
@@ -270,8 +270,8 @@ public abstract class EDA implements Serializable {
 						// Now calculate and add up the scores for each topic for this word
 						sum = 0.0;
 			
-	//					// Here's where the math happens! Note that overall performance is 
-	//					//  dominated by what you do in this loop.
+						// Here's where the math happens! Note that overall performance is 
+						//  dominated by what you do in this loop.
 						tcIt = typeTopicCounts(typeIdx);
 						while(tcIt.hasNext()) {
 							tc = tcIt.next();
