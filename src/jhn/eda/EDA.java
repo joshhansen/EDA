@@ -163,7 +163,7 @@ public abstract class EDA implements Serializable {
 		log.println("Going to sample " + iterations + " iterations with configuration:");
 		log.println(conf.toString());
 		
-		final int minThreads = Runtime.getRuntime().availableProcessors()*2;
+		final int minThreads = Runtime.getRuntime().availableProcessors();
 		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
 		
 		for (int iteration = 1; iteration <= iterations; iteration++) {
