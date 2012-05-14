@@ -3,6 +3,7 @@ package jhn.eda.lucene;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -24,6 +25,10 @@ public class LuceneEDA extends EDA {
 	private static final long serialVersionUID = 1L;
 	
 	private final IndexReader topicWordIdx;
+	
+	public LuceneEDA(IndexReader topicWordIdx, LabelAlphabet topicAlphabet, String logFilename) {
+		this(topicWordIdx, topicAlphabet, logFilename, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
+	}
 	
 	public LuceneEDA(IndexReader topicWordIdx, LabelAlphabet topicAlphabet, String logFilename, double alphaSum, double beta) {
 		super(logFilename, topicAlphabet, alphaSum, beta);
@@ -118,8 +123,15 @@ public class LuceneEDA extends EDA {
 		final String topicWordIndexName = "wp_lucene4"; /* "wp_lucene3" */
 		final String luceneDir = indicesDir + "/" + topicWordIndexName;
 		
-		final String datasetName = "toy_dataset2";/* debates2012 */ /*  */ /* state_of_the_union */
+		final String datasetName = "debates2012";/* debates2012 */ /* toy_dataset2 */ /* state_of_the_union */
 		final String datasetFilename = System.getenv("HOME") + "/Projects/eda/datasets/" + datasetName + ".mallet";
+		
+		final String featselFilename = outputDir + "/featsel/tfidfTop10.ser";
+		System.out.print("Loading tf-idf features...");
+		
+		@SuppressWarnings("unchecked")
+		Set<String> tfidfTop10 = (Set<String>) Util.deserialize(featselFilename);
+		System.out.println("done.");
 		
 		
 		File luceneDirF = new File(luceneDir);
@@ -137,15 +149,19 @@ public class LuceneEDA extends EDA {
 			topicAlphabet = new LuceneLabelAlphabet(topicWordIdx);
 		}
 		
-		EDA eda = new LuceneEDA (topicWordIdx, topicAlphabet, logFilename, 50.0, 0.01);
+		
+		
+		
+		EDA eda = new LuceneEDA (topicWordIdx, topicAlphabet, logFilename);
 		
 		// Cosmetic options:
-		eda.config().put(Options.SHOW_TOPICS_INTERVAL, 10);
+		eda.config().putInt(Options.SHOW_TOPICS_INTERVAL, 1);
 		
 		// Algorithm options:
-		eda.config().put(Options.TYPE_TOPIC_MIN_COUNT, 3);
-		eda.config().put(Options.FILTER_DIGITS, true);
-//		eda.config().put(Options.FILTER_MONTHS, true);
+//		eda.config().putInt(Options.TYPE_TOPIC_MIN_COUNT, 3);
+//		eda.config().putBool(Options.FILTER_DIGITS, true);
+//		eda.config().putBool(Options.FILTER_MONTHS, true);
+		eda.config().putObj(Options.PRESELECTED_FEATURES, tfidfTop10);
 		
 		InstanceList training = InstanceList.load(new File(datasetFilename));
 		eda.addInstances(training);

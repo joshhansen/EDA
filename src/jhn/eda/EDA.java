@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,20 +60,10 @@ public abstract class EDA implements Serializable {
 	// the alphabet for the topics
 	protected LabelAlphabet topicAlphabet;
 	
-	// The number of topics requested
-	protected int numTopics;
-
-	// The size of the vocabulary
-	protected int numTypes;
-	
 	protected final Log log;
 	protected Config conf = new Config();
-
-	// Prior parameters
-	protected double alpha; // Dirichlet(alpha,alpha,...) is the distribution over topics
-	protected double alphaSum;
-	protected double beta; // Prior on per-topic multinomial distribution over words
-	protected double betaSum;
+	
+	public static final double DEFAULT_ALPHA_SUM = 50.0;
 	public static final double DEFAULT_BETA = 0.01;
 	
 	// An array to put the topic counts for the current document. 
@@ -92,7 +83,10 @@ public abstract class EDA implements Serializable {
 	}
 	
 	protected Randoms random;
-	protected boolean printLogLikelihood = false;
+	
+	public EDA(String logFilename, LabelAlphabet topicAlphabet) {
+		this(logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
+	}
 	
 	public EDA (final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta) {
 		this(logFilename, topicAlphabet, alphaSum, beta, new Randoms());
@@ -101,18 +95,20 @@ public abstract class EDA implements Serializable {
 	public EDA(final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
-		this.numTopics = topicAlphabet.size();
+		final int numTopics = topicAlphabet.size();
 
-		this.alphaSum = alphaSum;
-		this.alpha = alphaSum / numTopics;
-		this.beta = beta;
+		conf.putDouble(Options.ALPHA_SUM, alphaSum);
+		conf.putDouble(Options.ALPHA, alphaSum / numTopics);
+		conf.putDouble(Options.BETA, beta);
+		conf.putInt(Options.NUM_TOPICS, numTopics);
+		
 		this.random = random;
 		
 		oneDocTopicCounts = new int[numTopics];
 		tokensPerTopic = new int[numTopics];
 		
+		// Start logging
 		log = new Log(logFilename);
-
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
 	}
 	
@@ -123,12 +119,16 @@ public abstract class EDA implements Serializable {
 	protected abstract Iterator<TopicCount> typeTopicCounts(int typeIdx);
 
 	public void addInstances (InstanceList training) {
+		final int numTopics = conf.getInt(Options.NUM_TOPICS);
+		
 		log.println("Dataset instances: " + training.size());
 		
 		alphabet = training.getDataAlphabet();
-		numTypes = alphabet.size();
 		
-		betaSum = beta * numTypes;
+		//FIXME This keeps overwriting NUM_TYPES and BETA_SUM every time an instance is added.
+		final int numTypes = alphabet.size();
+		conf.putInt(Options.NUM_TYPES, numTypes);
+		conf.putDouble(Options.BETA_SUM, conf.getDouble(Options.BETA) * numTypes);
 
 		int doc = 0;
 
@@ -166,7 +166,7 @@ public abstract class EDA implements Serializable {
 
 	public void sample (int iterations) {
 		log.println("Going to sample " + iterations + " iterations with configuration:");
-		log.println(conf.toString());
+		log.println(conf.toString(1));
 		
 		final int minThreads = Runtime.getRuntime().availableProcessors();
 		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
@@ -199,10 +199,10 @@ public abstract class EDA implements Serializable {
 			
 			// Occasionally print more information
 			int showTopicsInterval = conf.getInt(Options.SHOW_TOPICS_INTERVAL);
-			if (showTopicsInterval != 0 && iteration % showTopicsInterval == 0) {
+			if (/*showTopicsInterval != 0 &&*/ iteration % showTopicsInterval == 0) {
 //				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
 //							topWords (wordsPerTopic));
-				if(printLogLikelihood) {
+				if(conf.containsKey(Options.PRINT_LOG_LIKELIHOOD) && conf.getBool(Options.PRINT_LOG_LIKELIHOOD)) {
 					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
 				}
 				log.print("<" + iteration + ">\n" + topTopics(100));
@@ -216,10 +216,23 @@ public abstract class EDA implements Serializable {
 	// Topic and type filters
 	private static final Pattern months = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december");
 	private static final Pattern digits = Pattern.compile("\\d+");
+	private Set<String> preselectedFeatures = null;
+	
+	@SuppressWarnings("unchecked")
 	public boolean shouldFilterType(int typeIdx) {
 		String type = alphabet.lookupObject(typeIdx).toString();
+		
+		if(conf.containsKey(Options.PRESELECTED_FEATURES)) {
+			if(preselectedFeatures==null) {
+				preselectedFeatures = (Set<String>) conf.getObj(Options.PRESELECTED_FEATURES);
+			}
+			if(!preselectedFeatures.contains(type)) return true;
+		}
+		
 		if(conf.containsKey(Options.FILTER_DIGITS) && conf.getBool(Options.FILTER_DIGITS) && digits.matcher(type).matches()) return true;
+		
 		if(conf.containsKey(Options.FILTER_MONTHS) && conf.getBool(Options.FILTER_MONTHS) && months.matcher(type).matches()) return true;
+		
 		return false;
 	}
 	
@@ -236,6 +249,11 @@ public abstract class EDA implements Serializable {
 		
 		@Override
 		public void run() {
+			final double alpha = conf.getDouble(Options.ALPHA);
+			final double beta = conf.getDouble(Options.BETA);
+			final double betaSum = conf.getDouble(Options.BETA_SUM);
+			final int numTopics = conf.getInt(Options.NUM_TOPICS);
+			
 			final TopicAssignment ta = data.get(docNum);
 			final FeatureSequence tokenSequence = (FeatureSequence) ta.instance.getData();
 			final LabelSequence topicSequence = (LabelSequence) ta.topicSequence;
@@ -346,6 +364,12 @@ public abstract class EDA implements Serializable {
 	 * ) ]
 	 */
 	public double modelLogLikelihood() {
+		final double alpha = conf.getDouble(Options.ALPHA);
+		final double alphaSum = conf.getDouble(Options.ALPHA_SUM);
+		final double beta = conf.getDouble(Options.BETA);
+		final int numTopics = conf.getInt(Options.NUM_TOPICS);
+		final int numTypes = conf.getInt(Options.NUM_TYPES);
+		
 		double logLikelihood = 0.0;
 
 		// Do the documents first
@@ -477,6 +501,8 @@ public abstract class EDA implements Serializable {
 	 *  @param max         Print no more than this many topics
 	 */
 	public void printDocumentTopics (File file, double threshold, int max) throws IOException {
+		final int numTopics = conf.getInt(Options.NUM_TOPICS);
+		
 		PrintWriter out = new PrintWriter(file);
 
 		out.print ("#doc source topic proportion ...\n");
@@ -592,15 +618,9 @@ public abstract class EDA implements Serializable {
 		out.writeObject (alphabet);
 		out.writeObject (topicAlphabet);
 
-		out.writeInt (numTopics);
-		out.writeDouble (alpha);
-		out.writeDouble (beta);
-		out.writeDouble (betaSum);
-
 		out.writeObject(random);
-		out.writeBoolean(printLogLikelihood);
 
-		for (int ti = 0; ti < numTopics; ti++) {
+		for (int ti = 0; ti < conf.getInt(Options.NUM_TOPICS); ti++) {
 			out.writeInt (tokensPerTopic[ti]);
 		}
 	}
@@ -616,17 +636,9 @@ public abstract class EDA implements Serializable {
 		alphabet = (Alphabet) in.readObject();
 		topicAlphabet = (LabelAlphabet) in.readObject();
 
-		numTopics = in.readInt();
-		alpha = in.readDouble();
-		alphaSum = alpha * numTopics;
-		beta = in.readDouble();
-		betaSum = in.readDouble();
-
 		random = (Randoms) in.readObject();
-		printLogLikelihood = in.readBoolean();
-		
-		numTypes = alphabet.size();
 
+		final int numTopics = conf.getInt(Options.NUM_TOPICS);
 		tokensPerTopic = new int[numTopics];
 		for (int ti = 0; ti < numTopics; ti++) {
 			tokensPerTopic[ti] = in.readInt();
