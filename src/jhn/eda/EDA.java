@@ -41,6 +41,11 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
+import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
+import jhn.eda.topicdistance.StandardMaxTopicDistanceCalculator;
+import jhn.eda.topicdistance.TopicDistanceCalculator;
+import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.util.Config;
 import jhn.util.Util;
 
@@ -50,7 +55,7 @@ import jhn.util.Util;
 * 
 * @author Josh Hansen
 */
-public abstract class EDA implements Serializable {
+public class EDA implements Serializable {
 	// the training instances and their topic assignments
 	protected List<TopicAssignment> data;
 
@@ -83,16 +88,22 @@ public abstract class EDA implements Serializable {
 	}
 	
 	protected Randoms random;
+	protected TypeTopicCounts typeTopicCounts;
+	protected TopicDistanceCalculator topicDistCalc;
+	protected MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
 	
-	public EDA(String logFilename, LabelAlphabet topicAlphabet) {
-		this(logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
+	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) {
+		this(typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
 	}
 	
-	public EDA (final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta) {
-		this(logFilename, topicAlphabet, alphaSum, beta, new Randoms());
+	public EDA (TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) {
+		this(typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, alphaSum, beta, new Randoms());
 	}
 	
-	public EDA(final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
+	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
+		this.typeTopicCounts = typeTopicCounts;
+		this.topicDistCalc = topicDistCalc;
+		
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		final int numTopics = topicAlphabet.size();
@@ -110,13 +121,14 @@ public abstract class EDA implements Serializable {
 		// Start logging
 		log = new Log(logFilename);
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
+		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getName());
+		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getName());
+		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getName());
 	}
 	
 	public Config config() {
 		return conf;
 	}
-	
-	protected abstract Iterator<TopicCount> typeTopicCounts(int typeIdx);
 
 	public void addInstances (InstanceList training) {
 		final int numTopics = conf.getInt(Options.NUM_TOPICS);
@@ -171,16 +183,18 @@ public abstract class EDA implements Serializable {
 		final int minThreads = Runtime.getRuntime().availableProcessors();
 		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
 		
-		for (int iteration = 1; iteration <= iterations; iteration++) {
+		for (int iteration = 1; iteration <= iterations; iteration++) {			
 			log.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
+			
+			final double maxTopicDistance = maxTopicDistCalc.maxTopicDistance(iteration, iterations);
 			
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
 			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
 			
 			// Loop over every document in the corpus
 			for (int doc = 0; doc < data.size(); doc++) {
-				exec.execute(new DocumentSampler(doc));
+				exec.execute(new DocumentSampler(doc, maxTopicDistance));
 			}
 			
 			exec.shutdown();
@@ -243,8 +257,10 @@ public abstract class EDA implements Serializable {
 	
 	private class DocumentSampler implements Runnable {
 		private final int docNum;
-		public DocumentSampler(int docNum) {
+		private final double maxTopicDistance;
+		public DocumentSampler(int docNum, double maxTopicDistance) {
 			this.docNum = docNum;
+			this.maxTopicDistance = maxTopicDistance;
 		}
 		
 		@Override
@@ -297,18 +313,23 @@ public abstract class EDA implements Serializable {
 			
 						// Here's where the math happens! Note that overall performance is 
 						//  dominated by what you do in this loop.
-						tcIt = typeTopicCounts(typeIdx);
+						tcIt = typeTopicCounts.typeTopicCounts(typeIdx);
 						while(tcIt.hasNext()) {
 							tc = tcIt.next();
-							if(!shouldFilterTopic(tc)) {
-								score =
-									(alpha + localTopicCounts[tc.topic]) *
-									((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
-									 (betaSum + tokensPerTopic[tc.topic]));
-								sum += score;
-								
-								topics.add(tc.topic);
-								scores.add(score);
+							
+							boolean topicInRange = topicDistCalc.topicDistance(oldTopic, tc.topic) <= maxTopicDistance;
+							
+							if(topicInRange) {
+								if(!shouldFilterTopic(tc)) {
+									score =
+										(alpha + localTopicCounts[tc.topic]) *
+										((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
+										 (betaSum + tokensPerTopic[tc.topic]));
+									sum += score;
+									
+									topics.add(tc.topic);
+									scores.add(score);
+								}
 							}
 						}
 						
@@ -338,7 +359,7 @@ public abstract class EDA implements Serializable {
 							localTopicCounts[newTopic]++;
 							incTokensPerTopic(newTopic);
 						}
-					} catch(IllegalArgumentException e) {
+					} catch(TypeTopicCountsException e) {
 						// Words that occur in none of the topics will lead us here
 						System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
 					}
@@ -411,7 +432,7 @@ public abstract class EDA implements Serializable {
 
 		for (int type=0; type < numTypes; type++) {
 			try {
-				Iterator<TopicCount> tcIt = typeTopicCounts(type);
+				Iterator<TopicCount> tcIt = typeTopicCounts.typeTopicCounts(type);
 				while(tcIt.hasNext()) {
 					TopicCount tc = tcIt.next();
 					nonZeroTypeTopics++;
@@ -421,7 +442,7 @@ public abstract class EDA implements Serializable {
 						System.exit(1);
 					}
 				}
-			} catch(IllegalArgumentException e) {
+			} catch(TypeTopicCountsException e) {
 				// Words that occur in none of the topics will lead us here
 				// Do nothing
 			}

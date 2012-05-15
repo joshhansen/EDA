@@ -15,7 +15,7 @@ import cc.mallet.types.LabelAlphabet;
 
 import jhn.wp.Fields;
 
-class LuceneLabelAlphabet extends LabelAlphabet {
+public class LuceneLabelAlphabet extends LabelAlphabet {
 	private static final long serialVersionUID = 1L;
 	private IndexSearcher s;
 	public LuceneLabelAlphabet(IndexReader r) {
