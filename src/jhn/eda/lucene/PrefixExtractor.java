@@ -42,6 +42,7 @@ public class PrefixExtractor {
 		
 		try {
 			BufferedWriter w = new BufferedWriter(new FileWriter(outfile));
+			@SuppressWarnings("unchecked")
 			Entry<String,Double>[] entries = prefixes.entries().toArray(new Entry[0]);
 			Arrays.sort(entries, new Comparator<Entry<String,Double>>(){
 				@Override
