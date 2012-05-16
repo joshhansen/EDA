@@ -7,6 +7,7 @@ information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -47,6 +48,7 @@ import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.util.Config;
+import jhn.util.Log;
 import jhn.util.Util;
 
 /**
@@ -92,15 +94,15 @@ public class EDA implements Serializable {
 	protected TopicDistanceCalculator topicDistCalc;
 	protected MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
 	
-	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) {
+	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
 		this(typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
 	}
 	
-	public EDA (TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) {
+	public EDA (TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) throws FileNotFoundException {
 		this(typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, alphaSum, beta, new Randoms());
 	}
 	
-	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) {
+	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) throws FileNotFoundException {
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
 		
