@@ -3,18 +3,15 @@ package jhn.eda;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.NIOFSDirectory;
-
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 
-import jhn.eda.lucene.LuceneLabelAlphabet;
+import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topicdistance.LuceneTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
-import jhn.eda.typetopiccounts.LuceneTypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.util.ConstFactory;
+import jhn.util.Factory;
 import jhn.util.Util;
 
 public final class RunEDA {
@@ -45,57 +42,50 @@ public final class RunEDA {
 	
 	private static final boolean LOAD_SERIALIZED_LABEL_ALPHABET = false;
 	public static void main (String[] args) throws IOException, ClassNotFoundException {
-		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
+		final String outputDir = Paths.outputDir();
 		
 		final String logFilename = logFilename(outputDir+"/runs");
 		
-		final String topicWordIndexName = "wp_lucene4"; /* "wp_lucene3" */
-		
-		final String indicesDir = outputDir + "/indices";
-		final String topicWordIdxDir = indicesDir + "/topic_words/" + topicWordIndexName;
-		final String artCatsIdxDir = indicesDir + "/article_categories";
-		final String catCatsIdxDir = indicesDir + "/category_categories";
-		
+		final String topicWordIdxName = "wp_lucene4"; /* "wp_lucene3" */
 		
 		final String datasetName = "debates2012";/* debates2012 */ /* toy_dataset2 */ /* state_of_the_union */
-		final String datasetFilename = System.getenv("HOME") + "/Projects/eda/datasets/" + datasetName + ".mallet";
+		final String datasetFilename = Paths.datasetFilename(datasetName);
 		
-//		final String featselFilename = outputDir + "/featsel/tfidfTop10.ser";
-//		System.out.print("Loading tf-idf features...");
-//		
-//		@SuppressWarnings("unchecked")
-//		Set<String> tfidfTop10 = (Set<String>) Util.deserialize(featselFilename);
-//		System.out.println("done.");
+//		final String artCatsIdxDir = Paths.indexDir("article_categories");
+//		final String catCatsIdxDir = Paths.indexDir("category_categories");
 		
 		
-		File topicWordIdxDirF = new File(topicWordIdxDir);
-		Directory dir = NIOFSDirectory.open(topicWordIdxDirF);
-//		Directory dir = MMapDirectory.open(topicWordIdxDirF);
-		IndexReader topicWordIdx = IndexReader.open(dir);
+		
+		
+        System.out.print("Loading target corpus...");
+        InstanceList targetData = InstanceList.load(new File(datasetFilename));
+        System.out.println("done.");
 
-		LabelAlphabet topicAlphabet;
-		if(LOAD_SERIALIZED_LABEL_ALPHABET) {
-			final String alphaFilename = indicesDir + "/" + topicWordIndexName + "_label_alphabet.ser";
-			System.out.print("Loading label alphabet...");
-			topicAlphabet = (LabelAlphabet) Util.deserialize(alphaFilename);
-			System.out.println("done.");
-		} else {
-			topicAlphabet = new LuceneLabelAlphabet(topicWordIdx);
-		}
-		
-		System.out.print("Loading target corpus...");
-		InstanceList targetData = InstanceList.load(new File(datasetFilename));
+		System.out.print("Loading type-topic counts...");
+		final int minCount = 2;
+		final String ttCountsFilename = Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
-		
-		TypeTopicCounts ttcs = new LuceneTypeTopicCounts(topicWordIdx, targetData.getAlphabet());
-		
-		IndexReader articleCategoriesIdx = IndexReader.open(NIOFSDirectory.open(new File(artCatsIdxDir)));
-		IndexReader categoryCategoriesIdx = IndexReader.open(NIOFSDirectory.open(new File(catCatsIdxDir)));
-		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(articleCategoriesIdx, categoryCategoriesIdx);
-		
-		EDA eda = new EDA (ttcs, tdc, logFilename, topicAlphabet);
+
+		System.out.print("Loading label alphabet...");
+//        String labelAlphabetFilename = Paths.topicWordIndicesDir() + "/" + topicWordIdxName + "_label_alphabet.ser";
+		String labelAlphabetFilename = Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
+		LabelAlphabet topicAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
+		System.out.println("done.");
+
+		System.out.print("Loading topic counts...");
+		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
+		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
+//		Factory<TopicCounts> tcFact = MapTopicCounts.factory(Paths.indexDir("topic_counts") + "/topic_counts.ser");
+		Factory<TopicCounts> tcFact = new ConstFactory<TopicCounts>(tcs);
+		System.out.println("done.");
+
+		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(null, null);		
+		EDA eda = new EDA (tcFact, ttcs, tdc, logFilename, topicAlphabet, 10000.0, 0.01);
 		
 		// Cosmetic options:
+		eda.config().putBool(Options.PRINT_TOP_WORDS_AND_TOPICS, true);
+		eda.config().putBool(Options.PRINT_DOC_TOPICS, true);
 		eda.config().putInt(Options.SHOW_TOPICS_INTERVAL, 1);
 		
 		// Algorithm options:
@@ -104,7 +94,7 @@ public final class RunEDA {
 //		eda.config().putBool(Options.FILTER_MONTHS, true);
 //		eda.config().putObj(Options.PRESELECTED_FEATURES, tfidfTop10);
 		
-		
+		eda.config().putInt(Options.TOPIC_MIN_COUNT, 100);
 		
 		
 		System.out.print("Processing target corpus...");
@@ -112,10 +102,10 @@ public final class RunEDA {
 		System.out.println("done.");
 		
 		eda.sample(1000);
-		
-		topicWordIdx.close();
-		articleCategoriesIdx.close();
-		categoryCategoriesIdx.close();
+
+//		articleCategoriesIdx.close();
+//		categoryCategoriesIdx.close();
+
 		
 	}//end main
 }
