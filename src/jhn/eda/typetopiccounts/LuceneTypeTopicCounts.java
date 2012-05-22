@@ -9,7 +9,6 @@ import org.apache.lucene.index.TermDocs;
 
 import cc.mallet.types.Alphabet;
 
-import jhn.eda.TopicCount;
 import jhn.wp.Fields;
 
 public class LuceneTypeTopicCounts implements TypeTopicCounts {
@@ -21,8 +20,8 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts {
 		this.typeAlphabet = typeAlphabet;
 	}
 
-	private class TermDocsTopicCountIterator implements Iterator<TopicCount> {
-		private final TopicCount topicCount = new TopicCount();
+	private class TermDocsTopicCountIterator implements Iterator<TypeTopicCount> {
+		private final TypeTopicCount topicCount = new TypeTopicCount();
 		private Term typeTopicTerm = new Term(Fields.text);
 		
 		private TermDocs termDocs;
@@ -49,9 +48,10 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts {
 		}
 
 		@Override
-		public TopicCount next() {
+		public TypeTopicCount next() {
 			topicCount.topic = termDocs.doc();
 			topicCount.count = termDocs.freq();
+			
 			return topicCount;
 		}
 
@@ -62,7 +62,7 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts {
 	}
 	
 	@Override
-	public Iterator<TopicCount> typeTopicCounts(int typeIdx) throws TypeTopicCountsException {
+	public Iterator<TypeTopicCount> typeTopicCounts(int typeIdx) throws TypeTopicCountsException {
 		String type = typeAlphabet.lookupObject(typeIdx).toString();
 		try {
 			return new TermDocsTopicCountIterator(type);
