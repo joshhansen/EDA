@@ -347,15 +347,20 @@ public class EDA implements Serializable {
 							boolean topicInRange = topicDistCalc.topicDistance(oldTopic, tc.topic) <= maxTopicDistance;
 							
 							if(topicInRange) {
-								if(!shouldFilterTopic(tc)) {
-									score =
-										(alpha + localTopicCounts[tc.topic]) *
-										((beta + tc.count - (tc.topic==oldTopic ? 1 : 0)) /
-										 (betaSum + tokensPerTopic[tc.topic]));
-									sum += score;
+								if(!shouldFilterTypeTopic(ttc)) {
+									topicCount = topicCounts.topicCount(ttc.topic);
 									
+									if(!shouldFilterTopic(ttc.topic, topicCount)) {
+										countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
+										score = (alpha + docTopicCounts[ttc.topic] - countDelta) *
+												(beta + ttc.count) /
+												(betaSum + topicCount - countDelta);
+										
+										sum += score;
+										
 										ccTopics.add(ttc.topic);
 										ccScores.add(score);
+									}
 								}
 							}
 						}
