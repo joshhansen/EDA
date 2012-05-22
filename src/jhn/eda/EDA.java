@@ -318,8 +318,8 @@ public class EDA implements Serializable {
 			
 			int i;
 			double score, sum, sample;
-			TopicCount tc;
-			Iterator<TopicCount> tcIt;
+			TypeTopicCount ttc;
+			Iterator<TypeTopicCount> ttcIt;
 			
 			//	Iterate over the positions (words) in the document 
 			for (int position = 0; position < docLength; position++) {
@@ -340,9 +340,9 @@ public class EDA implements Serializable {
 			
 						// Here's where the math happens! Note that overall performance is 
 						//  dominated by what you do in this loop.
-						tcIt = typeTopicCounts.typeTopicCounts(typeIdx);
-						while(tcIt.hasNext()) {
-							tc = tcIt.next();
+						ttcIt = typeTopicCounts.typeTopicCounts(typeIdx);
+						while(ttcIt.hasNext()) {
+							ttc = ttcIt.next();
 							
 							boolean topicInRange = topicDistCalc.topicDistance(oldTopic, tc.topic) <= maxTopicDistance;
 							
@@ -470,9 +470,9 @@ public class EDA implements Serializable {
 
 		for (int type=0; type < numTypes; type++) {
 			try {
-				Iterator<TopicCount> tcIt = typeTopicCounts.typeTopicCounts(type);
+				Iterator<TypeTopicCount> tcIt = typeTopicCounts.typeTopicCounts(type);
 				while(tcIt.hasNext()) {
-					TopicCount tc = tcIt.next();
+					TypeTopicCount tc = tcIt.next();
 					nonZeroTypeTopics++;
 					logLikelihood += Dirichlet.logGamma(beta + tc.count);
 					if (Double.isNaN(logLikelihood)) {
