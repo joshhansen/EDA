@@ -12,7 +12,7 @@ import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.LabelAlphabet;
 
-public class LuceneLabelAlphabetExtractor {
+public class LabelAlphabetExtractor {
 	public static void main(String[] args) throws IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		final String indicesDir = outputDir + "/indices/topic_words";
