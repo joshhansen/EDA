@@ -306,8 +306,8 @@ public class EDA implements Serializable {
 				localTopicCounts[oneDocTopics[position]]++;
 			}
 			
-			IntList topics;
-			DoubleList scores;
+			IntList ccTopics;
+			DoubleList ccScores;
 			
 			int i;
 			double score, sum, sample;
@@ -318,8 +318,8 @@ public class EDA implements Serializable {
 			for (int position = 0; position < docLength; position++) {
 				typeIdx = tokenSequence.getIndexAtPosition(position);
 				if(!shouldFilterType(typeIdx)) {
-					topics = new IntArrayList();
-					scores = new DoubleArrayList();
+					ccTopics = new IntArrayList();
+					ccScores = new DoubleArrayList();
 					try {
 						oldTopic = oneDocTopics[position];
 			
@@ -347,8 +347,8 @@ public class EDA implements Serializable {
 										 (betaSum + tokensPerTopic[tc.topic]));
 									sum += score;
 									
-									topics.add(tc.topic);
-									scores.add(score);
+										ccTopics.add(ttc.topic);
+										ccScores.add(score);
 								}
 							}
 						}
@@ -365,8 +365,8 @@ public class EDA implements Serializable {
 							newTopic = -1;
 							while (sample > 0.0) {
 								i++;
-								newTopic = topics.getInt(i);
-								sample -= scores.getDouble(i);
+								newTopic = ccTopics.getInt(i);
+								sample -= ccScores.getDouble(i);
 							}
 				
 							// Make sure we actually sampled a topic
