@@ -40,9 +40,12 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
+import jhn.eda.topiccounts.TopicCounts;
+import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
 import jhn.eda.topicdistance.StandardMaxTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
+import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.util.Config;
@@ -95,16 +98,18 @@ public class EDA implements Serializable {
 	protected TypeTopicCounts typeTopicCounts;
 	protected TopicDistanceCalculator topicDistCalc;
 	protected MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
+	protected Factory<TopicCounts> topicCountsFact;
 	
-	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
-		this(typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
+	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
+		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
 	}
 	
-	public EDA (TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) throws FileNotFoundException {
-		this(typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, alphaSum, beta, new Randoms());
+	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) throws FileNotFoundException {
+		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, alphaSum, beta, new Randoms());
 	}
 	
-	public EDA(TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) throws FileNotFoundException {
+	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) throws FileNotFoundException {
+		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
 		
@@ -200,7 +205,7 @@ public class EDA implements Serializable {
 			
 			// Loop over every document in the corpus
 			for (int doc = 0; doc < data.size(); doc++) {
-				exec.execute(new DocumentSampler(doc, maxTopicDistance));
+				exec.execute(new DocumentSampler(doc, maxTopicDistance, topicCountsFact.create()));
 			}
 			
 			exec.shutdown();
@@ -278,9 +283,11 @@ public class EDA implements Serializable {
 	private class DocumentSampler implements Runnable {
 		private final int docNum;
 		private final double maxTopicDistance;
-		public DocumentSampler(int docNum, double maxTopicDistance) {
+		private TopicCounts topicCounts;
+		public DocumentSampler(int docNum, double maxTopicDistance, TopicCounts topicCounts) {
 			this.docNum = docNum;
 			this.maxTopicDistance = maxTopicDistance;
+			this.topicCounts = topicCounts;
 		}
 		
 		@Override
@@ -382,10 +389,21 @@ public class EDA implements Serializable {
 					} catch(TypeTopicCountsException e) {
 						// Words that occur in none of the topics will lead us here
 						System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
+					} catch(TopicCountsException e) {
+						e.printStackTrace();
 					}
 				}//end if should filter type
 			}//end for
 			log.print('.');
+			
+			if(topicCounts instanceof Closeable) {
+				try {
+					((Closeable)topicCounts).close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					throw new IllegalArgumentException();
+				}
+			}
 		}
 	}
 	
