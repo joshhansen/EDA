@@ -6,6 +6,7 @@ version 1.0, as published by http://www.opensource.org.	For further
 information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -15,8 +16,11 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -40,6 +44,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
+
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
@@ -51,8 +56,8 @@ import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.util.Config;
 import jhn.util.Counter;
 import jhn.util.CounterMap;
+import jhn.util.Factory;
 import jhn.util.Log;
-import jhn.util.Util;
 
 /**
 * An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew
@@ -86,13 +91,6 @@ public class EDA implements Serializable {
 	// Statistics needed for sampling.
 	protected int[] tokensPerTopic; // indexed by <topic index>
 
-	protected synchronized void incTokensPerTopic(int topic) {
-		tokensPerTopic[topic]++;
-	}
-	
-	protected synchronized void decTokensPerTopic(int topic) {
-		tokensPerTopic[topic]--;
-	}
 	
 	protected Randoms random;
 	protected TypeTopicCounts typeTopicCounts;
@@ -133,6 +131,7 @@ public class EDA implements Serializable {
 		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
 		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
 		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
+		
 		docTopicsLog = new Log(logFilename+".doctopics");
 		stateLog = new Log(logFilename+".state");
 	}
@@ -258,7 +257,7 @@ public class EDA implements Serializable {
 	private Set<String> preselectedFeatures = null;
 	
 	@SuppressWarnings("unchecked")
-	public boolean shouldFilterType(int typeIdx) {
+	private boolean shouldFilterType(int typeIdx) {
 		String type = alphabet.lookupObject(typeIdx).toString();
 		
 		if(conf.containsKey(Options.PRESELECTED_FEATURES)) {
@@ -275,9 +274,13 @@ public class EDA implements Serializable {
 		return false;
 	}
 	
-	public boolean shouldFilterTopic(TopicCount tc) {
+	private boolean shouldFilterTypeTopic(TypeTopicCount tc) {
 		if(conf.containsKey(Options.TYPE_TOPIC_MIN_COUNT) && tc.count < conf.getInt(Options.TYPE_TOPIC_MIN_COUNT)) return true;
 		return false;
+	}
+	
+	private boolean shouldFilterTopic(int topic, int count) {
+		return(conf.containsKey(Options.TOPIC_MIN_COUNT) && count < conf.getInt(Options.TOPIC_MIN_COUNT));
 	}
 	
 	private class DocumentSampler implements Runnable {
@@ -301,38 +304,47 @@ public class EDA implements Serializable {
 			final FeatureSequence tokenSequence = (FeatureSequence) ta.instance.getData();
 			final LabelSequence topicSequence = (LabelSequence) ta.topicSequence;
 
-			int[] oneDocTopics = topicSequence.getFeatures();
+			int[] tokens = tokenSequence.getFeatures();
+			int[] topics = topicSequence.getFeatures();
+			
 			
 			int typeIdx, oldTopic, newTopic;
 			int docLength = tokenSequence.getLength();
 
-			int[] localTopicCounts = new int[numTopics];
+			int[] docTopicCounts = new int[numTopics];
 
 			// populate topic counts
 			for (int position = 0; position < docLength; position++) {
-				localTopicCounts[oneDocTopics[position]]++;
+				docTopicCounts[topics[position]]++;
 			}
 			
 			IntList ccTopics;
 			DoubleList ccScores;
 			
 			int i;
-			double score, sum, sample;
+			int topicCount;
+			double score, sum, sample, countDelta;
 			TypeTopicCount ttc;
 			Iterator<TypeTopicCount> ttcIt;
+			boolean topicInRange;
 			
 			//	Iterate over the positions (words) in the document 
 			for (int position = 0; position < docLength; position++) {
-				typeIdx = tokenSequence.getIndexAtPosition(position);
+//				if(position % 100 == 0) {
+//					double pct = (double)position / (double)docLength;
+//					System.out.println(docNum + ": " + pct);
+//				}
+				typeIdx = tokens[position];
+//				typeIdx = tokenSequence.getIndexAtPosition(position);
 				if(!shouldFilterType(typeIdx)) {
 					ccTopics = new IntArrayList();
 					ccScores = new DoubleArrayList();
 					try {
-						oldTopic = oneDocTopics[position];
+						oldTopic = topics[position];
 			
 						//	Remove this token from all counts. 
-						localTopicCounts[oldTopic]--;
-						decTokensPerTopic(oldTopic);
+//						localTopicCounts[oldTopic]--;
+//						decTokensPerTopic(oldTopic);
 						assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
 			
 						// Now calculate and add up the scores for each topic for this word
@@ -344,7 +356,7 @@ public class EDA implements Serializable {
 						while(ttcIt.hasNext()) {
 							ttc = ttcIt.next();
 							
-							boolean topicInRange = topicDistCalc.topicDistance(oldTopic, tc.topic) <= maxTopicDistance;
+							topicInRange = topicDistCalc.topicDistance(oldTopic, ttc.topic) <= maxTopicDistance;
 							
 							if(topicInRange) {
 								if(!shouldFilterTypeTopic(ttc)) {
@@ -352,6 +364,9 @@ public class EDA implements Serializable {
 									
 									if(!shouldFilterTopic(ttc.topic, topicCount)) {
 										countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
+	//									score = (alpha + docTopicCounts[tc.topic] - countDelta) *
+	//											(beta + tc.count) /
+	//											(betaSum + tokensPerTopic[tc.topic]  - countDelta );
 										score = (alpha + docTopicCounts[ttc.topic] - countDelta) *
 												(beta + ttc.count) /
 												(betaSum + topicCount - countDelta);
@@ -387,9 +402,9 @@ public class EDA implements Serializable {
 							}
 			
 							// Put that new topic into the counts
-							oneDocTopics[position] = newTopic;
-							localTopicCounts[newTopic]++;
-							incTokensPerTopic(newTopic);
+							topics[position] = newTopic;
+//							localTopicCounts[newTopic]++;
+//							incTokensPerTopic(newTopic);
 						}
 					} catch(TypeTopicCountsException e) {
 						// Words that occur in none of the topics will lead us here
@@ -410,7 +425,7 @@ public class EDA implements Serializable {
 				}
 			}
 		}
-	}
+	}//end class DocumentSampler
 	
 
 	
