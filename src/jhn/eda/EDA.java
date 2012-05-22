@@ -123,9 +123,9 @@ public class EDA implements Serializable {
 		// Start logging
 		log = new Log(logFilename);
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
-		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getName());
-		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getName());
-		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getName());
+		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
+		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
+		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
 	}
 	
 	public Config config() {
