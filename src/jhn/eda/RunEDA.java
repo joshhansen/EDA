@@ -34,22 +34,19 @@ public final class RunEDA {
 		return max + 1;
 	}
 	
-	private static String logFilename(String logDir) {
+	private static String logFilename() {
+		final String logDir = Paths.runsDir();
 		String filename = logDir + "/" + String.valueOf(nextLogNum(logDir)) + ".txt";
 		System.out.println("Writing to log file: " + filename);
 		return filename;
 	}
 	
-	private static final boolean LOAD_SERIALIZED_LABEL_ALPHABET = false;
 	public static void main (String[] args) throws IOException, ClassNotFoundException {
-		final String outputDir = Paths.outputDir();
-		
-		final String logFilename = logFilename(outputDir+"/runs");
+		final String logFilename = logFilename();
 		
 		final String topicWordIdxName = "wp_lucene4"; /* "wp_lucene3" */
 		
 		final String datasetName = "debates2012";/* debates2012 */ /* toy_dataset2 */ /* state_of_the_union */
-		final String datasetFilename = Paths.datasetFilename(datasetName);
 		
 //		final String artCatsIdxDir = Paths.indexDir("article_categories");
 //		final String catCatsIdxDir = Paths.indexDir("category_categories");
@@ -58,7 +55,7 @@ public final class RunEDA {
 		
 		
         System.out.print("Loading target corpus...");
-        InstanceList targetData = InstanceList.load(new File(datasetFilename));
+        InstanceList targetData = InstanceList.load(new File(Paths.datasetFilename(datasetName)));
         System.out.println("done.");
 
 		System.out.print("Loading type-topic counts...");
@@ -85,17 +82,14 @@ public final class RunEDA {
 		
 		// Cosmetic options:
 		eda.config().putBool(Options.PRINT_TOP_WORDS_AND_TOPICS, true);
-		eda.config().putBool(Options.PRINT_DOC_TOPICS, true);
-		eda.config().putInt(Options.SHOW_TOPICS_INTERVAL, 1);
+//		eda.config().putBool(Options.PRINT_DOC_TOPICS, true);
+		eda.config().putInt(Options.PRINT_INTERVAL, 10);
 		
 		// Algorithm options:
 //		eda.config().putInt(Options.TYPE_TOPIC_MIN_COUNT, 3);
 //		eda.config().putBool(Options.FILTER_DIGITS, true);
 //		eda.config().putBool(Options.FILTER_MONTHS, true);
 //		eda.config().putObj(Options.PRESELECTED_FEATURES, tfidfTop10);
-		
-		eda.config().putInt(Options.TOPIC_MIN_COUNT, 100);
-		
 		
 		System.out.print("Processing target corpus...");
 		eda.addInstances(targetData);

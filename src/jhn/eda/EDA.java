@@ -21,12 +21,10 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
@@ -43,7 +41,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
@@ -66,8 +64,11 @@ import jhn.util.Log;
 * @author Josh Hansen
 */
 public class EDA implements Serializable {
+	public static final double DEFAULT_ALPHA_SUM = 50.0;
+	public static final double DEFAULT_BETA = 0.01;
+	
 	// the training instances and their topic assignments
-	protected List<TopicAssignment> data;
+	protected ObjectArrayList<TopicAssignment> data = new ObjectArrayList<TopicAssignment>();
 
 	// the alphabet for the input data
 	protected Alphabet alphabet;
@@ -76,23 +77,12 @@ public class EDA implements Serializable {
 	protected LabelAlphabet topicAlphabet;
 	
 	protected final Log log;
-	protected final Log docTopicsLog;
-	protected final Log stateLog;
+	protected Log docTopicsLog;
+	protected Log stateLog;
 	protected Config conf = new Config();
-	
-	public static final double DEFAULT_ALPHA_SUM = 50.0;
-	public static final double DEFAULT_BETA = 0.01;
-	
-	// An array to put the topic counts for the current document. 
-	// Initialized locally below.  Defined here to avoid
-	// garbage collection overhead.
-	protected int[] oneDocTopicCounts; // indexed by <document index, topic index>
-
-	// Statistics needed for sampling.
-	protected int[] tokensPerTopic; // indexed by <topic index>
-
-	
 	protected Randoms random;
+	
+	// Data sources and other helpers
 	protected TypeTopicCounts typeTopicCounts;
 	protected TopicDistanceCalculator topicDistCalc;
 	protected MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
@@ -111,7 +101,6 @@ public class EDA implements Serializable {
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
 		
-		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = topicAlphabet;
 		final int numTopics = topicAlphabet.size();
 
@@ -122,9 +111,6 @@ public class EDA implements Serializable {
 		
 		this.random = random;
 		
-		oneDocTopicCounts = new int[numTopics];
-		tokensPerTopic = new int[numTopics];
-		
 		// Start logging
 		log = new Log(System.out, logFilename);
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
@@ -132,8 +118,12 @@ public class EDA implements Serializable {
 		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
 		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
 		
-		docTopicsLog = new Log(logFilename+".doctopics");
-		stateLog = new Log(logFilename+".state");
+		if(conf.isTrue(Options.PRINT_DOC_TOPICS)) {
+			docTopicsLog = new Log(logFilename+".doctopics");
+		}
+		if(conf.isTrue(Options.PRINT_STATE)) {
+			stateLog = new Log(logFilename+".state");
+		}
 	}
 	
 	public Config config() {
@@ -170,7 +160,6 @@ public class EDA implements Serializable {
 			for (int position = 0; position < tokens.size(); position++) {
 				int topic = random.nextInt(numTopics);
 				topics[position] = topic;
-				tokensPerTopic[topic]++;
 			}
 			
 			log.print(instance.getSource());
@@ -180,6 +169,7 @@ public class EDA implements Serializable {
 			
 			tokenCount += tokens.getLength();
 		}
+		data.trim();
 		
 		log.println();
 		
@@ -216,71 +206,29 @@ public class EDA implements Serializable {
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			}
-			log.println();
 		
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
-			log.println(iteration + "\t" + elapsedMillis + "ms\t");
+			log.println("Iteration " + iteration + " duration: " + elapsedMillis + "ms\t");
 			
-			
-			if(conf.containsKey(Options.PRINT_TOP_WORDS_AND_TOPICS) && conf.getBool(Options.PRINT_TOP_WORDS_AND_TOPICS)) {
-				printTopWordsAndTopics(100, 10);
-			}
-			if(conf.containsKey(Options.PRINT_DOC_TOPICS) && conf.getBool(Options.PRINT_DOC_TOPICS)) {
-				printDocumentTopics(docTopicsLog, 0.01, 100);
-			}
-			if(conf.containsKey(Options.PRINT_STATE) && conf.getBool(Options.PRINT_STATE)) {
-				printState(stateLog);
-			}
-			
-			// Occasionally print more information
-			int showTopicsInterval = conf.getInt(Options.SHOW_TOPICS_INTERVAL);
-			if (/*showTopicsInterval != 0 &&*/ iteration % showTopicsInterval == 0) {
-//				logger.info("<" + iteration + "> Log Likelihood: " + modelLogLikelihood() + "\n" +
-//							topWords (wordsPerTopic));
-				
-				
-				
-				if(conf.containsKey(Options.PRINT_LOG_LIKELIHOOD) && conf.getBool(Options.PRINT_LOG_LIKELIHOOD)) {
+			if(iteration > 0 && iteration % conf.getInt(Options.PRINT_INTERVAL) == 0) {
+				log.println("Printing output");
+				if(conf.isTrue(Options.PRINT_TOP_WORDS_AND_TOPICS)) {
+					printTopWordsAndTopics(100, 10);
+				}
+				if(conf.isTrue(Options.PRINT_DOC_TOPICS)) {
+					printDocumentTopics(docTopicsLog, 0.01, 100);
+				}
+				if(conf.isTrue(Options.PRINT_STATE)) {
+					printState(stateLog);
+				}
+				if(conf.isTrue(Options.PRINT_LOG_LIKELIHOOD)) {
 					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
 				}
-//				log.print("<" + iteration + ">\n" + topTopics(100));
+				log.println();
 			}
-			log.println();
 		}
 		
 		log.close();
-	}
-	
-	// Topic and type filters
-	private static final Pattern months = Pattern.compile("january|february|march|april|may|june|july|august|september|october|november|december");
-	private static final Pattern digits = Pattern.compile("\\d+");
-	private Set<String> preselectedFeatures = null;
-	
-	@SuppressWarnings("unchecked")
-	private boolean shouldFilterType(int typeIdx) {
-		String type = alphabet.lookupObject(typeIdx).toString();
-		
-		if(conf.containsKey(Options.PRESELECTED_FEATURES)) {
-			if(preselectedFeatures==null) {
-				preselectedFeatures = (Set<String>) conf.getObj(Options.PRESELECTED_FEATURES);
-			}
-			if(!preselectedFeatures.contains(type)) return true;
-		}
-		
-		if(conf.containsKey(Options.FILTER_DIGITS) && conf.getBool(Options.FILTER_DIGITS) && digits.matcher(type).matches()) return true;
-		
-		if(conf.containsKey(Options.FILTER_MONTHS) && conf.getBool(Options.FILTER_MONTHS) && months.matcher(type).matches()) return true;
-		
-		return false;
-	}
-	
-	private boolean shouldFilterTypeTopic(TypeTopicCount tc) {
-		if(conf.containsKey(Options.TYPE_TOPIC_MIN_COUNT) && tc.count < conf.getInt(Options.TYPE_TOPIC_MIN_COUNT)) return true;
-		return false;
-	}
-	
-	private boolean shouldFilterTopic(int topic, int count) {
-		return(conf.containsKey(Options.TOPIC_MIN_COUNT) && count < conf.getInt(Options.TOPIC_MIN_COUNT));
 	}
 	
 	private class DocumentSampler implements Runnable {
@@ -318,8 +266,8 @@ public class EDA implements Serializable {
 				docTopicCounts[topics[position]]++;
 			}
 			
-			IntList ccTopics;
-			DoubleList ccScores;
+			IntList ccTopics = new IntArrayList();
+			DoubleList ccScores = new DoubleArrayList();
 			
 			int i;
 			int topicCount;
@@ -330,90 +278,73 @@ public class EDA implements Serializable {
 			
 			//	Iterate over the positions (words) in the document 
 			for (int position = 0; position < docLength; position++) {
-//				if(position % 100 == 0) {
-//					double pct = (double)position / (double)docLength;
-//					System.out.println(docNum + ": " + pct);
-//				}
 				typeIdx = tokens[position];
-//				typeIdx = tokenSequence.getIndexAtPosition(position);
-				if(!shouldFilterType(typeIdx)) {
-					ccTopics = new IntArrayList();
-					ccScores = new DoubleArrayList();
-					try {
-						oldTopic = topics[position];
-			
-						//	Remove this token from all counts. 
-//						localTopicCounts[oldTopic]--;
-//						decTokensPerTopic(oldTopic);
-						assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
-			
-						// Now calculate and add up the scores for each topic for this word
-						sum = 0.0;
-			
-						// Here's where the math happens! Note that overall performance is 
-						//  dominated by what you do in this loop.
-						ttcIt = typeTopicCounts.typeTopicCounts(typeIdx);
-						while(ttcIt.hasNext()) {
-							ttc = ttcIt.next();
-							
-							topicInRange = topicDistCalc.topicDistance(oldTopic, ttc.topic) <= maxTopicDistance;
-							
-							if(topicInRange) {
-								if(!shouldFilterTypeTopic(ttc)) {
-									topicCount = topicCounts.topicCount(ttc.topic);
-									
-									if(!shouldFilterTopic(ttc.topic, topicCount)) {
-										countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
-	//									score = (alpha + docTopicCounts[tc.topic] - countDelta) *
-	//											(beta + tc.count) /
-	//											(betaSum + tokensPerTopic[tc.topic]  - countDelta );
-										score = (alpha + docTopicCounts[ttc.topic] - countDelta) *
-												(beta + ttc.count) /
-												(betaSum + topicCount - countDelta);
-										
-										sum += score;
-										
-										ccTopics.add(ttc.topic);
-										ccScores.add(score);
-									}
-								}
-							}
-						}
+				
+				if(position > 0) {
+					ccTopics.clear();
+					ccScores.clear();
+				}
+				
+				try {
+					oldTopic = topics[position];
+		
+					// Now calculate and add up the scores for each topic for this word
+					sum = 0.0;
+		
+					// Here's where the math happens! Note that overall performance is 
+					//  dominated by what you do in this loop.
+					ttcIt = typeTopicCounts.typeTopicCounts(typeIdx);
+					while(ttcIt.hasNext()) {
+						ttc = ttcIt.next();
 						
-						if(sum <= 0.0) {
-	//						String type = alphabet.lookupObject(typeIdx).toString();
-	//						System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
-						} else {
-							// Choose a random point between 0 and the sum of all topic scores
-							sample = random.nextUniform() * sum;
-				
-							// Figure out which topic contains that point
-							i = -1;
-							newTopic = -1;
-							while (sample > 0.0) {
-								i++;
-								newTopic = ccTopics.getInt(i);
-								sample -= ccScores.getDouble(i);
-							}
-				
-							// Make sure we actually sampled a topic
-							if (newTopic == -1) {
-								throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
-							}
-			
-							// Put that new topic into the counts
-							topics[position] = newTopic;
-//							localTopicCounts[newTopic]++;
-//							incTokensPerTopic(newTopic);
+						topicInRange = topicDistCalc.topicDistance(oldTopic, ttc.topic) <= maxTopicDistance;
+						
+						if(topicInRange) {
+							topicCount = topicCounts.topicCount(ttc.topic);
+							
+							countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
+							score = (alpha + docTopicCounts[ttc.topic] - countDelta) *
+									(beta + ttc.count) /
+									(betaSum + topicCount - countDelta);
+							
+							sum += score;
+							
+							ccTopics.add(ttc.topic);
+							ccScores.add(score);
 						}
-					} catch(TypeTopicCountsException e) {
-						// Words that occur in none of the topics will lead us here
-						System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
-					} catch(TopicCountsException e) {
-						e.printStackTrace();
 					}
-				}//end if should filter type
-			}//end for
+					
+					if(sum <= 0.0) {
+//						String type = alphabet.lookupObject(typeIdx).toString();
+//						System.err.println("No instances of '" + type + "' (" + typeIdx + ") in topic corpus");
+					} else {
+						// Choose a random point between 0 and the sum of all topic scores
+						sample = random.nextUniform() * sum;
+			
+						// Figure out which topic contains that point
+						i = -1;
+						newTopic = -1;
+						while (sample > 0.0) {
+							i++;
+							newTopic = ccTopics.getInt(i);
+							sample -= ccScores.getDouble(i);
+						}
+			
+						// Make sure we actually sampled a topic
+						if (newTopic == -1) {
+							throw new IllegalStateException (EDA.class.getName()+": New topic not sampled.");
+						}
+		
+						// Put the new topic in place
+						topics[position] = newTopic;
+					}
+				} catch(TypeTopicCountsException e) {
+					// Words that occur in none of the topics will lead us here
+					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
+				} catch(TopicCountsException e) {
+					e.printStackTrace();
+				}
+			}//end for position
 			log.print('.');
 			
 			if(topicCounts instanceof Closeable) {
@@ -506,16 +437,17 @@ public class EDA implements Serializable {
 			}
 		}
 	
-		for (int topic=0; topic < numTopics; topic++) {
-			logLikelihood -= 
-				Dirichlet.logGamma( (beta * numTopics) +
-											tokensPerTopic[ topic ] );
-			if (Double.isNaN(logLikelihood)) {
-				log.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
-				System.exit(1);
-			}
-
-		}
+		//FIXME
+//		for (int topic=0; topic < numTopics; topic++) {
+//			logLikelihood -= 
+//				Dirichlet.logGamma( (beta * numTopics) +
+//											tokensPerTopic[ topic ] );
+//			if (Double.isNaN(logLikelihood)) {
+//				log.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
+//				System.exit(1);
+//			}
+//
+//		}
 	
 		logLikelihood += 
 			(Dirichlet.logGamma(beta * numTopics)) -
@@ -754,9 +686,9 @@ public class EDA implements Serializable {
 
 		out.writeObject(random);
 
-		for (int ti = 0; ti < conf.getInt(Options.NUM_TOPICS); ti++) {
-			out.writeInt (tokensPerTopic[ti]);
-		}
+//		for (int ti = 0; ti < conf.getInt(Options.NUM_TOPICS); ti++) {
+//			out.writeInt (tokensPerTopic[ti]);
+//		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -766,16 +698,16 @@ public class EDA implements Serializable {
 
 		conf = (Config) in.readObject();
 		
-		data = (ArrayList<TopicAssignment>) in.readObject ();
+		data = (ObjectArrayList<TopicAssignment>) in.readObject ();
 		alphabet = (Alphabet) in.readObject();
 		topicAlphabet = (LabelAlphabet) in.readObject();
 
 		random = (Randoms) in.readObject();
 
-		final int numTopics = conf.getInt(Options.NUM_TOPICS);
-		tokensPerTopic = new int[numTopics];
-		for (int ti = 0; ti < numTopics; ti++) {
-			tokensPerTopic[ti] = in.readInt();
-		}
+//		final int numTopics = conf.getInt(Options.NUM_TOPICS);
+//		tokensPerTopic = new int[numTopics];
+//		for (int ti = 0; ti < numTopics; ti++) {
+//			tokensPerTopic[ti] = in.readInt();
+//		}
 	}
 }

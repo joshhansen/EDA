@@ -55,6 +55,10 @@ public final class Paths {
 			public static String labelAlphabetFilename(String topicWordIdxName, String datasetName, int minCount) {
 				return labelAlphabetsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
 			}
+		
+		public static String runsDir() {
+			return outputDir() + "/runs";
+		}
 	
 	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
 		return topicWordIdxName + ":" + datasetName + "_min" + minCount;

@@ -4,10 +4,6 @@ public final class Options {
 	private Options() {}
 	
 	// Feature Selection, etc.
-	public static final String TOPIC_MIN_COUNT = "topic_min_count";
-	
-	public static final String TYPE_TOPIC_MIN_COUNT = "type_topic_min_count";
-	
 	public static final String FILTER_DIGITS = "filter_digits";
 	
 	public static final String FILTER_MONTHS = "filter_months";
@@ -34,7 +30,7 @@ public final class Options {
 	public static final String NUM_TYPES = "num_types";
 	
 	// Console and Log Output
-	public static final String SHOW_TOPICS_INTERVAL = "show_topics_interval";
+	public static final String PRINT_INTERVAL = "print_interval";
 	
 	public static final String PRINT_LOG_LIKELIHOOD = "print_log_likelihood";
 	
