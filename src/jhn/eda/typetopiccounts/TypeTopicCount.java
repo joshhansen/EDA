@@ -3,6 +3,8 @@ package jhn.eda.typetopiccounts;
 import java.io.Serializable;
 
 public class TypeTopicCount implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	public int topic;
 	public int count;
 	
