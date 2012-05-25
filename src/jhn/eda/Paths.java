@@ -25,6 +25,10 @@ public final class Paths {
 				public static String topicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
 					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
 				}
+				
+				public static String restrictedTopicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
+					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_restricted.ser";
+				}
 			
 			public static String typeTopicCountsDir() {
 				return countsDir() + "/type_topics";
