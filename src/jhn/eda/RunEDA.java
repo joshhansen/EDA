@@ -41,65 +41,55 @@ public final class RunEDA {
 		return filename;
 	}
 	
+	public static final double DEFAULT_ALPHA_SUM = 50.0;
+	public static final double DEFAULT_BETA = 0.01;
 	public static void main (String[] args) throws IOException, ClassNotFoundException {
-		final String logFilename = logFilename();
-		
-		final String topicWordIdxName = "wp_lucene4"; /* "wp_lucene3" */
-		
-		final String datasetName = "debates2012";/* debates2012 */ /* toy_dataset2 */ /* state_of_the_union */
-		
-//		final String artCatsIdxDir = Paths.indexDir("article_categories");
-//		final String catCatsIdxDir = Paths.indexDir("category_categories");
-		
-		
-		
+		final int iterations = 500;
+		final int minCount = 2;
+		final String topicWordIdxName = "wp_lucene4";
+		final String datasetName = "state_of_the_union";// toy_dataset2, debates2012, state_of_the_union
 		
         System.out.print("Loading target corpus...");
         InstanceList targetData = InstanceList.load(new File(Paths.datasetFilename(datasetName)));
         System.out.println("done.");
 
 		System.out.print("Loading type-topic counts...");
-		final int minCount = 2;
 		final String ttCountsFilename = Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 
 		System.out.print("Loading label alphabet...");
-//        String labelAlphabetFilename = Paths.topicWordIndicesDir() + "/" + topicWordIdxName + "_label_alphabet.ser";
 		String labelAlphabetFilename = Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
 		LabelAlphabet topicAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
 		System.out.println("done.");
 
 		System.out.print("Loading topic counts...");
-		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
+//		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
-//		Factory<TopicCounts> tcFact = MapTopicCounts.factory(Paths.indexDir("topic_counts") + "/topic_counts.ser");
 		Factory<TopicCounts> tcFact = new ConstFactory<TopicCounts>(tcs);
 		System.out.println("done.");
 
 		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(null, null);		
-		EDA eda = new EDA (tcFact, ttcs, tdc, logFilename, topicAlphabet, 10000.0, 0.01);
+		EDA eda = new EDA (tcFact, ttcs, tdc, logFilename(), topicAlphabet);
 		
 		// Cosmetic options:
 		eda.config().putBool(Options.PRINT_TOP_WORDS_AND_TOPICS, true);
 //		eda.config().putBool(Options.PRINT_DOC_TOPICS, true);
-		eda.config().putInt(Options.PRINT_INTERVAL, 10);
+		eda.config().putInt(Options.PRINT_INTERVAL, 1);
 		
 		// Algorithm options:
-//		eda.config().putInt(Options.TYPE_TOPIC_MIN_COUNT, 3);
-//		eda.config().putBool(Options.FILTER_DIGITS, true);
-//		eda.config().putBool(Options.FILTER_MONTHS, true);
-//		eda.config().putObj(Options.PRESELECTED_FEATURES, tfidfTop10);
+//		eda.config().putDouble(Options.ALPHA_SUM, 10000);
+		eda.config().putDouble(Options.ALPHA_SUM, 1000);
+//		eda.config().putDouble(Options.ALPHA_SUM, DEFAULT_ALPHA_SUM);
+		eda.config().putDouble(Options.BETA, 0.01);
+		eda.config().putInt(Options.ITERATIONS, iterations);
 		
 		System.out.print("Processing target corpus...");
-		eda.addInstances(targetData);
+		eda.setTrainingData(targetData);
 		System.out.println("done.");
 		
-		eda.sample(1000);
-
-//		articleCategoriesIdx.close();
-//		categoryCategoriesIdx.close();
-
+		eda.sample();
 		
-	}//end main
+	}
 }

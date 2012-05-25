@@ -64,9 +64,6 @@ import jhn.util.Log;
 * @author Josh Hansen
 */
 public class EDA implements Serializable {
-	public static final double DEFAULT_ALPHA_SUM = 50.0;
-	public static final double DEFAULT_BETA = 0.01;
-	
 	// the training instances and their topic assignments
 	protected ObjectArrayList<TopicAssignment> data = new ObjectArrayList<TopicAssignment>();
 
@@ -88,28 +85,21 @@ public class EDA implements Serializable {
 	protected MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
 	protected Factory<TopicCounts> topicCountsFact;
 	
-	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
-		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, DEFAULT_ALPHA_SUM, DEFAULT_BETA);
+	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
+		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, new Randoms());
 	}
 	
-	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet, double alphaSum, double beta) throws FileNotFoundException {
-		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, alphaSum, beta, new Randoms());
-	}
-	
-	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, final String logFilename, final LabelAlphabet topicAlphabet, double alphaSum, double beta, Randoms random) throws FileNotFoundException {
+	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
+			final String logFilename, final LabelAlphabet topicAlphabet, Randoms random) throws FileNotFoundException {
+		
 		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
-		
 		this.topicAlphabet = topicAlphabet;
-		final int numTopics = topicAlphabet.size();
-
-		conf.putDouble(Options.ALPHA_SUM, alphaSum);
-		conf.putDouble(Options.ALPHA, alphaSum / numTopics);
-		conf.putDouble(Options.BETA, beta);
-		conf.putInt(Options.NUM_TOPICS, numTopics);
-		
 		this.random = random;
+		
+		final int numTopics = topicAlphabet.size();
+		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
 		// Start logging
 		log = new Log(System.out, logFilename);
@@ -130,29 +120,21 @@ public class EDA implements Serializable {
 		return conf;
 	}
 
-	public void addInstances (InstanceList training) {
+	public void setTrainingData (InstanceList training) {
 		final int numTopics = conf.getInt(Options.NUM_TOPICS);
 		
 		log.println("Dataset instances: " + training.size());
 		
 		alphabet = training.getDataAlphabet();
 		
-		//FIXME This keeps overwriting NUM_TYPES and BETA_SUM every time an instance is added.
 		final int numTypes = alphabet.size();
 		conf.putInt(Options.NUM_TYPES, numTypes);
-		conf.putDouble(Options.BETA_SUM, conf.getDouble(Options.BETA) * numTypes);
-
-		int doc = 0;
-
-		FeatureSequence tokens;
-		LabelSequence topicSequence;
-		
-		int tokenCount = 0;
 		
 		log.print("Loading: ");
+		int tokenCount = 0;
+		FeatureSequence tokens;
+		LabelSequence topicSequence;
 		for (Instance instance : training) {
-			doc++;
-
 			tokens = (FeatureSequence) instance.getData();
 			topicSequence = new LabelSequence(topicAlphabet, new int[ tokens.size() ]);
 			
@@ -176,7 +158,16 @@ public class EDA implements Serializable {
 		log.println("Loaded " + tokenCount + " tokens.");
 	}
 
-	public void sample (int iterations) {
+	public void sample () {
+		// Compute alpha from alphaSum
+		final double alpha = conf.getDouble(Options.ALPHA_SUM) / (double) conf.getInt(Options.NUM_TOPICS);
+		conf.putDouble(Options.ALPHA, alpha);
+		
+		// Compute betaSum from beta
+		final double betaSum = conf.getDouble(Options.BETA) * (double) conf.getInt(Options.NUM_TYPES);
+		conf.putDouble(Options.BETA_SUM, betaSum);
+		
+		final int iterations = conf.getInt(Options.ITERATIONS);
 		log.println("Going to sample " + iterations + " iterations with configuration:");
 		log.println(conf.toString(1));
 		
@@ -506,7 +497,7 @@ public class EDA implements Serializable {
 				topicWordCounts.inc(topics[i], tokens[i]);
 				docTopicCounts.inc(filename, topics[i]);
 			}
-			System.out.print('.');
+			log.print('.');
 		}
 		log.println();
 		

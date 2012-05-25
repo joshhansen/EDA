@@ -1,6 +1,6 @@
 package jhn.eda;
 
-public final class Options {
+final class Options {
 	private Options() {}
 	
 	// Feature Selection, etc.
@@ -29,6 +29,8 @@ public final class Options {
 	/** The size of the vocabulary */
 	public static final String NUM_TYPES = "num_types";
 	
+	public static final String ITERATIONS = "iterations";
+	
 	// Console and Log Output
 	public static final String PRINT_INTERVAL = "print_interval";
 	
@@ -39,4 +41,5 @@ public final class Options {
 	public static final String PRINT_DOC_TOPICS = "print_doc_topics";
 	
 	public static final String PRINT_STATE = "print_state";
+	
 }
