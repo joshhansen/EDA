@@ -26,8 +26,14 @@ public final class Paths {
 					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
 				}
 				
+				/** Topic counts that are sums of type-topic counts where type is in target corpus and count >= minCount */
 				public static String restrictedTopicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
 					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_restricted.ser";
+				}
+				
+				/** Topic counts that are sums of type-topic counts where topic has at least one type in corpus and count >= minCount */
+				public static String filteredTopicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
+					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_filtered.ser";
 				}
 			
 			public static String typeTopicCountsDir() {

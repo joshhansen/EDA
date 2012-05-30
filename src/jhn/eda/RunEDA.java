@@ -65,7 +65,8 @@ public final class RunEDA {
 
 		System.out.print("Loading topic counts...");
 //		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
-		final String topicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+//		final String topicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		Factory<TopicCounts> tcFact = new ConstFactory<TopicCounts>(tcs);
 		System.out.println("done.");
