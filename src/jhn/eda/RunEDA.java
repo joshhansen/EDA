@@ -47,7 +47,7 @@ public final class RunEDA {
 		final int iterations = 500;
 		final int minCount = 2;
 		final String topicWordIdxName = "wp_lucene4";
-		final String datasetName = "state_of_the_union";// toy_dataset2, debates2012, state_of_the_union
+		final String datasetName = "state_of_the_union";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 		
         System.out.print("Loading target corpus...");
         InstanceList targetData = InstanceList.load(new File(Paths.datasetFilename(datasetName)));

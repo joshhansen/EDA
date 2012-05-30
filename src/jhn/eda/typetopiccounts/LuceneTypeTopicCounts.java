@@ -30,7 +30,6 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts {
 			setTerm(term);
 		}
 
-
 		public void setTerm(String term) throws IOException {
 			typeTopicTerm = typeTopicTerm.createTerm(term);
 			termDocs = topicWordIdx.termDocs(typeTopicTerm);
