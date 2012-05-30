@@ -7,13 +7,8 @@ information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,7 +58,7 @@ import jhn.util.Log;
 * 
 * @author Josh Hansen
 */
-public class EDA implements Serializable {
+public class EDA {
 	// the training instances and their topic assignments
 	protected ObjectArrayList<TopicAssignment> data = new ObjectArrayList<TopicAssignment>();
 
@@ -649,56 +644,4 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	
-	// Serialization
-	private static final long serialVersionUID = 1;
-	private static final int CURRENT_SERIAL_VERSION = 0;
-	
-	public void write (File f) {
-		try {
-			ObjectOutputStream oos = new ObjectOutputStream (new FileOutputStream(f));
-			oos.writeObject(this);
-			oos.close();
-		} catch (IOException e) {
-			System.err.println("Exception writing file " + f + ": " + e);
-		}
-	}
-	
-	private void writeObject (ObjectOutputStream out) throws IOException {
-		out.writeInt (CURRENT_SERIAL_VERSION);
-
-		// Config
-		out.writeObject(conf);
-		
-		// Instance lists
-		out.writeObject (data);
-		out.writeObject (alphabet);
-		out.writeObject (topicAlphabet);
-
-		out.writeObject(random);
-
-//		for (int ti = 0; ti < conf.getInt(Options.NUM_TOPICS); ti++) {
-//			out.writeInt (tokensPerTopic[ti]);
-//		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void readObject (ObjectInputStream in) throws IOException, ClassNotFoundException {
-		@SuppressWarnings("unused")
-		int version = in.readInt ();
-
-		conf = (Config) in.readObject();
-		
-		data = (ObjectArrayList<TopicAssignment>) in.readObject ();
-		alphabet = (Alphabet) in.readObject();
-		topicAlphabet = (LabelAlphabet) in.readObject();
-
-		random = (Randoms) in.readObject();
-
-//		final int numTopics = conf.getInt(Options.NUM_TOPICS);
-//		tokensPerTopic = new int[numTopics];
-//		for (int ti = 0; ti < numTopics; ti++) {
-//			tokensPerTopic[ti] = in.readInt();
-//		}
-	}
 }
