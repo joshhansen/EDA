@@ -21,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
@@ -29,14 +28,14 @@ import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
-import cc.mallet.types.LabelSequence;
 import cc.mallet.util.Randoms;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
@@ -50,6 +49,8 @@ import jhn.util.Config;
 import jhn.util.Counter;
 import jhn.util.CounterMap;
 import jhn.util.Factory;
+import jhn.util.IntIntCounter;
+import jhn.util.IntIntIntCounterMap;
 import jhn.util.Log;
 
 /**
@@ -59,8 +60,13 @@ import jhn.util.Log;
 * @author Josh Hansen
 */
 public class EDA {
-	// the training instances and their topic assignments
-	protected ObjectArrayList<TopicAssignment> data = new ObjectArrayList<TopicAssignment>();
+	protected final int numTopics;
+	protected int numDocs;
+	protected int[][] tokens;
+	protected int[][] topics;
+	protected int[] docLengths;
+	protected String[] docNames;
+	protected double[] alphas;
 
 	// the alphabet for the input data
 	protected Alphabet alphabet;
@@ -93,7 +99,7 @@ public class EDA {
 		this.topicAlphabet = topicAlphabet;
 		this.random = random;
 		
-		final int numTopics = topicAlphabet.size();
+		numTopics = topicAlphabet.size();
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
 		// Start logging
@@ -116,7 +122,7 @@ public class EDA {
 	}
 
 	public void setTrainingData (InstanceList training) {
-		final int numTopics = conf.getInt(Options.NUM_TOPICS);
+		numDocs = training.size();
 		
 		log.println("Dataset instances: " + training.size());
 		
@@ -127,26 +133,31 @@ public class EDA {
 		
 		log.print("Loading: ");
 		int tokenCount = 0;
-		FeatureSequence tokens;
-		LabelSequence topicSequence;
-		for (Instance instance : training) {
-			tokens = (FeatureSequence) instance.getData();
-			topicSequence = new LabelSequence(topicAlphabet, new int[ tokens.size() ]);
+		int docLength;
+		tokens = new int[numDocs][];
+		topics = new int[numDocs][];
+		docLengths = new int[numDocs];
+		docNames = new String[numDocs];
+		
+		Instance instance;
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			instance = training.get(docNum);
+			docNames[docNum] = instance.getName().toString();
+			tokens[docNum] = ((FeatureSequence) instance.getData()).getFeatures();
+			docLength = tokens[docNum].length;
+			docLengths[docNum] = docLength;
 			
-			int[] topics = topicSequence.getFeatures();
-			for (int position = 0; position < tokens.size(); position++) {
-				int topic = random.nextInt(numTopics);
-				topics[position] = topic;
+			
+			topics[docNum] = new int[docLength];
+			for (int position = 0; position < docLength; position++) {
+				topics[docNum][position] = random.nextInt(numTopics);
 			}
 			
 			log.print(instance.getSource());
 			log.print(" ");
 			
-			data.add (new TopicAssignment (instance, topicSequence));
-			
-			tokenCount += tokens.getLength();
+			tokenCount += docLength;
 		}
-		data.trim();
 		
 		log.println();
 		
@@ -155,8 +166,10 @@ public class EDA {
 
 	public void sample () {
 		// Compute alpha from alphaSum
-		final double alpha = conf.getDouble(Options.ALPHA_SUM) / (double) conf.getInt(Options.NUM_TOPICS);
-		conf.putDouble(Options.ALPHA, alpha);
+		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / (double) conf.getInt(Options.NUM_TOPICS);
+		conf.putDouble(Options.ALPHA, startingAlpha);
+		alphas = new double[numTopics];
+		Arrays.fill(alphas, startingAlpha);
 		
 		// Compute betaSum from beta
 		final double betaSum = conf.getDouble(Options.BETA) * (double) conf.getInt(Options.NUM_TYPES);
@@ -179,8 +192,8 @@ public class EDA {
 			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
 			
 			// Loop over every document in the corpus
-			for (int doc = 0; doc < data.size(); doc++) {
-				exec.execute(new DocumentSampler(doc, maxTopicDistance, topicCountsFact.create()));
+			for (int docNum = 0; docNum < numDocs; docNum++) {
+				exec.execute(new DocumentSampler(docNum, maxTopicDistance, topicCountsFact.create()));
 			}
 			
 			exec.shutdown();
@@ -196,7 +209,7 @@ public class EDA {
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
 			log.println("Iteration " + iteration + " duration: " + elapsedMillis + "ms\t");
 			
-			if(iteration > 0 && iteration % conf.getInt(Options.PRINT_INTERVAL) == 0) {
+			if(iteration % conf.getInt(Options.PRINT_INTERVAL) == 0) {
 				log.println("Printing output");
 				if(conf.isTrue(Options.PRINT_TOP_WORDS_AND_TOPICS)) {
 					printTopWordsAndTopics(100, 10);
@@ -217,6 +230,19 @@ public class EDA {
 		log.close();
 	}
 	
+
+	private int[] docTopicCounts(final int docNum) {
+		int[] docTopicCounts = new int[numTopics];
+		docTopicCounts(docNum, docTopicCounts);
+		return docTopicCounts;
+	}
+	
+	private void docTopicCounts(final int docNum, final int[] topicCounts) {
+		for(int topic : topics[docNum]) {
+			topicCounts[topic]++;
+		}
+	}
+	
 	private class DocumentSampler implements Runnable {
 		private final int docNum;
 		private final double maxTopicDistance;
@@ -229,28 +255,13 @@ public class EDA {
 		
 		@Override
 		public void run() {
-			final double alpha = conf.getDouble(Options.ALPHA);
 			final double beta = conf.getDouble(Options.BETA);
 			final double betaSum = conf.getDouble(Options.BETA_SUM);
-			final int numTopics = conf.getInt(Options.NUM_TOPICS);
-			
-			final TopicAssignment ta = data.get(docNum);
-			final FeatureSequence tokenSequence = (FeatureSequence) ta.instance.getData();
-			final LabelSequence topicSequence = (LabelSequence) ta.topicSequence;
-
-			int[] tokens = tokenSequence.getFeatures();
-			int[] topics = topicSequence.getFeatures();
-			
 			
 			int typeIdx, oldTopic, newTopic;
-			int docLength = tokenSequence.getLength();
+			int docLength = docLengths[docNum];
 
-			int[] docTopicCounts = new int[numTopics];
-
-			// populate topic counts
-			for (int position = 0; position < docLength; position++) {
-				docTopicCounts[topics[position]]++;
-			}
+			int[] docTopicCounts = docTopicCounts(this.docNum);
 			
 			IntList ccTopics = new IntArrayList();
 			DoubleList ccScores = new DoubleArrayList();
@@ -264,7 +275,7 @@ public class EDA {
 			
 			//	Iterate over the positions (words) in the document 
 			for (int position = 0; position < docLength; position++) {
-				typeIdx = tokens[position];
+				typeIdx = tokens[docNum][position];
 				
 				if(position > 0) {
 					ccTopics.clear();
@@ -272,7 +283,7 @@ public class EDA {
 				}
 				
 				try {
-					oldTopic = topics[position];
+					oldTopic = topics[docNum][position];
 		
 					// Now calculate and add up the scores for each topic for this word
 					sum = 0.0;
@@ -289,7 +300,7 @@ public class EDA {
 							topicCount = topicCounts.topicCount(ttc.topic);
 							
 							countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
-							score = (alpha + docTopicCounts[ttc.topic] - countDelta) *
+							score = (alphas[ttc.topic] + docTopicCounts[ttc.topic] - countDelta) *
 									(beta + ttc.count) /
 									(betaSum + topicCount - countDelta);
 							
@@ -322,7 +333,7 @@ public class EDA {
 						}
 		
 						// Put the new topic in place
-						topics[position] = newTopic;
+						topics[docNum][position] = newTopic;
 					}
 				} catch(TypeTopicCountsException e) {
 					// Words that occur in none of the topics will lead us here
@@ -331,7 +342,6 @@ public class EDA {
 					e.printStackTrace();
 				}
 			}//end for position
-			log.print('.');
 			
 			if(topicCounts instanceof Closeable) {
 				try {
@@ -340,6 +350,15 @@ public class EDA {
 					e.printStackTrace();
 					throw new IllegalArgumentException();
 				}
+			}
+			
+			samplerFinished();
+		}
+		
+		private void samplerFinished() {
+			log.print('.');
+			if(docNum > 0 && docNum % 120 == 0) {
+				log.println();
 			}
 		}
 	}//end class DocumentSampler
@@ -371,20 +390,23 @@ public class EDA {
 		// Do the documents first
 		int[] topicCounts = new int[numTopics];
 		double[] topicLogGammas = new double[numTopics];
-		int[] docTopics;
+//		int[] docTopics;
 
 		for (int topic=0; topic < numTopics; topic++) {
 			topicLogGammas[ topic ] = Dirichlet.logGamma( alpha );
 		}
 	
-		for (int doc=0; doc < data.size(); doc++) {
-			LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
+		for (int docNum=0; docNum < numDocs; docNum++) {
+//			LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
 
-			docTopics = topicSequence.getFeatures();
+//			docTopics = topicSequence.getFeatures();
 
-			for (int token=0; token < docTopics.length; token++) {
-				topicCounts[ docTopics[token] ]++;
+			for(int topic : topics[docNum]) {
+				topicCounts[topic]++;
 			}
+//			for (int token=0; token < docLengdocTopics.length; token++) {
+//				topicCounts[ docTopics[token] ]++;
+//			}
 
 			for (int topic=0; topic < numTopics; topic++) {
 				if (topicCounts[topic] > 0) {
@@ -394,13 +416,13 @@ public class EDA {
 			}
 
 			// subtract the (count + parameter) sum term
-			logLikelihood -= Dirichlet.logGamma(alphaSum + docTopics.length);
+			logLikelihood -= Dirichlet.logGamma(alphaSum + docLengths[docNum]);
 
 			Arrays.fill(topicCounts, 0);
 		}
 	
 		// add the parameter sum term
-		logLikelihood += data.size() * Dirichlet.logGamma(alphaSum);
+		logLikelihood += numDocs * Dirichlet.logGamma(alphaSum);
 
 		// Count the number of type-topic pairs
 		int nonZeroTypeTopics = 0;
@@ -478,19 +500,10 @@ public class EDA {
 		CounterMap<String,Integer> docTopicCounts = new CounterMap<String,Integer>();
 		CounterMap<Integer,Integer> topicWordCounts = new CounterMap<Integer,Integer>();
 		
-		for(TopicAssignment ta : data) {
-			String filename = ta.instance.getName().toString();
-			
-			
-			final FeatureSequence tokenSequence = (FeatureSequence) ta.instance.getData();
-			final LabelSequence topicSequence = (LabelSequence) ta.topicSequence;
-
-			int[] tokens = tokenSequence.getFeatures();
-			int[] topics = topicSequence.getFeatures();
-			
-			for(int i = 0; i < tokens.length; i++) {
-				topicWordCounts.inc(topics[i], tokens[i]);
-				docTopicCounts.inc(filename, topics[i]);
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			for(int i = 0; i < docLengths[docNum]; i++) {
+				topicWordCounts.inc(topics[docNum][i], tokens[docNum][i]);
+				docTopicCounts.inc(docNames[docNum], topics[docNum][i]);
 			}
 			log.print('.');
 		}
@@ -565,7 +578,6 @@ public class EDA {
 		final int numTopics = conf.getInt(Options.NUM_TOPICS);
 
 		out.print ("#doc source topic proportion ...\n");
-		int docLen;
 		int[] topicCounts = new int[ numTopics ];
 
 		IDSorter[] sortedTopics = new IDSorter[ numTopics ];
@@ -578,30 +590,19 @@ public class EDA {
 			max = numTopics;
 		}
 
-		for (int doc = 0; doc < data.size(); doc++) {
-			LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
-			int[] currentDocTopics = topicSequence.getFeatures();
-
-			out.print (doc); out.print (' ');
-
-			if (data.get(doc).instance.getSource() != null) {
-				out.print (data.get(doc).instance.getSource()); 
-			}
-			else {
-				out.print ("null-source");
-			}
-
+		for (int docNum = 0; docNum < numDocs; docNum++) {
+			out.print (docNum); out.print (' ');
+			out.print(docNames[docNum]);
 			out.print (' ');
-			docLen = currentDocTopics.length;
 
 			// Count up the tokens
-			for (int token=0; token < docLen; token++) {
-				topicCounts[ currentDocTopics[token] ]++;
+			for(int topic : topics[docNum]) {
+				topicCounts[topic]++;
 			}
 
 			// And normalize
 			for (int topic = 0; topic < numTopics; topic++) {
-				sortedTopics[topic].set(topic, (float) topicCounts[topic] / docLen);
+				sortedTopics[topic].set(topic, (double) topicCounts[topic] / (double) docLengths[docNum]);
 			}
 			
 			Arrays.sort(sortedTopics);
@@ -621,25 +622,14 @@ public class EDA {
 	
 	public void printState (Log out) {
 		out.println ("#doc source pos typeindex type topic");
-
-		for (int doc = 0; doc < data.size(); doc++) {
-			FeatureSequence tokenSequence =	(FeatureSequence) data.get(doc).instance.getData();
-			LabelSequence topicSequence =	(LabelSequence) data.get(doc).topicSequence;
-
-			String source = "NA";
-			if (data.get(doc).instance.getSource() != null) {
-				source = data.get(doc).instance.getSource().toString();
-			}
-
-			for (int position = 0; position < topicSequence.getLength(); position++) {
-				int type = tokenSequence.getIndexAtPosition(position);
-				int topic = topicSequence.getIndexAtPosition(position);
-				out.print(doc); out.print(' ');
-				out.print(source); out.print(' '); 
+		for (int docNum = 0; docNum < numDocs; docNum++) {
+			for (int position = 0; position < docLengths[docNum]; position++) {
+				out.print(docNum); out.print(' ');
+				out.print(docNames[docNum]); out.print(' '); 
 				out.print(position); out.print(' ');
-				out.print(type); out.print(' ');
-				out.print(alphabet.lookupObject(type)); out.print(' ');
-				out.print(topic); out.println();
+				out.print(tokens[docNum][position]); out.print(' ');
+				out.print(alphabet.lookupObject(tokens[docNum][position])); out.print(' ');
+				out.print(topics[docNum][position]); out.println();
 			}
 		}
 	}
