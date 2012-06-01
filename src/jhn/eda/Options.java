@@ -36,10 +36,18 @@ final class Options {
 	
 	public static final String PRINT_LOG_LIKELIHOOD = "print_log_likelihood";
 	
-	public static final String PRINT_TOP_WORDS_AND_TOPICS = "print_top_words_and_topics";
+	public static final String PRINT_TOP_TOPIC_WORDS = "print_top_topic_words";
+	
+	public static final String PRINT_TOP_DOC_TOPICS = "print_top_doc_topics";
+	
+	public static final String SERIALIZE_MODEL = "serialize_model";
 	
 	public static final String PRINT_DOC_TOPICS = "print_doc_topics";
 	
 	public static final String PRINT_STATE = "print_state";
+
+	public static final String PRINT_REDUCED_DOCS = "print_reduced_docs";
+	
+	public static final String REDUCED_DOCS_TOP_N = "reduced_docs_top_n";
 	
 }

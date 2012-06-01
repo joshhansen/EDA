@@ -20,12 +20,8 @@ public final class RunEDA {
 	private static int nextLogNum(String logDir) {
 		int max = -1;
 		for(File f : new File(logDir).listFiles()) {
-			final String fname = f.getName();
-			
-			if(fname.endsWith(".txt")) {
-				String[] parts = fname.split("\\.");
-				
-				int value = Integer.parseInt(parts[0]);
+			if(f.isDirectory()) {
+				int value = Integer.parseInt(f.getName());
 				if(value > max) {
 					max = value;
 				}
@@ -36,7 +32,7 @@ public final class RunEDA {
 	
 	private static String logFilename() {
 		final String logDir = Paths.runsDir();
-		String filename = logDir + "/" + String.valueOf(nextLogNum(logDir)) + ".txt";
+		String filename = logDir + "/" + String.valueOf(nextLogNum(logDir));
 		System.out.println("Writing to log file: " + filename);
 		return filename;
 	}
@@ -75,9 +71,14 @@ public final class RunEDA {
 		EDA eda = new EDA (tcFact, ttcs, tdc, logFilename(), topicAlphabet);
 		
 		// Cosmetic options:
-		eda.config().putBool(Options.PRINT_TOP_WORDS_AND_TOPICS, true);
+		eda.config().putBool(Options.PRINT_TOP_DOC_TOPICS, true);
+		eda.config().putBool(Options.PRINT_TOP_TOPIC_WORDS, true);
 //		eda.config().putBool(Options.PRINT_DOC_TOPICS, true);
 		eda.config().putInt(Options.PRINT_INTERVAL, 1);
+		eda.config().putBool(Options.PRINT_REDUCED_DOCS, true);
+		eda.config().putInt(Options.REDUCED_DOCS_TOP_N, 10);
+		
+		eda.config().putBool(Options.SERIALIZE_MODEL, true);
 		
 		// Algorithm options:
 //		eda.config().putDouble(Options.ALPHA_SUM, 10000);

@@ -7,8 +7,11 @@ information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +53,7 @@ import jhn.util.Config;
 import jhn.util.Counter;
 import jhn.util.CounterMap;
 import jhn.util.Factory;
+import jhn.util.IntIndex;
 import jhn.util.IntIntCounter;
 import jhn.util.IntIntIntCounterMap;
 import jhn.util.Log;
@@ -78,8 +82,7 @@ public class EDA implements Serializable {
 	// the alphabet for the topics
 	protected transient LabelAlphabet topicAlphabet;
 	
-	protected Log docTopicsLog;
-	protected Log stateLog;
+	protected final String logDir;
 	protected transient Log log;
 	protected Config conf = new Config();
 	protected Randoms random;
@@ -95,7 +98,7 @@ public class EDA implements Serializable {
 	}
 	
 	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
-			final String logFilename, final LabelAlphabet topicAlphabet, Randoms random) throws FileNotFoundException {
+			final String logDir, final LabelAlphabet topicAlphabet, Randoms random) throws FileNotFoundException {
 		
 		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
@@ -106,26 +109,48 @@ public class EDA implements Serializable {
 		numTopics = topicAlphabet.size();
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
-		// Start logging
-		log = new Log(System.out, logFilename);
-		log.println(EDA.class.getName() + ": " + numTopics + " topics");
-		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
-		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
-		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
-		
-		if(conf.isTrue(Options.PRINT_DOC_TOPICS)) {
-			docTopicsLog = new Log(logFilename+".doctopics");
-		}
-		if(conf.isTrue(Options.PRINT_STATE)) {
-			stateLog = new Log(logFilename+".state");
-		}
+		this.logDir = logDir;
 	}
 	
 	public Config config() {
 		return conf;
 	}
+	
+	private void initLogging() throws FileNotFoundException {
+		File logFile = new File(logDir);
+		if(!logFile.exists()) {
+			logFile.mkdirs();
+		}
+		
+		log = new Log(System.out, logDir + "/main.log");
+		log.println(EDA.class.getName() + ": " + numTopics + " topics");
+		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
+		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
+		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
+		
+		String[][] outputs = new String[][]{
+				{Options.PRINT_DOC_TOPICS, "doctopics"},
+				{Options.PRINT_STATE, "state"},
+				{Options.PRINT_REDUCED_DOCS, "reduced"},
+				{Options.PRINT_TOP_DOC_TOPICS, "top_doc_topics"},
+				{Options.PRINT_TOP_TOPIC_WORDS, "top_topic_words"},
+				{Options.SERIALIZE_MODEL, "model"}
+		};
+		
+		for(String[] output : outputs) {
+			if(conf.isTrue(output[0])) {
+				File f = new File(logDir + "/" + output[1]);
+				if(!f.exists()) {
+					f.mkdirs();
+				}
+			}
+		}
+	}
 
-	public void setTrainingData (InstanceList training) {
+	public void setTrainingData (InstanceList training) throws FileNotFoundException {
+		initLogging();
+		
+		
 		numDocs = training.size();
 		
 		log.println("Dataset instances: " + training.size());
@@ -215,21 +240,45 @@ public class EDA implements Serializable {
 			
 			if(iteration % conf.getInt(Options.PRINT_INTERVAL) == 0) {
 				log.println("Printing output");
-				if(conf.isTrue(Options.PRINT_TOP_WORDS_AND_TOPICS)) {
-					printTopWordsAndTopics(100, 10);
+				if(conf.isTrue(Options.PRINT_TOP_DOC_TOPICS) || conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS)) {
+					printTopWordsAndTopics(iteration, 100, 10);
 				}
 				if(conf.isTrue(Options.PRINT_DOC_TOPICS)) {
-					printDocumentTopics(docTopicsLog, 0.01, 100);
+					try {
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/doctopics/" + iteration + ".log"));
+						printDocumentTopics(out, 0.01, 100);
+						out.close();
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
 				}
 				if(conf.isTrue(Options.PRINT_STATE)) {
-					printState(stateLog);
+					try {
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/state/" + iteration + ".log"));
+						printState(out);
+						out.close();
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
 				}
 				if(conf.isTrue(Options.PRINT_LOG_LIKELIHOOD)) {
 					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
 				}
+				
+				if(conf.isTrue(Options.PRINT_REDUCED_DOCS)) {
+					try {
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".csv"));
+						printReducedDocs(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
+						out.close();
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
 				if(conf.isTrue(Options.SERIALIZE_MODEL)) {
 					Util.serialize(this, logDir + "/model/" + iteration + ".ser");
 				}
+				
 				log.println();
 			}
 		}
@@ -365,7 +414,7 @@ public class EDA implements Serializable {
 		private void samplerFinished() {
 			log.print('.');
 			if(docNum > 0 && docNum % 120 == 0) {
-				log.println();
+				log.println(docNum);
 			}
 		}
 	}//end class DocumentSampler
@@ -481,9 +530,9 @@ public class EDA implements Serializable {
 	// Methods for displaying and saving results
 	//
 
-	private static final Comparator<Entry<Integer,Counter<Integer>>> counterCmp = new Comparator<Entry<Integer,Counter<Integer>>>(){
+	private static final Comparator<Entry<Integer,IntIntCounter>> counterCmp = new Comparator<Entry<Integer,IntIntCounter>>(){
 		@Override
-		public int compare(Entry<Integer, Counter<Integer>> o1, Entry<Integer, Counter<Integer>> o2) {
+		public int compare(Entry<Integer, IntIntCounter> o1, Entry<Integer, IntIntCounter> o2) {
 			return Double.compare(o2.getValue().totalCount(), o1.getValue().totalCount());
 		}
 	};
@@ -502,52 +551,77 @@ public class EDA implements Serializable {
 		}
 	};
 	
-	private void printTopWordsAndTopics(int numTopics, int numWords) {
+	private void printTopWordsAndTopics(int iteration, int numTopics, int numWords) {
 		log.print("Counting");
 		CounterMap<String,Integer> docTopicCounts = new CounterMap<String,Integer>();
-		CounterMap<Integer,Integer> topicWordCounts = new CounterMap<Integer,Integer>();
+		IntIntIntCounterMap topicWordCounts = new IntIntIntCounterMap();
 		
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			for(int i = 0; i < docLengths[docNum]; i++) {
-				topicWordCounts.inc(topics[docNum][i], tokens[docNum][i]);
-				docTopicCounts.inc(docNames[docNum], topics[docNum][i]);
+				if(conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS)) {
+					topicWordCounts.inc(topics[docNum][i], tokens[docNum][i]);
+				}
+				if(conf.isTrue(Options.PRINT_TOP_DOC_TOPICS)) {
+					docTopicCounts.inc(docNames[docNum], topics[docNum][i]);
+				}
 			}
 			log.print('.');
 		}
 		log.println();
 		
-		log.println("Topic words:");
-		List<Entry<Integer,Counter<Integer>>> topicWordCounters = new ArrayList<Entry<Integer,Counter<Integer>>>(topicWordCounts.entrySet());
-		Collections.sort(topicWordCounters, counterCmp);
-		
-		for(Entry<Integer,Counter<Integer>> counterEntry : topicWordCounters.subList(0, numTopics)) {
-			List<Entry<Integer,Double>> countEntries = new ArrayList<Entry<Integer,Double>>(counterEntry.getValue().entries());
-			Collections.sort(countEntries, countCmp);
-			
-			log.print("#");
-			log.print(counterEntry.getKey());
-			log.print(" \"");
-			log.print(topicAlphabet.lookupObject(counterEntry.getKey()));
-			log.print("\" [total=");
-			log.print(counterEntry.getValue().totalCount());
-			log.println("]:");
-			log.print('\t');
-			
-			for(Entry<Integer,Double> countEntry : countEntries.subList(0, Math.min(countEntries.size(), numWords))) {
-				Integer typeIdx = countEntry.getKey();
-				Double typeCount = countEntry.getValue();
-				String type = alphabet.lookupObject(typeIdx).toString();
-//				log.print('\t');
-				log.print(type);
-				log.print("[");
-				log.print(typeCount);
-				log.print("] ");
+		if(conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS)) {
+			try {
+				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_topic_words/" + iteration + ".log"));
+				printTopTopicWords(topicWordCounts, out, numTopics, numWords);
+				out.close();
+			} catch(IOException e) {
+				e.printStackTrace();
 			}
-			log.println();
-			log.println();
 		}
 		
-		log.println("Documents topics:");
+		if(conf.isTrue(Options.PRINT_TOP_DOC_TOPICS)) {
+			try {
+				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_doc_topics/" + iteration + ".log"));
+				printTopDocTopics(docTopicCounts, out, numWords);
+				out.close();
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void printTopTopicWords(IntIntIntCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
+		out.println("Topic words:");
+		List<Entry<Integer,IntIntCounter>> topicWordCounters = new ArrayList<Entry<Integer,IntIntCounter>>(topicWordCounts.entrySet());
+		Collections.sort(topicWordCounters, counterCmp);
+		
+		for(Entry<Integer,IntIntCounter> counterEntry : topicWordCounters.subList(0, numTopics)) {
+			out.print("#");
+			out.print(counterEntry.getKey());
+			out.print(" \"");
+			out.print(topicAlphabet.lookupObject(counterEntry.getKey()));
+			out.print("\" [total=");
+			out.print(counterEntry.getValue().totalCount());
+			out.println("]:");
+			out.print('\t');
+			
+			for(Entry<Integer,Integer> countEntry : counterEntry.getValue().topN(numWords)) {
+				Integer typeIdx = countEntry.getKey();
+				Integer typeCount = countEntry.getValue();
+				String type = alphabet.lookupObject(typeIdx).toString();
+//				log.print('\t');
+				out.print(type);
+				out.print("[");
+				out.print(typeCount);
+				out.print("] ");
+			}
+			out.println();
+			out.println();
+		}
+	}
+	
+	private void printTopDocTopics(CounterMap<String,Integer> docTopicCounts, PrintStream out, int numWords) {
+		out.println("Documents topics:");
 		List<Entry<String,Counter<Integer>>> docTopicCounters = new ArrayList<Entry<String,Counter<Integer>>>(docTopicCounts.entrySet());
 		Collections.sort(docTopicCounters, strCounterCmp);
 		
@@ -555,24 +629,23 @@ public class EDA implements Serializable {
 			List<Entry<Integer,Double>> countEntries = new ArrayList<Entry<Integer,Double>>(docTopicCounterEntry.getValue().entries());
 			Collections.sort(countEntries, countCmp);
 			
-			log.print(docTopicCounterEntry.getKey());
-			log.print(" [total=");
-			log.print(docTopicCounterEntry.getValue().totalCount());
-			log.println("]:");
+			out.print(docTopicCounterEntry.getKey());
+			out.print(" [total=");
+			out.print(docTopicCounterEntry.getValue().totalCount());
+			out.println("]:");
 			
 			for(Entry<Integer,Double> countEntry : countEntries.subList(0, Math.min(countEntries.size(), numWords))) {
 				Integer topicIdx = countEntry.getKey();
 				String topicLabel = topicAlphabet.lookupObject(topicIdx).toString();
 				Double typeCount = countEntry.getValue();
-				log.print("\t");
-				log.print(topicLabel);
-				log.print("[");
-				log.print(typeCount);
-				log.println("]");
+				out.print("\t");
+				out.print(topicLabel);
+				out.print("[");
+				out.print(typeCount);
+				out.println("]");
 			}
-			log.println();
+			out.println();
 		}
-		
 	}
 
 
@@ -581,7 +654,7 @@ public class EDA implements Serializable {
 	 *  @param threshold   Only print topics with proportion greater than this number
 	 *  @param max         Print no more than this many topics
 	 */
-	private void printDocumentTopics (Log out, double threshold, int max) {
+	private void printDocumentTopics (PrintStream out, double threshold, int max) {
 		final int numTopics = conf.getInt(Options.NUM_TOPICS);
 
 		out.print ("#doc source topic proportion ...\n");
@@ -602,10 +675,7 @@ public class EDA implements Serializable {
 			out.print(docNames[docNum]);
 			out.print (' ');
 
-			// Count up the tokens
-			for(int topic : topics[docNum]) {
-				topicCounts[topic]++;
-			}
+			topicCounts = docTopicCounts(docNum);
 
 			// And normalize
 			for (int topic = 0; topic < numTopics; topic++) {
@@ -627,7 +697,7 @@ public class EDA implements Serializable {
 		
 	}
 	
-	public void printState (Log out) {
+	private void printState (PrintStream out) {
 		out.println ("#doc source pos typeindex type topic");
 		for (int docNum = 0; docNum < numDocs; docNum++) {
 			for (int position = 0; position < docLengths[docNum]; position++) {
