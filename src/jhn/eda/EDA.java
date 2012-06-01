@@ -9,6 +9,7 @@ package jhn.eda;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,6 +53,7 @@ import jhn.util.Factory;
 import jhn.util.IntIntCounter;
 import jhn.util.IntIntIntCounterMap;
 import jhn.util.Log;
+import jhn.util.Util;
 
 /**
 * An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew
@@ -59,7 +61,9 @@ import jhn.util.Log;
 * 
 * @author Josh Hansen
 */
-public class EDA {
+public class EDA implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	protected final int numTopics;
 	protected int numDocs;
 	protected int[][] tokens;
@@ -69,22 +73,22 @@ public class EDA {
 	protected double[] alphas;
 
 	// the alphabet for the input data
-	protected Alphabet alphabet;
+	protected transient Alphabet alphabet;
 	
 	// the alphabet for the topics
-	protected LabelAlphabet topicAlphabet;
+	protected transient LabelAlphabet topicAlphabet;
 	
-	protected final Log log;
 	protected Log docTopicsLog;
 	protected Log stateLog;
+	protected transient Log log;
 	protected Config conf = new Config();
 	protected Randoms random;
 	
 	// Data sources and other helpers
-	protected TypeTopicCounts typeTopicCounts;
-	protected TopicDistanceCalculator topicDistCalc;
-	protected MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
-	protected Factory<TopicCounts> topicCountsFact;
+	protected transient TypeTopicCounts typeTopicCounts;
+	protected transient TopicDistanceCalculator topicDistCalc;
+	protected transient MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
+	protected transient Factory<TopicCounts> topicCountsFact;
 	
 	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
 		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, new Randoms());
@@ -222,6 +226,9 @@ public class EDA {
 				}
 				if(conf.isTrue(Options.PRINT_LOG_LIKELIHOOD)) {
 					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
+				}
+				if(conf.isTrue(Options.SERIALIZE_MODEL)) {
+					Util.serialize(this, logDir + "/model/" + iteration + ".ser");
 				}
 				log.println();
 			}
