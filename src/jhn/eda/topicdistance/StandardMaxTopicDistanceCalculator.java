@@ -1,6 +1,9 @@
 package jhn.eda.topicdistance;
 
-public class StandardMaxTopicDistanceCalculator implements MaxTopicDistanceCalculator {
+import java.io.Serializable;
+
+public class StandardMaxTopicDistanceCalculator implements MaxTopicDistanceCalculator, Serializable {
+	private static final long serialVersionUID = 1L;
 
 	@Override
 	public double maxTopicDistance(int currentIteration, int maxIteration) {
