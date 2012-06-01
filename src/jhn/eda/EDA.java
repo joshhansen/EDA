@@ -293,6 +293,14 @@ public class EDA implements Serializable {
 		return docTopicCounts;
 	}
 	
+	private IntIntCounter docTopicCounter(final int docNum) {
+		IntIntCounter counts = new IntIntCounter();
+		for(int topic : topics[docNum]) {
+			counts.inc(topic);
+		}
+		return counts;
+	}
+	
 	private void docTopicCounts(final int docNum, final int[] topicCounts) {
 		for(int topic : topics[docNum]) {
 			topicCounts[topic]++;
@@ -708,6 +716,50 @@ public class EDA implements Serializable {
 				out.print(alphabet.lookupObject(tokens[docNum][position])); out.print(' ');
 				out.print(topics[docNum][position]); out.println();
 			}
+		}
+	}
+	
+	private IntIndex topDocTopics(final int topN) {
+		IntIndex topics = new IntIndex();
+		IntIntCounter docTopics;
+		
+		for (int docNum = 0; docNum < numDocs; docNum++) {
+			docTopics = docTopicCounter(docNum);
+			
+			for(Entry<Integer,Integer> entry : docTopics.topN(topN)) {
+				topics.indexOf(entry.getKey().intValue());
+			}
+		}
+		
+		return topics;
+	}
+	
+	private void printReducedDocs(PrintStream out, int topN) {
+		IntList feats = topDocTopics(topN).list();
+		log.print("Dimensionality reduction selected ");
+		log.print(feats.size());
+		log.println(" topics");
+		
+		out.print("doc");
+		for(int topicNum = 0; topicNum < feats.size(); topicNum++) {
+			out.print(',');
+			out.print(topicNum);
+		}
+		out.println();
+		
+		double docLength;
+		int[] docTopicCounts = new int[numTopics];
+		for (int docNum = 0; docNum < numDocs; docNum++) {
+			out.print(docNum);
+			
+			docTopicCounts(docNum, docTopicCounts);
+			docLength = (double) docLengths[docNum];
+			
+			for(int topic : feats) {
+				out.print(',');
+				out.print((double)docTopicCounts[topic] / docLength);
+			}
+			out.println();
 		}
 	}
 	
