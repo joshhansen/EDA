@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 public class ArrayTypeTopicCounts implements TypeTopicCounts, Serializable {
 	private static final long serialVersionUID = 1L;
-	
+	// Note: array is jagged, so we're not wasting a bunch of space due to sparseness issues
 	private final int[][] counts;
 	public ArrayTypeTopicCounts(int[][] counts) {
 		this.counts = counts;

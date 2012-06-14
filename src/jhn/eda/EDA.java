@@ -20,10 +20,17 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import weka.core.Attribute;
+import weka.core.FastVector;
+import weka.core.Instances;
+import weka.core.SparseInstance;
 
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
@@ -41,6 +48,11 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
+import jhn.counts.Counter;
+import jhn.counts.DoubleCounterMap;
+import jhn.counts.IntIntCounter;
+import jhn.counts.IntIntIntCounterMap;
+import jhn.counts.ObjObjDoubleCounterMap;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
@@ -50,12 +62,8 @@ import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.util.Config;
-import jhn.util.Counter;
-import jhn.util.CounterMap;
 import jhn.util.Factory;
 import jhn.util.IntIndex;
-import jhn.util.IntIntCounter;
-import jhn.util.IntIntIntCounterMap;
 import jhn.util.Log;
 import jhn.util.Util;
 
@@ -75,6 +83,10 @@ public class EDA implements Serializable {
 	protected int[] docLengths;
 	protected String[] docNames;
 	protected double[] alphas;
+	
+	// Classification helpers
+	protected String[] docLabels;
+	protected FastVector allLabels;
 
 	// the alphabet for the input data
 	protected transient Alphabet alphabet;
@@ -84,7 +96,7 @@ public class EDA implements Serializable {
 	
 	protected final String logDir;
 	protected transient Log log;
-	protected Config conf = new Config();
+	public final Config conf = new Config();
 	protected Randoms random;
 	
 	// Data sources and other helpers
@@ -112,10 +124,6 @@ public class EDA implements Serializable {
 		this.logDir = logDir;
 	}
 	
-	public Config config() {
-		return conf;
-	}
-	
 	private void initLogging() throws FileNotFoundException {
 		File logFile = new File(logDir);
 		if(!logFile.exists()) {
@@ -128,17 +136,18 @@ public class EDA implements Serializable {
 		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
 		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
 		
-		String[][] outputs = new String[][]{
+		Object[][] outputs = new Object[][] {
 				{Options.PRINT_DOC_TOPICS, "doctopics"},
 				{Options.PRINT_STATE, "state"},
 				{Options.PRINT_REDUCED_DOCS, "reduced"},
 				{Options.PRINT_TOP_DOC_TOPICS, "top_doc_topics"},
 				{Options.PRINT_TOP_TOPIC_WORDS, "top_topic_words"},
-				{Options.SERIALIZE_MODEL, "model"}
+				{Options.SERIALIZE_MODEL, "model"},
+				{Options.PRINT_FAST_STATE, "fast_state"}
 		};
 		
-		for(String[] output : outputs) {
-			if(conf.isTrue(output[0])) {
+		for(Object[] output : outputs) {
+			if(conf.isTrue((Enum<?>)output[0])) {
 				File f = new File(logDir + "/" + output[1]);
 				if(!f.exists()) {
 					f.mkdirs();
@@ -168,7 +177,11 @@ public class EDA implements Serializable {
 		docLengths = new int[numDocs];
 		docNames = new String[numDocs];
 		
+		docLabels = new String[numDocs];
+		SortedSet<String> labels = new TreeSet<String>();
+		
 		Instance instance;
+		String label;
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			instance = training.get(docNum);
 			docNames[docNum] = instance.getName().toString();
@@ -176,6 +189,9 @@ public class EDA implements Serializable {
 			docLength = tokens[docNum].length;
 			docLengths[docNum] = docLength;
 			
+			label = instance.getTarget().toString();
+			docLabels[docNum] = label;
+			labels.add(label);
 			
 			topics[docNum] = new int[docLength];
 			for (int position = 0; position < docLength; position++) {
@@ -186,6 +202,12 @@ public class EDA implements Serializable {
 			log.print(" ");
 			
 			tokenCount += docLength;
+		}
+		
+		allLabels = new FastVector(labels.size()+1);
+		allLabels.addElement("none");//Needed for use in SparseInstance
+		for(String theLabel : labels) {
+			allLabels.addElement(theLabel);
 		}
 		
 		log.println();
@@ -208,8 +230,8 @@ public class EDA implements Serializable {
 		log.println("Going to sample " + iterations + " iterations with configuration:");
 		log.println(conf.toString(1));
 		
-		final int minThreads = Runtime.getRuntime().availableProcessors();
-		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
+		final int minThreads = conf.getInt(Options.MIN_THREADS);
+		final int maxThreads = conf.getInt(Options.MAX_THREADS);
 		
 		for (int iteration = 1; iteration <= iterations; iteration++) {			
 			log.println("Iteration " + iteration);
@@ -252,23 +274,53 @@ public class EDA implements Serializable {
 						e.printStackTrace();
 					}
 				}
+				
+				
 				if(conf.isTrue(Options.PRINT_STATE)) {
 					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/state/" + iteration + ".log"));
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/state/" + iteration + ".state"));
 						printState(out);
 						out.close();
 					} catch(IOException e) {
 						e.printStackTrace();
 					}
 				}
+				
+				if(conf.isTrue(Options.PRINT_FAST_STATE)) {
+					try {
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/fast_state/" + iteration + ".fast_state"));
+						printFastState(out);
+						out.close();
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+
 				if(conf.isTrue(Options.PRINT_LOG_LIKELIHOOD)) {
 					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
 				}
 				
 				if(conf.isTrue(Options.PRINT_REDUCED_DOCS)) {
+//					try {
+//						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".arff"));
+//						printReducedDocs(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
+//						out.close();
+//					} catch(IOException e) {
+//						e.printStackTrace();
+//					}
+					
 					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".csv"));
-						printReducedDocs(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm"));
+						printReducedDocsLibSvm(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
+						out.close();
+					} catch(IOException e) {
+						e.printStackTrace();
+					}
+					
+					try {
+						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm_unnorm"));
+						printReducedDocsLibSvm(out, conf.getInt(Options.REDUCED_DOCS_TOP_N), false);
 						out.close();
 					} catch(IOException e) {
 						e.printStackTrace();
@@ -281,11 +333,164 @@ public class EDA implements Serializable {
 				
 				log.println();
 			}
+			
+			if(conf.containsKey(Options.ALPHA_OPTIMIZE_INTERVAL) && iteration % conf.getInt(Options.ALPHA_OPTIMIZE_INTERVAL) == 0) {
+				optimizeAlphas();
+			}
 		}
 		
 		log.close();
 	}
 	
+//	private static final double EPSILON = 0.0001;
+//	private void optimizeAlphas() {
+//		for(int topicNum = 0; topicNum < numTopics; topicNum++) {
+//			double newAlpha;
+//			double delta = Double.POSITIVE_INFINITY;
+//			
+//			while(delta > EPSILON) {
+//				newAlpha = alphas[topicNum] - alphaOptFirstDeriv(topicNum) / alphaOptSecondDeriv(topicNum);
+//				delta = Math.abs(newAlpha - alphas[topicNum]);
+//				
+//				// Update the alpha sum
+//				alphaSum += newAlpha - alphas[topicNum];
+//				
+//				alphas[topicNum] = newAlpha;
+//			}
+//		}
+//	}
+//	
+//	private double alphaOptFirstDeriv(final int topicNum) {
+//		double sum = 0.0;
+//		int[] docTopicCounts;
+//		
+//		for (int docNum = 0; docNum < numDocs; docNum++) {
+//			docTopicCounts = docTopicCounts(docNum);
+//			
+//			sum += Gamma.digamma(alphas[topicNum] + docTopicCounts[topicNum])
+//			       - Gamma.digamma(alphas[topicNum])
+//			       + Gamma.digamma(alphaSum)
+//			       - Gamma.digamma(alphaSum + (double)docLengths[docNum]);
+//		}
+//		
+//		return sum;
+//	}
+//	
+//	private static double alphaOptSecondDeriv(final double alpha) {
+//		
+//	}
+	
+	
+	private void optimizeAlphas() {
+		// Started with a literal transcription of the pseudo-code from Hanna Wallach's
+		// dissertation. See Algorithm 2.2 on page 29.
+		
+		// Since my alpha_k is equivalent to Wallach's alpha*m_k, alpha in line 6
+		// of the pseudo-code is the sum of the alphas here. Since \sum_k m_k = 1,
+		// \sum_k alpha * m_k = alpha.
+		System.out.println("Starting alpha optimization");
+
+		// Determine maxes and count counts
+		IntIntCounter docLengthFreqs = new IntIntCounter();
+		IntIntIntCounterMap topicDocTopicFreqs = new IntIntIntCounterMap();
+		int maxDocLength = 0;
+//		int [] maxDocTopicCounts = new int [numTopics];
+		Int2IntMap maxDocTopicCounts = new Int2IntOpenHashMap();
+		int[] docTopicCounts = new int[numTopics];
+		
+		for(int d = 0; d < numDocs; d++) {
+			docTopicCounts(d, docTopicCounts);
+			
+			for(int k = 0; k < numTopics; k++) {
+//				if(docTopicCounts[k] > 1) {
+				topicDocTopicFreqs.inc(k, docTopicCounts[k]);
+//				}
+				
+				if(docTopicCounts[k] > maxDocTopicCounts.get(k)) {
+					maxDocTopicCounts.put(k, docTopicCounts[k]);
+				}
+//				if(docTopicCounts[k] > maxDocTopicCounts[k]) {
+//					maxDocTopicCounts[k] = docTopicCounts[k];
+//				}
+			}
+			docLengthFreqs.inc(docLengths[d]);
+			if(docLengths[d] > maxDocLength) {
+				maxDocLength = docLengths[d];
+			}
+		}
+		
+ 		int x = optimizeAssymetricParameters(docLengthFreqs, topicDocTopicFreqs, maxDocLength, maxDocTopicCounts);
+		System.out.println(String.format("After %d rounds of iterations found new alphas:", x));
+//		System.out.println(Arrays.toString(alphas));
+	}
+
+	private static final int MAX_ALPHA_OPT_ITER = 10000000;
+	private static final double MIN_DIFF = 0.0000001;
+	/**
+	 * Uses the fixed-point iteration found in Hanna Wallach's dissertation.
+	 * @param docLengthFreqs Histogram of context lengths (document lengths in the case of alphas)
+	 * @param topicDocTopicCountFreqs Histogram of context/outcome counts (# occurrences of topic in documents)
+	 * @param maxDocLength Maximum value in c__n
+	 * @param maxDocTopicCounts.get( Maximum value in c_kn
+	 * @param alphas Current value of parameters to be optimized
+	 * @return
+	 */
+	private int optimizeAssymetricParameters(IntIntCounter docLengthFreqs, IntIntIntCounterMap topicDocTopicCountFreqs,
+			int maxDocLength, Int2IntMap maxDocTopicCounts) {
+		
+		double diffs_sum = Double.MAX_VALUE;
+		int iteration;
+		for(iteration = 0; iteration < MAX_ALPHA_OPT_ITER && diffs_sum > MIN_DIFF; iteration++){
+			double alphaSum = 0;
+			for(int k = 0; k < alphas.length; k++) {
+				alphaSum += alphas[k];
+			}
+			
+			double D = 0;
+			double S = 0;
+			for(int docLength = 1; docLength <= maxDocLength; docLength++) {
+				D += 1.0 / (double) (docLength-1 + alphaSum);
+				if(Double.isInfinite(D)) {
+					System.err.println("Danger");
+				}
+				final int count = docLengthFreqs.getCountI(docLength);
+				S += count * D;
+				if(Double.isNaN(S)) {
+					System.err.println("Warning");
+				}
+			}
+			diffs_sum = 0.0;
+			for(int topicNum = 0; topicNum < alphas.length; topicNum++) {
+				D = 0;
+				double S_k = 0;
+				for(int docTopicCount = 1; docTopicCount <= maxDocTopicCounts.get(topicNum); docTopicCount++) {
+					D += 1.0 / (double) (docTopicCount - 1 + alphas[topicNum]);
+					final int docTopicCountFreq = topicDocTopicCountFreqs.getCount(topicNum, docTopicCount);
+					if(docTopicCountFreq > 0) {
+						System.err.println("OK");
+					}
+					S_k += docTopicCountFreq * D;
+				}
+				if(S_k > 0.0) {
+					System.err.println("Waddup");
+				}
+				if(S <= 0.0) {
+					System.err.println("Pending problem");
+				}
+				double old_alphas_k = alphas[topicNum];
+				double new_alphas_k = alphas[topicNum] * (S_k / S);
+				if(new_alphas_k > 0.0) {
+					System.err.println("Good");
+				}
+				alphas[topicNum] = new_alphas_k;
+				if(Double.isNaN(alphas[topicNum])) {
+					System.err.println("Trouble");
+				}
+				diffs_sum += Math.abs(alphas[topicNum] - old_alphas_k);
+			}
+		}
+		return iteration;
+	}
 
 	private int[] docTopicCounts(final int docNum) {
 		int[] docTopicCounts = new int[numTopics];
@@ -538,17 +743,17 @@ public class EDA implements Serializable {
 	// Methods for displaying and saving results
 	//
 
-	private static final Comparator<Entry<Integer,IntIntCounter>> counterCmp = new Comparator<Entry<Integer,IntIntCounter>>(){
+	private static final Comparator<Entry<Integer,Counter<Integer,Integer>>> counterCmp = new Comparator<Entry<Integer,Counter<Integer,Integer>>>(){
 		@Override
-		public int compare(Entry<Integer, IntIntCounter> o1, Entry<Integer, IntIntCounter> o2) {
-			return Double.compare(o2.getValue().totalCount(), o1.getValue().totalCount());
+		public int compare(Entry<Integer, Counter<Integer,Integer>> o1, Entry<Integer, Counter<Integer,Integer>> o2) {
+			return o2.getValue().totalCount().compareTo(o1.getValue().totalCount());
 		}
 	};
 	
-	private static final Comparator<Entry<String,Counter<Integer>>> strCounterCmp = new Comparator<Entry<String,Counter<Integer>>>(){
+	private static final Comparator<Entry<String,Counter<Integer,Double>>> strCounterCmp = new Comparator<Entry<String,Counter<Integer,Double>>>(){
 		@Override
-		public int compare(Entry<String, Counter<Integer>> o1, Entry<String, Counter<Integer>> o2) {
-			return Double.compare(o2.getValue().totalCount(), o1.getValue().totalCount());
+		public int compare(Entry<String, Counter<Integer,Double>> o1, Entry<String, Counter<Integer,Double>> o2) {
+			return o2.getValue().totalCount().compareTo(o1.getValue().totalCount());
 		}
 	};
 	
@@ -561,7 +766,7 @@ public class EDA implements Serializable {
 	
 	private void printTopWordsAndTopics(int iteration, int numTopics, int numWords) {
 		log.print("Counting");
-		CounterMap<String,Integer> docTopicCounts = new CounterMap<String,Integer>();
+		DoubleCounterMap<String, Integer> docTopicCounts = new ObjObjDoubleCounterMap<String,Integer>();
 		IntIntIntCounterMap topicWordCounts = new IntIntIntCounterMap();
 		
 		for(int docNum = 0; docNum < numDocs; docNum++) {
@@ -600,10 +805,10 @@ public class EDA implements Serializable {
 	
 	private void printTopTopicWords(IntIntIntCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
 		out.println("Topic words:");
-		List<Entry<Integer,IntIntCounter>> topicWordCounters = new ArrayList<Entry<Integer,IntIntCounter>>(topicWordCounts.entrySet());
+		List<Entry<Integer,Counter<Integer,Integer>>> topicWordCounters = new ArrayList<Entry<Integer,Counter<Integer,Integer>>>(topicWordCounts.entrySet());
 		Collections.sort(topicWordCounters, counterCmp);
 		
-		for(Entry<Integer,IntIntCounter> counterEntry : topicWordCounters.subList(0, numTopics)) {
+		for(Entry<Integer,Counter<Integer,Integer>> counterEntry : topicWordCounters.subList(0, numTopics)) {
 			out.print("#");
 			out.print(counterEntry.getKey());
 			out.print(" \"");
@@ -628,12 +833,12 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	private void printTopDocTopics(CounterMap<String,Integer> docTopicCounts, PrintStream out, int numWords) {
+	private void printTopDocTopics(DoubleCounterMap<String, Integer> docTopicCounts, PrintStream out, int numWords) {
 		out.println("Documents topics:");
-		List<Entry<String,Counter<Integer>>> docTopicCounters = new ArrayList<Entry<String,Counter<Integer>>>(docTopicCounts.entrySet());
+		List<Entry<String,Counter<Integer,Double>>> docTopicCounters = new ArrayList<Entry<String,Counter<Integer,Double>>>(docTopicCounts.entrySet());
 		Collections.sort(docTopicCounters, strCounterCmp);
 		
-		for(Entry<String,Counter<Integer>> docTopicCounterEntry : docTopicCounters) {
+		for(Entry<String,Counter<Integer,Double>> docTopicCounterEntry : docTopicCounters) {
 			List<Entry<Integer,Double>> countEntries = new ArrayList<Entry<Integer,Double>>(docTopicCounterEntry.getValue().entries());
 			Collections.sort(countEntries, countCmp);
 			
@@ -719,6 +924,22 @@ public class EDA implements Serializable {
 		}
 	}
 	
+	private void printFastState(PrintStream out) {
+		out.println ("#docnum class source token1topic token2topic ... tokenNtopic");
+		for (int docNum = 0; docNum < numDocs; docNum++) {
+			out.print(docNum);
+			out.print(' ');
+			out.print(allLabels.indexOf(docLabels[docNum]));
+			out.print(' ');
+			out.print(docNames[docNum]);
+			for (int position = 0; position < docLengths[docNum]; position++) {
+				out.print(' ');
+				out.print(topics[docNum][position]);
+			}
+			out.println();
+		}
+	}
+	
 	private IntIndex topDocTopics(final int topN) {
 		IntIndex topics = new IntIndex();
 		IntIntCounter docTopics;
@@ -735,29 +956,103 @@ public class EDA implements Serializable {
 	}
 	
 	private void printReducedDocs(PrintStream out, int topN) {
+		ArffWriter arff = new ArffWriter(out);
+		
 		IntList feats = topDocTopics(topN).list();
 		log.print("Dimensionality reduction selected ");
 		log.print(feats.size());
 		log.println(" topics");
 		
-		out.print("doc");
-		for(int topicNum = 0; topicNum < feats.size(); topicNum++) {
-			out.print(',');
-			out.print(topicNum);
-		}
-		out.println();
+		log.print("Building ARFF model");
+		FastVector attributes = new FastVector();
 		
-		double docLength;
+		arff.init("document");
+		
+		log.print("\tCreating attributes...");
+		for(int i = 0; i < feats.size(); i++) {
+			Attribute attr = new Attribute("topic"+feats.get(i));
+			attributes.addElement(attr);
+			arff.attr(attr);
+		}
+		Attribute clsAttr = new Attribute("class", allLabels);
+		arff.attr(clsAttr);
+		attributes.addElement(clsAttr);
+		log.println("done.");
+		
+		Instances dataSet = new Instances("EDA Dim. Red. State", attributes, numDocs);
+		dataSet.setClass(clsAttr);
+		
+		double docLength, count;
 		int[] docTopicCounts = new int[numTopics];
-		for (int docNum = 0; docNum < numDocs; docNum++) {
-			out.print(docNum);
-			
+		for(int docNum = 0; docNum < numDocs; docNum++) {
 			docTopicCounts(docNum, docTopicCounts);
 			docLength = (double) docLengths[docNum];
 			
-			for(int topic : feats) {
-				out.print(',');
-				out.print((double)docTopicCounts[topic] / docLength);
+			weka.core.Instance inst = new SparseInstance(feats.size()+1); 
+			for(int featNum = 0; featNum < feats.size(); featNum++) {
+				count = docTopicCounts[feats.getInt(featNum)];
+				inst.setValue(featNum, count/docLength);
+			}
+			
+			inst.setDataset(dataSet);
+			inst.setValue(clsAttr, docLabels[docNum]);
+			
+			arff.inst(inst);
+			
+			log.print('.');
+		}
+		log.println("done.");
+	}
+	
+	private IntIntCounter docTopicCounter(final int docNum, IntIndex features) {
+		IntIntCounter counts = new IntIntCounter();
+		
+		int featureIdx;
+		for(int topic : topics[docNum]) {
+			featureIdx = features.indexOf(topic, false);
+			if(featureIdx != IntIndex.KEY_NOT_FOUND) {
+				counts.inc(featureIdx);
+			}
+		}
+		
+		return counts;
+	}
+	
+	
+	public static final Comparator<Int2IntMap.Entry> fastKeyCmp = new Comparator<Int2IntMap.Entry>(){
+		@Override
+		public int compare(Int2IntMap.Entry o1, Int2IntMap.Entry o2) {
+			return Util.compareInts(o1.getIntKey(), o2.getIntKey());
+		}
+	};
+	
+	private void printReducedDocsLibSvm(PrintStream out, int topN) {
+		printReducedDocsLibSvm(out, topN, true);
+	}
+	
+	private void printReducedDocsLibSvm(PrintStream out, int topN, boolean normalize) {
+		int classNum;
+		IntIntCounter docTopicCounts;
+		double docLength;
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			classNum = allLabels.indexOf(docLabels[docNum]);
+			docTopicCounts = docTopicCounter(docNum);
+			docLength = (double) docLengths[docNum];
+			
+			out.print(classNum);
+			
+			Int2IntMap.Entry[] entries = docTopicCounts.int2IntEntrySet().toArray(new Int2IntMap.Entry[0]);
+			Arrays.sort(entries, fastKeyCmp);
+			
+			for(Int2IntMap.Entry entry : entries) {
+				out.print(' ');
+				out.print(entry.getIntKey());
+				out.print(':');
+				if(normalize) {
+					out.print( (double) entry.getIntValue() / docLength);
+				} else {
+					out.print(entry.getIntValue());
+				}
 			}
 			out.println();
 		}

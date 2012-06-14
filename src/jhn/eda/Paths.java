@@ -1,5 +1,7 @@
 package jhn.eda;
 
+import java.io.File;
+
 public final class Paths {
 	private Paths() {}
 	
@@ -72,5 +74,25 @@ public final class Paths {
 	
 	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
 		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
+	}
+	
+	public static int nextLogNum(String logDir) {
+		int max = -1;
+		for(File f : new File(logDir).listFiles()) {
+			if(f.isDirectory()) {
+				int value = Integer.parseInt(f.getName());
+				if(value > max) {
+					max = value;
+				}
+			}
+		}
+		return max + 1;
+	}
+	
+	public static String logFilename() {
+		final String logDir = Paths.runsDir();
+		String filename = logDir + "/" + String.valueOf(nextLogNum(logDir));
+		System.out.println("Writing to log file: " + filename);
+		return filename;
 	}
 }

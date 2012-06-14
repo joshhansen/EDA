@@ -1,53 +1,60 @@
 package jhn.eda;
 
-final class Options {
-	private Options() {}
+enum Options {
+	MIN_THREADS,
+	MAX_THREADS,
 	
 	// Feature Selection, etc.
-	public static final String FILTER_DIGITS = "filter_digits";
+	FILTER_DIGITS,
 	
-	public static final String FILTER_MONTHS = "filter_months";
+	FILTER_MONTHS,
 	
-//	public static final String TFIDF_TOP10 = "tfidf_top10";
-	public static final String PRESELECTED_FEATURES = "preselected_features";
+//	TFIDF_TOP10,
+	PRESELECTED_FEATURES,
 	
 	
 	// EDA Model Parameters
 	/** Dirichlet(alpha,alpha,...) is the distribution over topics */
-	public static final String ALPHA = "alpha";
+	ALPHA,
 	
 	/** Prior on per-topic multinomial distribution over words */
-	public static final String BETA = "beta";
+	BETA,
 	
-	public static final String ALPHA_SUM = "alpha_sum";
+	ALPHA_SUM,
 	
-	public static final String BETA_SUM = "beta_sum";
+	BETA_SUM,
+	
+	ALPHA_OPTIMIZE_INTERVAL,
 	
 	/** The number of topics requested */
-	public static final String NUM_TOPICS = "num_topics";
+	NUM_TOPICS,
 	
 	/** The size of the vocabulary */
-	public static final String NUM_TYPES = "num_types";
+	NUM_TYPES,
 	
-	public static final String ITERATIONS = "iterations";
+	ITERATIONS,
 	
 	// Console and Log Output
-	public static final String PRINT_INTERVAL = "print_interval";
+	PRINT_INTERVAL,
 	
-	public static final String PRINT_LOG_LIKELIHOOD = "print_log_likelihood";
+	PRINT_LOG_LIKELIHOOD,
 	
-	public static final String PRINT_TOP_TOPIC_WORDS = "print_top_topic_words";
+	PRINT_TOP_TOPIC_WORDS,
 	
-	public static final String PRINT_TOP_DOC_TOPICS = "print_top_doc_topics";
+	PRINT_TOP_DOC_TOPICS,
 	
-	public static final String SERIALIZE_MODEL = "serialize_model";
+	SERIALIZE_MODEL,
 	
-	public static final String PRINT_DOC_TOPICS = "print_doc_topics";
+	PRINT_DOC_TOPICS,
 	
-	public static final String PRINT_STATE = "print_state";
+	/** Print state with one line per token */
+	PRINT_STATE,
+	
+	/** Print state with one line per document, and only indices */
+	PRINT_FAST_STATE,
 
-	public static final String PRINT_REDUCED_DOCS = "print_reduced_docs";
+	PRINT_REDUCED_DOCS,
 	
-	public static final String REDUCED_DOCS_TOP_N = "reduced_docs_top_n";
+	REDUCED_DOCS_TOP_N
 	
 }

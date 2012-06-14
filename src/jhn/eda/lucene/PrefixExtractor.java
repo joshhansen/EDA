@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map.Entry;
 
-import jhn.util.Counter;
+import jhn.counts.ObjDoubleCounter;
 import jhn.wp.Fields;
 
 import org.apache.lucene.document.Document;
@@ -23,7 +23,7 @@ public class PrefixExtractor {
 		
 		FSDirectory dir = FSDirectory.open(new File(luceneDir));
 		IndexReader r = IndexReader.open(dir);
-		Counter<String> prefixes = new Counter<String>();
+		ObjDoubleCounter<String> prefixes = new ObjDoubleCounter<String>();
 		
 		for(int docNum = 0; docNum < r.numDocs(); docNum++) {
 			Document doc = r.document(docNum);

@@ -5,8 +5,9 @@ LUCENE_V=3.6.0
 LIB=$HOME/Libraries
 PRJ=$HOME/Projects
 EXT=$PRJ/External
+CLS=./target/classes
 
-JHNC=$PRJ/JhnCommon/bin
+JHNC=$PRJ/JhnCommon/target/classes
 BZIP2=$LIB/bzip2
 MALLET=$EXT/mallet-2.0.7/class
 MALLET_DEPS=$EXT/mallet-2.0.7/lib/mallet-deps.jar
@@ -17,4 +18,4 @@ LUCENE=$LIB/lucene-$LUCENE_V/lucene-core-$LUCENE_V.jar
 BLIKI=$LIB/bliki_3.0.16/bliki-core/target/bliki-core-3.0.16.jar
 WIKIXML_J=$LIB/wikixml-j/bin
 FASTUTIL=$LIB/fastutil-6.4.3-bin/fastutil-6.4.3.jar
-
+WEKA=$HOME/.m2/repository/nz/ac/waikato/cms/weka/weka-stable/3.6.7/weka-stable-3.6.7.jar
