@@ -4,20 +4,18 @@ import java.io.File;
 import java.io.IOException;
 
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelAlphabet;
 
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topicdistance.LuceneTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.util.Config;
 import jhn.util.ConstFactory;
 import jhn.util.Factory;
 import jhn.util.Util;
 
 public final class RunEDA {
 	private RunEDA() {}
-	
-
 	
 	public static final double DEFAULT_ALPHA_SUM = 50.0;
 	public static final double DEFAULT_BETA = 0.01;
@@ -36,10 +34,10 @@ public final class RunEDA {
 		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 
-		System.out.print("Loading label alphabet...");
-		String labelAlphabetFilename = Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
-		LabelAlphabet topicAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
-		System.out.println("done.");
+//		System.out.print("Loading label alphabet...");
+//		String labelAlphabetFilename = Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
+//		LabelAlphabet topicAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
+//		System.out.println("done.");
 
 		System.out.print("Loading topic counts...");
 //		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
@@ -49,8 +47,10 @@ public final class RunEDA {
 		Factory<TopicCounts> tcFact = new ConstFactory<TopicCounts>(tcs);
 		System.out.println("done.");
 
+		Config props = (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
+		
 		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(null, null);		
-		EDA eda = new EDA (tcFact, ttcs, tdc, Paths.logFilename(), topicAlphabet);
+		EDA eda = new EDA (tcFact, ttcs, tdc, Paths.logFilename(), props.getInt(Options.NUM_TOPICS));
 		
 		// Cosmetic options:
 //		eda.conf.putBool(Options.PRINT_TOP_DOC_TOPICS, true);
@@ -77,15 +77,14 @@ public final class RunEDA {
 		eda.setTrainingData(targetData);
 		System.out.println("done.");
 		
-//		final int minThreads = Runtime.getRuntime().availableProcessors();
-		int minThreads = 1;
-//		final int maxThreads = Runtime.getRuntime().availableProcessors()*2;
-		int maxThreads = 2;
+		final int minThreads = Runtime.getRuntime().availableProcessors();
+//		int minThreads = 1;
+		final int maxThreads = Runtime.getRuntime().availableProcessors()*3;
+//		int maxThreads = 2;
 		eda.conf.putInt(Options.MIN_THREADS, minThreads);
 		eda.conf.putInt(Options.MAX_THREADS, maxThreads);
 		
 		
 		eda.sample();
-		
 	}
 }

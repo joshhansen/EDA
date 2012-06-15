@@ -20,13 +20,16 @@ import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.topiccounts.ArrayTopicCounts;
 import jhn.eda.topiccounts.LuceneTopicCounts;
 import jhn.eda.topiccounts.TopicCounts;
+import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topictypecounts.LuceneTopicTypeCounts;
 import jhn.eda.topictypecounts.TopicTypeCount;
 import jhn.eda.topictypecounts.TopicTypeCounts;
+import jhn.eda.topictypecounts.TopicTypeCountsException;
 import jhn.eda.typetopiccounts.ArrayTypeTopicCounts;
 import jhn.eda.typetopiccounts.LuceneTypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.util.Config;
 import jhn.util.IntIndex;
 import jhn.util.Util;
 
@@ -37,6 +40,7 @@ public class CountsExtractor {
 	private LabelAlphabet srcLabels;
 	private final int typeCount;
 	private final int minCount;
+	private final String extractedPropsFilename;
 	private final String topicCountsFilename;
 	private final String restrictedTopicCountsFilename;
 	private final String filteredTopicCountsFilename;
@@ -45,6 +49,7 @@ public class CountsExtractor {
 	
 	public CountsExtractor(TopicCounts srcTopicCounts, TypeTopicCounts srcTypeTopicCounts,
 			TopicTypeCounts srcTopicTypeCounts, LabelAlphabet srcLabels, int typeCount, int minCount,
+			String extractedPropsFilename,
 			String topicCountsFilename, String restrictedTopicCountsFilename, String filteredTopicCountsFilename,
 			String typeTopicCountsFilename, String destLabelAlphabetFilename) throws Exception {
 		
@@ -54,6 +59,7 @@ public class CountsExtractor {
 		this.srcTopicTypeCounts = srcTopicTypeCounts;
 		this.srcLabels = srcLabels;
 		this.minCount = minCount;
+		this.extractedPropsFilename = extractedPropsFilename;
 		this.topicCountsFilename = topicCountsFilename;
 		this.restrictedTopicCountsFilename = restrictedTopicCountsFilename;
 		this.filteredTopicCountsFilename = filteredTopicCountsFilename;
@@ -70,6 +76,8 @@ public class CountsExtractor {
 	}
 	
 	public void extract() throws Exception {
+		Config props = new Config();
+		
 		IntIndex newTopicNums = new IntIndex();
 		
 		Int2IntOpenHashMap restrictedTopicCounts = new Int2IntOpenHashMap();
@@ -139,22 +147,17 @@ public class CountsExtractor {
 		typeTopicCounts = null;
 		System.out.println("done.");
 		
-		// Label alphabet
-		System.out.print("Building label alphabet...");
-		LabelAlphabet destLabels = new LabelAlphabet();
-		for(int topicIdx = 0; topicIdx < newTopicNums.size(); topicIdx++) {
-			int oldTopicIdx = newTopicNums.objectAt(topicIdx);
-			String label = srcLabels.lookupObject(oldTopicIdx).toString();
-			destLabels.lookupIndex(label, true);
-		}
-		srcLabels = null;
-		System.out.println("done.");
+		extractLabelAlphabet(props, newTopicNums);
 		
-		System.out.print("Serializing label alphabet...");
-		Util.serialize(destLabels, destLabelAlphabetFilename);
-		destLabels = null;
-		System.out.println("done.");
+		extractFullTopicCounts(newTopicNums);
 		
+		extractFilteredTopicCounts(newTopicNums);
+		
+		Util.serialize(props, extractedPropsFilename);
+	}
+
+	private void extractFullTopicCounts(IntIndex newTopicNums)
+			throws TopicCountsException {
 		System.out.print("Building full topic counts...");
 		int[] topicCounts = new int[newTopicNums.size()];
 		for(int topicNum = 0; topicNum < newTopicNums.size(); topicNum++) {
@@ -166,7 +169,10 @@ public class CountsExtractor {
 		System.out.print("Serializing full topic counts...");
 		Util.serialize(new ArrayTopicCounts(topicCounts), topicCountsFilename);
 		System.out.println("done.");
-		
+	}
+
+	private void extractFilteredTopicCounts(IntIndex newTopicNums)
+			throws TopicTypeCountsException {
 		System.out.print("Building filtered topic counts...");
 		int[] filteredTopicCounts = new int[newTopicNums.size()];
 		
@@ -189,19 +195,39 @@ public class CountsExtractor {
 		Util.serialize(new ArrayTopicCounts(filteredTopicCounts), filteredTopicCountsFilename);
 		System.out.println("done.");
 	}
+
+	private void extractLabelAlphabet(Config props, IntIndex newTopicNums) {
+		System.out.print("Building label alphabet...");
+		LabelAlphabet destLabels = new LabelAlphabet();
+		for(int topicIdx = 0; topicIdx < newTopicNums.size(); topicIdx++) {
+			int oldTopicIdx = newTopicNums.objectAt(topicIdx);
+			String label = srcLabels.lookupObject(oldTopicIdx).toString();
+			destLabels.lookupIndex(label, true);
+		}
+		srcLabels = null;
+		System.out.println("done.");
+		
+		props.putInt(Options.NUM_TOPICS, destLabels.size());
+		
+		System.out.print("Serializing label alphabet...");
+		Util.serialize(destLabels, destLabelAlphabetFilename);
+		destLabels = null;
+		System.out.println("done.");
+	}
 	
 	public static void main(String[] args) throws Exception {
 		// Config
 		int minCount = 2;
-		String datasetName = "debates2012";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		String datasetName = "reuters21578";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 		String topicWordIdxName = "wp_lucene4";
 		System.out.println("Extracting " + datasetName);
 		String datasetFilename = Paths.datasetFilename(datasetName);
 		String topicWordIdxLuceneDir = Paths.topicWordIndexDir(topicWordIdxName);
 		
+		String propsFilename =                 Paths.propsFilename(topicWordIdxName, datasetName, minCount);
 		String topicCountsFilename =           Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
 		String restrictedTopicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String filteredTopicCountsFilename = Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String filteredTopicCountsFilename =   Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		String typeTopicCountsFilename =       Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		String destLabelAlphabetFilename =     Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
 		
@@ -219,8 +245,9 @@ public class CountsExtractor {
 		LabelAlphabet srcLabels = new LuceneLabelAlphabet(topicWordIdx);
 		
 		// Run
-		CountsExtractor ce = new CountsExtractor(srcTopicCounts, srcTypeTopicCounts, srcTopicTypeCounts, srcLabels, typeCount, minCount,
-				topicCountsFilename, restrictedTopicCountsFilename, filteredTopicCountsFilename, typeTopicCountsFilename, destLabelAlphabetFilename);
+		CountsExtractor ce = new CountsExtractor(srcTopicCounts, srcTypeTopicCounts, srcTopicTypeCounts, srcLabels,
+				typeCount, minCount, propsFilename, topicCountsFilename, restrictedTopicCountsFilename,
+				filteredTopicCountsFilename, typeTopicCountsFilename, destLabelAlphabetFilename);
 		ce.extract();
 		
 		topicWordIdx.close();

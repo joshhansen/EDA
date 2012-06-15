@@ -17,6 +17,13 @@ public final class Paths {
 		return System.getenv("HOME") + "/Projects/eda_output";
 	}
 	
+		public static String propsDir() {
+			return outputDir() + "/props";
+		}
+			public static String propsFilename(String topicWordIdxName, String datasetName, int minCount) {
+				return propsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".conf.ser";
+			}
+	
 		public static String countsDir() {
 			return outputDir() + "/counts";
 		}

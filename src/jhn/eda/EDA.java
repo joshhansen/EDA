@@ -32,13 +32,11 @@ import weka.core.FastVector;
 import weka.core.Instances;
 import weka.core.SparseInstance;
 
-import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelAlphabet;
 import cc.mallet.util.Randoms;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -88,11 +86,11 @@ public class EDA implements Serializable {
 	protected String[] docLabels;
 	protected FastVector allLabels;
 
-	// the alphabet for the input data
-	protected transient Alphabet alphabet;
-	
-	// the alphabet for the topics
-	protected transient LabelAlphabet topicAlphabet;
+//	// the alphabet for the input data
+//	protected transient Alphabet alphabet;
+//	
+//	// the alphabet for the topics
+//	protected transient LabelAlphabet topicAlphabet;
 	
 	protected final String logDir;
 	protected transient Log log;
@@ -105,20 +103,22 @@ public class EDA implements Serializable {
 	protected transient MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
 	protected transient Factory<TopicCounts> topicCountsFact;
 	
-	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc, String logFilename, LabelAlphabet topicAlphabet) throws FileNotFoundException {
-		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, topicAlphabet, new Randoms());
+	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts,
+			TopicDistanceCalculator topicDistCalc, String logFilename, final int numTopics) throws FileNotFoundException {
+		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, numTopics, new Randoms());
 	}
 	
 	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
-			final String logDir, final LabelAlphabet topicAlphabet, Randoms random) throws FileNotFoundException {
+			final String logDir, final int numTopics, Randoms random) throws FileNotFoundException {
 		
 		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
-		this.topicAlphabet = topicAlphabet;
+//		this.topicAlphabet = topicAlphabet;
 		this.random = random;
 		
-		numTopics = topicAlphabet.size();
+//		numTopics = topicAlphabet.size();
+		this.numTopics = numTopics;
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
 		this.logDir = logDir;
@@ -164,9 +164,9 @@ public class EDA implements Serializable {
 		
 		log.println("Dataset instances: " + training.size());
 		
-		alphabet = training.getDataAlphabet();
+//		alphabet = training.getDataAlphabet();
 		
-		final int numTypes = alphabet.size();
+		final int numTypes = training.getDataAlphabet().size();
 		conf.putInt(Options.NUM_TYPES, numTypes);
 		
 		log.print("Loading: ");
@@ -606,7 +606,9 @@ public class EDA implements Serializable {
 					}
 				} catch(TypeTopicCountsException e) {
 					// Words that occur in none of the topics will lead us here
-					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
+//					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
+					System.err.print(typeIdx);
+					System.err.print(' ');
 				} catch(TopicCountsException e) {
 					e.printStackTrace();
 				}
@@ -812,7 +814,11 @@ public class EDA implements Serializable {
 			out.print("#");
 			out.print(counterEntry.getKey());
 			out.print(" \"");
-			out.print(topicAlphabet.lookupObject(counterEntry.getKey()));
+			
+			//FIXME
+//			out.print(topicAlphabet.lookupObject(counterEntry.getKey()));
+			out.print(counterEntry.getKey());
+			
 			out.print("\" [total=");
 			out.print(counterEntry.getValue().totalCount());
 			out.println("]:");
@@ -821,9 +827,13 @@ public class EDA implements Serializable {
 			for(Entry<Integer,Integer> countEntry : counterEntry.getValue().topN(numWords)) {
 				Integer typeIdx = countEntry.getKey();
 				Integer typeCount = countEntry.getValue();
-				String type = alphabet.lookupObject(typeIdx).toString();
+				
+				//FIXME
+//				String type = alphabet.lookupObject(typeIdx).toString();
 //				log.print('\t');
-				out.print(type);
+//				out.print(type);
+				out.print(typeIdx);
+				
 				out.print("[");
 				out.print(typeCount);
 				out.print("] ");
@@ -849,10 +859,14 @@ public class EDA implements Serializable {
 			
 			for(Entry<Integer,Double> countEntry : countEntries.subList(0, Math.min(countEntries.size(), numWords))) {
 				Integer topicIdx = countEntry.getKey();
-				String topicLabel = topicAlphabet.lookupObject(topicIdx).toString();
+				
 				Double typeCount = countEntry.getValue();
 				out.print("\t");
-				out.print(topicLabel);
+				
+				//FIXME
+//				String topicLabel = topicAlphabet.lookupObject(topicIdx).toString();
+//				out.print(topicLabel);
+				out.print(topicIdx);
 				out.print("[");
 				out.print(typeCount);
 				out.println("]");
@@ -911,14 +925,15 @@ public class EDA implements Serializable {
 	}
 	
 	private void printState (PrintStream out) {
-		out.println ("#doc source pos typeindex type topic");
+//		out.println ("#doc source pos typeindex type topic");
+		out.println("#doc source pos typeindex topic");
 		for (int docNum = 0; docNum < numDocs; docNum++) {
 			for (int position = 0; position < docLengths[docNum]; position++) {
 				out.print(docNum); out.print(' ');
 				out.print(docNames[docNum]); out.print(' '); 
 				out.print(position); out.print(' ');
 				out.print(tokens[docNum][position]); out.print(' ');
-				out.print(alphabet.lookupObject(tokens[docNum][position])); out.print(' ');
+//				out.print(alphabet.lookupObject(tokens[docNum][position])); out.print(' ');
 				out.print(topics[docNum][position]); out.println();
 			}
 		}
