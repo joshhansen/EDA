@@ -27,11 +27,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instances;
-import weka.core.SparseInstance;
-
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
@@ -59,6 +54,7 @@ import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
+import jhn.idx.StringIndex;
 import jhn.util.Config;
 import jhn.util.Factory;
 import jhn.util.IntIndex;
@@ -84,8 +80,7 @@ public class EDA implements Serializable {
 	
 	// Classification helpers
 	protected String[] docLabels;
-	protected FastVector allLabels;
-
+	protected StringIndex allLabels;
 //	// the alphabet for the input data
 //	protected transient Alphabet alphabet;
 //	
@@ -204,10 +199,10 @@ public class EDA implements Serializable {
 			tokenCount += docLength;
 		}
 		
-		allLabels = new FastVector(labels.size()+1);
-		allLabels.addElement("none");//Needed for use in SparseInstance
+		allLabels = new StringIndex();
+		allLabels.indexOf("none");//Needed for use in SparseInstance
 		for(String theLabel : labels) {
-			allLabels.addElement(theLabel);
+			allLabels.indexOf(theLabel);
 		}
 		
 		log.println();
@@ -302,14 +297,6 @@ public class EDA implements Serializable {
 				}
 				
 				if(conf.isTrue(Options.PRINT_REDUCED_DOCS)) {
-//					try {
-//						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".arff"));
-//						printReducedDocs(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
-//						out.close();
-//					} catch(IOException e) {
-//						e.printStackTrace();
-//					}
-					
 					try {
 						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm"));
 						printReducedDocsLibSvm(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
@@ -944,7 +931,7 @@ public class EDA implements Serializable {
 		for (int docNum = 0; docNum < numDocs; docNum++) {
 			out.print(docNum);
 			out.print(' ');
-			out.print(allLabels.indexOf(docLabels[docNum]));
+			out.print(allLabels.indexOf(docLabels[docNum], false));
 			out.print(' ');
 			out.print(docNames[docNum]);
 			for (int position = 0; position < docLengths[docNum]; position++) {
@@ -954,85 +941,6 @@ public class EDA implements Serializable {
 			out.println();
 		}
 	}
-	
-	private IntIndex topDocTopics(final int topN) {
-		IntIndex topics = new IntIndex();
-		IntIntCounter docTopics;
-		
-		for (int docNum = 0; docNum < numDocs; docNum++) {
-			docTopics = docTopicCounter(docNum);
-			
-			for(Entry<Integer,Integer> entry : docTopics.topN(topN)) {
-				topics.indexOf(entry.getKey().intValue());
-			}
-		}
-		
-		return topics;
-	}
-	
-	private void printReducedDocs(PrintStream out, int topN) {
-		ArffWriter arff = new ArffWriter(out);
-		
-		IntList feats = topDocTopics(topN).list();
-		log.print("Dimensionality reduction selected ");
-		log.print(feats.size());
-		log.println(" topics");
-		
-		log.print("Building ARFF model");
-		FastVector attributes = new FastVector();
-		
-		arff.init("document");
-		
-		log.print("\tCreating attributes...");
-		for(int i = 0; i < feats.size(); i++) {
-			Attribute attr = new Attribute("topic"+feats.get(i));
-			attributes.addElement(attr);
-			arff.attr(attr);
-		}
-		Attribute clsAttr = new Attribute("class", allLabels);
-		arff.attr(clsAttr);
-		attributes.addElement(clsAttr);
-		log.println("done.");
-		
-		Instances dataSet = new Instances("EDA Dim. Red. State", attributes, numDocs);
-		dataSet.setClass(clsAttr);
-		
-		double docLength, count;
-		int[] docTopicCounts = new int[numTopics];
-		for(int docNum = 0; docNum < numDocs; docNum++) {
-			docTopicCounts(docNum, docTopicCounts);
-			docLength = (double) docLengths[docNum];
-			
-			weka.core.Instance inst = new SparseInstance(feats.size()+1); 
-			for(int featNum = 0; featNum < feats.size(); featNum++) {
-				count = docTopicCounts[feats.getInt(featNum)];
-				inst.setValue(featNum, count/docLength);
-			}
-			
-			inst.setDataset(dataSet);
-			inst.setValue(clsAttr, docLabels[docNum]);
-			
-			arff.inst(inst);
-			
-			log.print('.');
-		}
-		log.println("done.");
-	}
-	
-	private IntIntCounter docTopicCounter(final int docNum, IntIndex features) {
-		IntIntCounter counts = new IntIntCounter();
-		
-		int featureIdx;
-		for(int topic : topics[docNum]) {
-			featureIdx = features.indexOf(topic, false);
-			if(featureIdx != IntIndex.KEY_NOT_FOUND) {
-				counts.inc(featureIdx);
-			}
-		}
-		
-		return counts;
-	}
-	
 	
 	public static final Comparator<Int2IntMap.Entry> fastKeyCmp = new Comparator<Int2IntMap.Entry>(){
 		@Override
@@ -1050,7 +958,7 @@ public class EDA implements Serializable {
 		IntIntCounter docTopicCounts;
 		double docLength;
 		for(int docNum = 0; docNum < numDocs; docNum++) {
-			classNum = allLabels.indexOf(docLabels[docNum]);
+			classNum = allLabels.indexOf(docLabels[docNum], false);
 			docTopicCounts = docTopicCounter(docNum);
 			docLength = (double) docLengths[docNum];
 			
