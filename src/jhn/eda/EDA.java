@@ -81,11 +81,6 @@ public class EDA implements Serializable {
 	// Classification helpers
 	protected String[] docLabels;
 	protected StringIndex allLabels;
-//	// the alphabet for the input data
-//	protected transient Alphabet alphabet;
-//	
-//	// the alphabet for the topics
-//	protected transient LabelAlphabet topicAlphabet;
 	
 	protected final String logDir;
 	protected transient Log log;
@@ -109,10 +104,8 @@ public class EDA implements Serializable {
 		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
-//		this.topicAlphabet = topicAlphabet;
 		this.random = random;
 		
-//		numTopics = topicAlphabet.size();
 		this.numTopics = numTopics;
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
@@ -158,8 +151,6 @@ public class EDA implements Serializable {
 		numDocs = training.size();
 		
 		log.println("Dataset instances: " + training.size());
-		
-//		alphabet = training.getDataAlphabet();
 		
 		final int numTypes = training.getDataAlphabet().size();
 		conf.putInt(Options.NUM_TYPES, numTypes);
@@ -494,23 +485,15 @@ public class EDA implements Serializable {
 		// Do the documents first
 		int[] topicCounts = new int[numTopics];
 		double[] topicLogGammas = new double[numTopics];
-//		int[] docTopics;
 
 		for (int topic=0; topic < numTopics; topic++) {
 			topicLogGammas[ topic ] = Dirichlet.logGamma( alpha );
 		}
 	
 		for (int docNum=0; docNum < numDocs; docNum++) {
-//			LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
-
-//			docTopics = topicSequence.getFeatures();
-
 			for(int topic : topics[docNum]) {
 				topicCounts[topic]++;
 			}
-//			for (int token=0; token < docLengdocTopics.length; token++) {
-//				topicCounts[ docTopics[token] ]++;
-//			}
 
 			for (int topic=0; topic < numTopics; topic++) {
 				if (topicCounts[topic] > 0) {
