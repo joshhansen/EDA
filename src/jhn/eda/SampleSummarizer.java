@@ -26,6 +26,18 @@ public class SampleSummarizer {
 		}
 	};
 	
+	private static final Comparator<File> fileCmp = new Comparator<File>(){
+		private int fileNum(File f) {
+			String[] parts = f.getName().split("[.]");
+			return Integer.parseInt(parts[0]);
+		}
+		
+		@Override
+		public int compare(File o1, File o2) {
+			return Util.compareInts(fileNum(o1), fileNum(o2));
+		}
+	};
+	
 	private static void summarize(int run, int lastN, int minCount) throws IOException {
 		String fastStateDir = Paths.fastStateDir(run);
 		String summaryFilename = Paths.sampleSummaryFilename(run, lastN, minCount);
@@ -42,11 +54,17 @@ public class SampleSummarizer {
 		int docNum;
 		int docClass;
 		int topic;
-		int i;
+		int j;
 		
-		for(String filename : new File(fastStateDir).list()) {
-			System.out.println(filename);
-			fullFilename = fastStateDir + "/" + filename;
+		File[] files = new File(fastStateDir).listFiles();
+		Arrays.sort(files, fileCmp);
+		
+		
+		for(int i = Math.max(files.length - lastN, 0); i < files.length; i++) {
+			fullFilename = files[i].getPath();
+//		for(String filename : new File(fastStateDir).list()) {
+			System.out.println(files[i].getName());
+//			fullFilename = fastStateDir + "/" + filename;
 			
 			r = new BufferedReader(new FileReader(fullFilename));
 			tmp = null;
@@ -60,8 +78,8 @@ public class SampleSummarizer {
 					
 //					String source = parts[2];
 					
-					for(i = 3; i < parts.length; i++) {
-						topic = Integer.parseInt(parts[i]);
+					for(j = 3; j < parts.length; j++) {
+						topic = Integer.parseInt(parts[j]);
 						aggregateDocTopicCounts.inc(docNum, topic);
 					}
 					
@@ -95,11 +113,12 @@ public class SampleSummarizer {
 			
 			for(Int2IntMap.Entry count : entries) {
 				topic = count.getIntKey();
-				
-				w.write(' ');
-				w.write(String.valueOf(topic));
-				w.write(':');
-				w.write(String.valueOf(count.getIntValue()));
+				if(count.getIntValue() >= minCount) {
+					w.write(' ');
+					w.write(String.valueOf(topic));
+					w.write(':');
+					w.write(String.valueOf(count.getIntValue()));
+				}
 			}
 			w.newLine();
 		}
