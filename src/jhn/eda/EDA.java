@@ -83,6 +83,7 @@ public class EDA implements Serializable {
 	protected StringIndex allLabels;
 	
 	protected final String logDir;
+	protected final int run;
 	protected transient Log log;
 	public final Config conf = new Config();
 	protected Randoms random;
@@ -94,12 +95,12 @@ public class EDA implements Serializable {
 	protected transient Factory<TopicCounts> topicCountsFact;
 	
 	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts,
-			TopicDistanceCalculator topicDistCalc, String logFilename, final int numTopics) throws FileNotFoundException {
-		this(topicCountsFact, typeTopicCounts, topicDistCalc, logFilename, numTopics, new Randoms());
+			TopicDistanceCalculator topicDistCalc, final int numTopics, final int run) throws FileNotFoundException {
+		this(topicCountsFact, typeTopicCounts, topicDistCalc, numTopics, run, new Randoms());
 	}
 	
 	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
-			final String logDir, final int numTopics, Randoms random) throws FileNotFoundException {
+			final int numTopics, final int run, Randoms random) throws FileNotFoundException {
 		
 		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
@@ -109,7 +110,8 @@ public class EDA implements Serializable {
 		this.numTopics = numTopics;
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
-		this.logDir = logDir;
+		this.logDir = Paths.runDir(run);
+		this.run = run;
 	}
 	
 	private void initLogging() throws FileNotFoundException {
@@ -274,7 +276,7 @@ public class EDA implements Serializable {
 				
 				if(conf.isTrue(Options.PRINT_FAST_STATE)) {
 					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/fast_state/" + iteration + ".fast_state"));
+						PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(run, iteration)));
 						printFastState(out);
 						out.close();
 					} catch(IOException e) {
@@ -809,5 +811,4 @@ public class EDA implements Serializable {
 			out.println();
 		}
 	}
-	
 }

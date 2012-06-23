@@ -50,7 +50,7 @@ public final class RunEDA {
 		Config props = (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
 		
 		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(null, null);		
-		EDA eda = new EDA (tcFact, ttcs, tdc, Paths.logFilename(), props.getInt(Options.NUM_TOPICS));
+		EDA eda = new EDA (tcFact, ttcs, tdc, props.getInt(Options.NUM_TOPICS), Paths.nextRun());
 		
 		// Cosmetic options:
 //		eda.conf.putBool(Options.PRINT_TOP_DOC_TOPICS, true);

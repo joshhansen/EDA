@@ -26,7 +26,10 @@ public class SampleSummarizer {
 		}
 	};
 	
-	private static void summarize(String fastStateDir, String summaryFilename) throws IOException {
+	private static void summarize(int run, int lastN, int minCount) throws IOException {
+		String fastStateDir = Paths.fastStateDir(run);
+		String summaryFilename = Paths.sampleSummaryFilename(run, lastN, minCount);
+		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
 		Int2IntMap classes = new Int2IntOpenHashMap();
 		
@@ -105,10 +108,9 @@ public class SampleSummarizer {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		int run = 17;
-		String runDir = System.getenv("HOME") + "/Projects/eda_output/runs/" + run;
-		String summaryFilename = runDir + "/aggregate_state.txt";
-		
-		summarize(runDir+"/fast_state", summaryFilename);
+		final int lastN = 10;
+		final int run = 17;
+		final int minCount = 2;
+		summarize(run, lastN, minCount);
 	}
 }

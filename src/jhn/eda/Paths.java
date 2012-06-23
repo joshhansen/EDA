@@ -1,6 +1,5 @@
 package jhn.eda;
 
-import java.io.File;
 
 public final class Paths {
 	private Paths() {}
@@ -14,7 +13,7 @@ public final class Paths {
 		}
 	
 	public static String outputDir() {
-		return System.getenv("HOME") + "/Projects/eda_output";
+		return jhn.Paths.outputDir("EDA");
 	}
 	
 		public static String propsDir() {
@@ -67,6 +66,13 @@ public final class Paths {
 				public static String topicWordIndexDir(String name) {
 					return topicWordIndicesDir() + "/" + name;
 				}
+			
+			public static String topicMappingsDir() {
+				return outputDir() + "/topic_mappings";
+			}
+				public static String topicMappingFilename(String topicWordIdxName, String datasetName, int minCount) {
+					return topicMappingsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
+				}
 
 		public static String labelAlphabetsDir() {
 			return outputDir() + "/label_alphabets";
@@ -78,28 +84,42 @@ public final class Paths {
 		public static String runsDir() {
 			return outputDir() + "/runs";
 		}
+			public static String runDir(int run) {
+				return runsDir() + "/" + String.valueOf(run);
+			}
+				public static String nextRunDir() {
+					return runDir(nextRun());
+				}
+				
+				public static String sampleSummaryFilename(int run, int lastN) {
+					return runDir(run) + "/aggregate_last" + lastN + ".state";
+				}
+				
+				public static String sampleSummaryFilename(int run, int lastN, int minCount) {
+					return runDir(run) + "/aggregate_last" + lastN + "_min" + minCount + ".state";
+				}
+				
+				public static String fastStateDir(int run) {
+					return runDir(run) + "/fast_state";
+				}
+					public static String fastStateFilename(int run, int iteration) {
+						return fastStateDir(run) + "/" + iteration + ".fast_state";
+					}
+				
+				public static String topicLabelHitDataFilename(int run, int iteration) {
+					return runDir(run) + "/topic_label_hit_data_it" + iteration + ".csv";
+				}
+				
+				public static String documentLabelHitDataFilename(int run, int iteration) {
+					return runDir(run) + "/document_label_hit_data_it" + iteration + ".csv";
+				}
 	
 	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
 		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
 	}
 	
-	public static int nextLogNum(String logDir) {
-		int max = -1;
-		for(File f : new File(logDir).listFiles()) {
-			if(f.isDirectory()) {
-				int value = Integer.parseInt(f.getName());
-				if(value > max) {
-					max = value;
-				}
-			}
-		}
-		return max + 1;
+	public static int nextRun() {
+		return jhn.Paths.nextRun(runsDir());
 	}
-	
-	public static String logFilename() {
-		final String logDir = Paths.runsDir();
-		String filename = logDir + "/" + String.valueOf(nextLogNum(logDir));
-		System.out.println("Writing to log file: " + filename);
-		return filename;
-	}
+
 }
