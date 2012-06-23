@@ -37,7 +37,6 @@ import cc.mallet.util.Randoms;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
@@ -57,7 +56,6 @@ import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.idx.StringIndex;
 import jhn.util.Config;
 import jhn.util.Factory;
-import jhn.util.IntIndex;
 import jhn.util.Log;
 import jhn.util.Util;
 
