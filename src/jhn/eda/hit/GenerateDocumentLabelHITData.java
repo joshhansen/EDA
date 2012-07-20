@@ -62,7 +62,7 @@ public class GenerateDocumentLabelHITData {
 	}
 	
 	private static Int2ObjectMap<String> docSources(String fastStateFilename) throws Exception {
-		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<String>();
+		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
 		BufferedReader r = new BufferedReader(new FileReader(fastStateFilename));
 		int docNum;
