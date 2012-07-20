@@ -36,14 +36,17 @@ public class GenerateDocumentLabelHITData {
 		int docNum;
 		int lineNum = 0;
 		String tmp = null;
+		String[] parts;
+		String[] subparts;
 		while( (tmp=r.readLine()) != null) {
 			if(!tmp.startsWith("#")) {
-				String[] parts = tmp.split("\\s+");
+				parts = tmp.split("\\s+");
 				
-				docNum = Integer.parseInt(parts[0]);
+				docNum = Integer.parseInt(parts[1]);
 				
 				for(int i = 3; i < parts.length; i++) {
-					counts.inc(docNum, Integer.parseInt(parts[i]));
+					subparts = parts[i].split(":");
+					counts.set(docNum, Integer.parseInt(subparts[0]), Integer.parseInt(subparts[1]));
 				}
 				
 				lineNum++;
