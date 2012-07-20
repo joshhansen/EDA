@@ -65,17 +65,18 @@ public class GenerateDocumentLabelHITData {
 		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
 		BufferedReader r = new BufferedReader(new FileReader(sampleSummaryFilename));
+		
 		int docNum;
 		String tmp = null;
+		String[] parts;
 		while( (tmp=r.readLine()) != null) {
 			if(!tmp.startsWith("#")) {
-				String[] parts = tmp.split("\\s+");
-				
-				docNum = Integer.parseInt(parts[0]);
-				
+				parts = tmp.split("\\s+");
+				docNum = Integer.parseInt(parts[1]);
 				sources.put(docNum, parts[2]);
 			}
 		}
+		r.close();
 		
 		return sources;
 	}
