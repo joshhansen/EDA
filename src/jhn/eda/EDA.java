@@ -164,7 +164,7 @@ public class EDA implements Serializable {
 		docNames = new String[numDocs];
 		
 		docLabels = new String[numDocs];
-		SortedSet<String> labels = new TreeSet<String>();
+		SortedSet<String> labels = new TreeSet<>();
 		
 		Instance instance;
 		String label;
@@ -190,7 +190,7 @@ public class EDA implements Serializable {
 			tokenCount += docLength;
 		}
 		
-		allLabels = new StringIndex();
+		allLabels = new RAMIndex<>();
 		allLabels.indexOf("none");//Needed for use in SparseInstance
 		for(String theLabel : labels) {
 			allLabels.indexOf(theLabel);
@@ -225,7 +225,7 @@ public class EDA implements Serializable {
 			
 			final double maxTopicDistance = maxTopicDistCalc.maxTopicDistance(iteration, iterations);
 			
-			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
+			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
 			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
 			
 			// Loop over every document in the corpus
@@ -584,8 +584,8 @@ public class EDA implements Serializable {
 	
 	private void printTopWordsAndTopics(int iteration, int numTopics, int numWords) {
 		log.print("Counting");
-		DoubleCounterMap<String, Integer> docTopicCounts = new ObjObjDoubleCounterMap<String,Integer>();
-		IntIntIntCounterMap topicWordCounts = new IntIntIntCounterMap();
+		DoubleCounterMap<String, Integer> docTopicCounts = new ObjObjDoubleCounterMap<>();
+		IntIntIntRAMCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
 		
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			for(int i = 0; i < docLengths[docNum]; i++) {
@@ -621,9 +621,9 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	private void printTopTopicWords(IntIntIntCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
+	private static void printTopTopicWords(IntIntIntRAMCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
 		out.println("Topic words:");
-		List<Entry<Integer,Counter<Integer,Integer>>> topicWordCounters = new ArrayList<Entry<Integer,Counter<Integer,Integer>>>(topicWordCounts.entrySet());
+		List<Entry<Integer,Counter<Integer,Integer>>> topicWordCounters = new ArrayList<>(topicWordCounts.entrySet());
 		Collections.sort(topicWordCounters, counterCmp);
 		
 		for(Entry<Integer,Counter<Integer,Integer>> counterEntry : topicWordCounters.subList(0, numTopics)) {
@@ -661,11 +661,11 @@ public class EDA implements Serializable {
 	
 	private void printTopDocTopics(DoubleCounterMap<String, Integer> docTopicCounts, PrintStream out, int numWords) {
 		out.println("Documents topics:");
-		List<Entry<String,Counter<Integer,Double>>> docTopicCounters = new ArrayList<Entry<String,Counter<Integer,Double>>>(docTopicCounts.entrySet());
+		List<Entry<String,Counter<Integer,Double>>> docTopicCounters = new ArrayList<>(docTopicCounts.entrySet());
 		Collections.sort(docTopicCounters, strCounterCmp);
 		
 		for(Entry<String,Counter<Integer,Double>> docTopicCounterEntry : docTopicCounters) {
-			List<Entry<Integer,Double>> countEntries = new ArrayList<Entry<Integer,Double>>(docTopicCounterEntry.getValue().entries());
+			List<Entry<Integer,Double>> countEntries = new ArrayList<>(docTopicCounterEntry.getValue().entries());
 			Collections.sort(countEntries, countCmp);
 			
 			out.print(docTopicCounterEntry.getKey());

@@ -23,7 +23,7 @@ public class PrefixExtractor {
 		
 		FSDirectory dir = FSDirectory.open(new File(luceneDir));
 		IndexReader r = IndexReader.open(dir);
-		ObjDoubleCounter<String> prefixes = new ObjDoubleCounter<String>();
+		ObjDoubleCounter<String> prefixes = new ObjDoubleCounter<>();
 		
 		for(int docNum = 0; docNum < r.numDocs(); docNum++) {
 			Document doc = r.document(docNum);

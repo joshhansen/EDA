@@ -44,7 +44,7 @@ public final class RunEDA {
 //		final String topicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		final String topicCountsFilename = Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
-		Factory<TopicCounts> tcFact = new ConstFactory<TopicCounts>(tcs);
+		Factory<TopicCounts> tcFact = new ConstFactory<>(tcs);
 		System.out.println("done.");
 
 		Config props = (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));

@@ -27,7 +27,7 @@ public class MapTopicCounts implements TopicCounter,TopicCounts,Closeable {
 		this.outputFilename = outputFilename;
 		creating = ! new File(outputFilename).exists();
 		if(creating) {
-			counts = new HashMap<Integer,Integer>();
+			counts = new HashMap<>();
 		} else {
 			try {
 				counts = (Map<Integer, Integer>) Util.deserialize(outputFilename);
