@@ -149,14 +149,16 @@ public class GenerateDocumentLabelHITData {
 		final String topicWordIdxName = "wp_lucene4";
 		final String datasetName = "reuters21578";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 		final int run = 17;
-		final int iteration = 95;
+//		final int iteration = 95;
+		final int lastN = 50;
 		final int topNlabels = 10;
 		
-		String fastStateFilename =    Paths.fastStateFilename(run, iteration);
+//		String fastStateFilename =    Paths.fastStateFilename(run, iteration);
+		String sampleSummaryFilename = Paths.sampleSummaryFilename(run, lastN, minCount);
 		String topicWordIdxDir =      Paths.topicWordIndexDir("wp_lucene4");
 		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
-		String outputFilename =       Paths.documentLabelHitDataFilename(run, iteration);
+		String outputFilename =       Paths.documentLabelHitDataFilename(run, lastN, minCount);
 		
-		generate(fastStateFilename, topicWordIdxDir, topicMappingFilename, outputFilename, topNlabels);
+		generate(sampleSummaryFilename, topicWordIdxDir, topicMappingFilename, outputFilename, topNlabels);
 	}
 }
