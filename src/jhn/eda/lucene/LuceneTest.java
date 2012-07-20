@@ -8,11 +8,10 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
-import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.store.FSDirectory;
 
 public class LuceneTest {
-	public static void main(String[] args) throws ParseException, CorruptIndexException, IOException {
+	public static void main(String[] args) throws CorruptIndexException, IOException {
 		final String outputDir = System.getenv("HOME") + "/Projects/eda_output";
 		final String luceneDir = outputDir + "/wp_lucene";
 		
