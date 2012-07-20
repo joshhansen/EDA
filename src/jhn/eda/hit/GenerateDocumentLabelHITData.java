@@ -28,10 +28,10 @@ import jhn.idx.IntIndex;
 import jhn.util.Util;
 
 public class GenerateDocumentLabelHITData {
-	public static IntIntIntCounterMap docTopicCounts(String fastStateFilename) throws Exception {
+	public static IntIntIntCounterMap docTopicCounts(String sampleSummaryFilename) throws Exception {
 		IntIntIntCounterMap counts = new IntIntIntRAMCounterMap();
 		
-		BufferedReader r = new BufferedReader(new FileReader(fastStateFilename));
+		BufferedReader r = new BufferedReader(new FileReader(sampleSummaryFilename));
 		
 		int docNum;
 		int lineNum = 0;
