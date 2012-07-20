@@ -29,7 +29,7 @@ import jhn.util.Util;
 
 public class GenerateDocumentLabelHITData {
 	public static IntIntIntCounterMap docTopicCounts(String fastStateFilename) throws Exception {
-		IntIntIntCounterMap counts = new IntIntIntCounterMap();
+		IntIntIntCounterMap counts = new IntIntIntRAMCounterMap();
 		
 		BufferedReader r = new BufferedReader(new FileReader(fastStateFilename));
 		
