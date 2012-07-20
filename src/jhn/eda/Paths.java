@@ -113,6 +113,10 @@ public final class Paths {
 				public static String documentLabelHitDataFilename(int run, int iteration) {
 					return runDir(run) + "/document_label_hit_data_it" + iteration + ".csv";
 				}
+				
+				public static String documentLabelHitDataFilename(int run, int lastN, int minCount) {
+					return runDir(run) + "/document_label_hit_data_last" + lastN + "_min" + minCount + ".csv";
+				}
 	
 	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
 		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
