@@ -95,12 +95,12 @@ public class EDA implements Serializable {
 	protected transient Factory<TopicCounts> topicCountsFact;
 	
 	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts,
-			TopicDistanceCalculator topicDistCalc, final int numTopics, final int run) throws FileNotFoundException {
+			TopicDistanceCalculator topicDistCalc, final int numTopics, final int run) {
 		this(topicCountsFact, typeTopicCounts, topicDistCalc, numTopics, run, new Randoms());
 	}
 	
 	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
-			final int numTopics, final int run, Randoms random) throws FileNotFoundException {
+			final int numTopics, final int run, Randoms random) {
 		
 		this.topicCountsFact = topicCountsFact;
 		this.typeTopicCounts = typeTopicCounts;
@@ -205,13 +205,13 @@ public class EDA implements Serializable {
 
 	public void sample () {
 		// Compute alpha from alphaSum
-		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / (double) conf.getInt(Options.NUM_TOPICS);
+		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / conf.getInt(Options.NUM_TOPICS);
 		conf.putDouble(Options.ALPHA, startingAlpha);
 		alphas = new double[numTopics];
 		Arrays.fill(alphas, startingAlpha);
 		
 		// Compute betaSum from beta
-		final double betaSum = conf.getDouble(Options.BETA) * (double) conf.getInt(Options.NUM_TYPES);
+		final double betaSum = conf.getDouble(Options.BETA) * conf.getInt(Options.NUM_TYPES);
 		conf.putDouble(Options.BETA_SUM, betaSum);
 		
 		final int iterations = conf.getInt(Options.ITERATIONS);
@@ -239,7 +239,7 @@ public class EDA implements Serializable {
 			
 			try {
 				while(!exec.awaitTermination(500L, TimeUnit.MILLISECONDS)) {
-					
+					// Do nothing
 				}
 			} catch(InterruptedException e) {
 				e.printStackTrace();
@@ -292,7 +292,7 @@ public class EDA implements Serializable {
 				if(conf.isTrue(Options.PRINT_REDUCED_DOCS)) {
 					try {
 						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm"));
-						printReducedDocsLibSvm(out, conf.getInt(Options.REDUCED_DOCS_TOP_N));
+						printReducedDocsLibSvm(out);
 						out.close();
 					} catch(IOException e) {
 						e.printStackTrace();
@@ -300,7 +300,7 @@ public class EDA implements Serializable {
 					
 					try {
 						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm_unnorm"));
-						printReducedDocsLibSvm(out, conf.getInt(Options.REDUCED_DOCS_TOP_N), false);
+						printReducedDocsLibSvm(out, false);
 						out.close();
 					} catch(IOException e) {
 						e.printStackTrace();
@@ -661,7 +661,7 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	private void printTopDocTopics(DoubleCounterMap<String, Integer> docTopicCounts, PrintStream out, int numWords) {
+	private static void printTopDocTopics(DoubleCounterMap<String, Integer> docTopicCounts, PrintStream out, int numWords) {
 		out.println("Documents topics:");
 		List<Entry<String,Counter<Integer,Double>>> docTopicCounters = new ArrayList<>(docTopicCounts.entrySet());
 		Collections.sort(docTopicCounters, strCounterCmp);
@@ -780,18 +780,18 @@ public class EDA implements Serializable {
 		}
 	};
 	
-	private void printReducedDocsLibSvm(PrintStream out, int topN) {
-		printReducedDocsLibSvm(out, topN, true);
+	private void printReducedDocsLibSvm(PrintStream out) {
+		printReducedDocsLibSvm(out, true);
 	}
 	
-	private void printReducedDocsLibSvm(PrintStream out, int topN, boolean normalize) {
+	private void printReducedDocsLibSvm(PrintStream out, boolean normalize) {
 		int classNum;
 		IntIntCounter docTopicCounts;
 		double docLength;
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			classNum = allLabels.indexOf(docLabels[docNum], false);
 			docTopicCounts = docTopicCounter(docNum);
-			docLength = (double) docLengths[docNum];
+			docLength = docLengths[docNum];
 			
 			out.print(classNum);
 			
@@ -803,7 +803,7 @@ public class EDA implements Serializable {
 				out.print(entry.getIntKey());
 				out.print(':');
 				if(normalize) {
-					out.print( (double) entry.getIntValue() / docLength);
+					out.print( entry.getIntValue() / docLength);
 				} else {
 					out.print(entry.getIntValue());
 				}

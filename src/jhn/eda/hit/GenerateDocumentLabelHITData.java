@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.LabelAlphabet;
 
@@ -85,7 +85,6 @@ public class GenerateDocumentLabelHITData {
 	};
 	
 	private static void generate(String fastStateFilename, String topicWordIdxDir, String topicMappingFilename, String outputFilename, int topNlabels) throws Exception {
-		IndexReader topicWordIdx = IndexReader.open(NIOFSDirectory.open(new File(topicWordIdxDir)));
 		LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 		
 		System.out.print("Deserializing topic mapping...");
@@ -98,6 +97,7 @@ public class GenerateDocumentLabelHITData {
 		
 		System.out.print("Mapping document sources...");
 		Int2ObjectMap<String> sources = docSources(fastStateFilename);
+		IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)));
 		System.out.println("done.");
 		
 		PrintStream w = new PrintStream(new FileOutputStream(outputFilename));

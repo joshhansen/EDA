@@ -9,14 +9,12 @@ import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelAlphabet;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.topiccounts.ArrayTopicCounts;
 import jhn.eda.topiccounts.LuceneTopicCounts;
 import jhn.eda.topiccounts.TopicCounts;
@@ -72,7 +70,7 @@ public class CountsExtractor {
 //		this.destLabelAlphabetFilename = destLabelAlphabetFilename;
 	}
 	
-	private int[] topicCountsArr(Int2IntMap topicCounts) {
+	private static int[] topicCountsArr(Int2IntMap topicCounts) {
 		int[] countsArr = new int[topicCounts.size()];
 		for(int i = 0; i < countsArr.length; i++) {
 			countsArr[i] = topicCounts.get(i);

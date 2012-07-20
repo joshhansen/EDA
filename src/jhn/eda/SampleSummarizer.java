@@ -40,7 +40,7 @@ public class SampleSummarizer {
 		}
 	};
 	
-	private static void summarize(int run, int lastN, int minCount) throws IOException {
+	private static void summarize(int run, int lastN, int minCount, boolean classOnly) throws IOException {
 		String fastStateDir = Paths.fastStateDir(run);
 		String summaryFilename = Paths.sampleSummaryFilename(run, lastN, minCount);
 		

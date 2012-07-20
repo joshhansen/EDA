@@ -7,11 +7,10 @@ import java.io.FileReader;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.TermFreqVector;
-import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.LabelAlphabet;
 
@@ -72,7 +71,7 @@ public class GenerateTopicLabelHITData {
 		PrintStream w = new PrintStream(new FileOutputStream(outputFilename));
 		w.println("topicnum,globaltopicnum,word1,word2,word3,word4,word5,word6,word7,word8,word9,word10,\"label\"");
 		
-		IndexReader topicWordIdx = IndexReader.open(NIOFSDirectory.open(new File(topicWordIdxDir)));
+		IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)));
 		
 		
 		LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
