@@ -1,11 +1,11 @@
 package jhn.eda;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -65,9 +65,7 @@ public class SampleSummarizer {
 		
 		for(int i = Math.max(files.length - lastN, 0); i < files.length; i++) {
 			fullFilename = files[i].getPath();
-//		for(String filename : new File(fastStateDir).list()) {
 			System.out.println(files[i].getName());
-//			fullFilename = fastStateDir + "/" + filename;
 			
 			r = new BufferedReader(new FileReader(fullFilename));
 			tmp = null;
@@ -78,8 +76,7 @@ public class SampleSummarizer {
 					docNum = Integer.parseInt(parts[0]);
 					docClass = Integer.parseInt(parts[1]);
 					classes.put(docNum, docClass);
-					
-//					String source = parts[2];
+					sources.put(docNum, parts[2]);
 					
 					for(j = 3; j < parts.length; j++) {
 						topic = Integer.parseInt(parts[j]);
@@ -101,13 +98,22 @@ public class SampleSummarizer {
 		IntIntCounter counts;
 		Int2IntMap.Entry[] entries;
 		
-		BufferedWriter w = new BufferedWriter(new FileWriter(summaryFilename));
-		w.write("#class topic1id:topic1count topic2id:topic2count ... topicNid:topicNcount\n");
+		PrintStream w = new PrintStream(new FileOutputStream(summaryFilename));
+		w.print("#class");
+		if(!classOnly) {
+			w.print(" docnum docsrc");
+		}
+		w.println(" topic1id:topic1count topic2id:topic2count ... topicNid:topicNcount");
 		for(Int2ObjectMap.Entry<Counter<Integer, Integer>> entry : aggregateDocTopicCounts.int2ObjectEntrySet()) {
 			docNum = entry.getIntKey();
 			docClass = classes.get(docNum);
-			
-			w.write(String.valueOf(docClass));
+			w.print(docClass);
+			if(!classOnly) {
+				w.print(' ');
+				w.print(docNum);
+				w.print(' ');
+				w.print(sources.get(docNum));
+			}
 			
 			counts = (IntIntCounter) entry.getValue();
 			entries = counts.int2IntEntrySet().toArray(new Int2IntMap.Entry[0]);
@@ -117,22 +123,22 @@ public class SampleSummarizer {
 			for(Int2IntMap.Entry count : entries) {
 				topic = count.getIntKey();
 				if(count.getIntValue() >= minCount) {
-					w.write(' ');
-					w.write(String.valueOf(topic));
-					w.write(':');
-					w.write(String.valueOf(count.getIntValue()));
+					w.print(' ');
+					w.print(topic);
+					w.print(':');
+					w.print(count.getIntValue());
 				}
 			}
-			w.newLine();
+			w.println();
 		}
 		
 		w.close();
 	}
 	
 	public static void main(String[] args) throws IOException {
-		final int lastN = 10;
+		final int lastN = 50;
 		final int run = 17;
-		final int minCount = 2;
-		summarize(run, lastN, minCount);
+		final int minCount = 0;
+		summarize(run, lastN, minCount, false);
 	}
 }
