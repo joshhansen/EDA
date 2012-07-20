@@ -17,7 +17,8 @@ import cc.mallet.types.LabelAlphabet;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap.Entry;
 
-import jhn.counts.IntIntCounter;
+import jhn.counts.ints.IntIntCounter;
+import jhn.counts.ints.IntIntRAMCounter;
 import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.idx.IntIndex;
@@ -26,7 +27,7 @@ import jhn.wp.Fields;
 
 public class GenerateTopicLabelHITData {
 	private static IntIntCounter topicCounts(String fastStateFilename) throws Exception {
-		IntIntCounter counts = new IntIntCounter();
+		IntIntCounter counts = new IntIntRAMCounter();
 		
 		BufferedReader r = new BufferedReader(new FileReader(fastStateFilename));
 		

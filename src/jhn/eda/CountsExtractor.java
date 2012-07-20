@@ -30,6 +30,7 @@ import jhn.eda.typetopiccounts.LuceneTypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.IntIndex;
+import jhn.idx.IntRAMIndex;
 import jhn.util.Config;
 import jhn.util.Util;
 
@@ -82,7 +83,7 @@ public class CountsExtractor {
 	public void extract() throws Exception {
 		Config props = new Config();
 		
-		IntIndex newTopicNums = new IntIndex();
+		IntIndex newTopicNums = new IntRAMIndex();
 		
 		Int2IntOpenHashMap restrictedTopicCounts = new Int2IntOpenHashMap();
 		

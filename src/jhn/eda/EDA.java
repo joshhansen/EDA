@@ -41,10 +41,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import jhn.counts.Counter;
-import jhn.counts.DoubleCounterMap;
-import jhn.counts.IntIntCounter;
-import jhn.counts.IntIntIntCounterMap;
-import jhn.counts.ObjObjDoubleCounterMap;
+import jhn.counts.doubles.DoubleCounterMap;
+import jhn.counts.ints.IntIntCounter;
+import jhn.counts.ints.IntIntIntRAMCounterMap;
+import jhn.counts.doubles.ObjObjDoubleCounterMap;
+import jhn.counts.ints.IntIntRAMCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
@@ -53,7 +54,8 @@ import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
-import jhn.idx.StringIndex;
+import jhn.idx.Index;
+import jhn.idx.RAMIndex;
 import jhn.util.Config;
 import jhn.util.Factory;
 import jhn.util.Log;
@@ -78,7 +80,7 @@ public class EDA implements Serializable {
 	
 	// Classification helpers
 	protected String[] docLabels;
-	protected StringIndex allLabels;
+	protected Index<String> allLabels;
 	
 	protected final String logDir;
 	protected final int run;
@@ -323,7 +325,7 @@ public class EDA implements Serializable {
 	}
 	
 	private IntIntCounter docTopicCounter(final int docNum) {
-		IntIntCounter counts = new IntIntCounter();
+		IntIntCounter counts = new IntIntRAMCounter();
 		for(int topic : topics[docNum]) {
 			counts.inc(topic);
 		}

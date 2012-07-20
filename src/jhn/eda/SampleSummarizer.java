@@ -12,10 +12,12 @@ import java.util.Comparator;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import jhn.counts.Counter;
-import jhn.counts.IntIntCounter;
-import jhn.counts.IntIntIntCounterMap;
+import jhn.counts.ints.IntIntCounter;
+import jhn.counts.ints.IntIntIntRAMCounterMap;
+import jhn.counts.ints.IntIntIntCounterMap;
 import jhn.util.Util;
 
 public class SampleSummarizer {
@@ -44,8 +46,9 @@ public class SampleSummarizer {
 		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
 		Int2IntMap classes = new Int2IntOpenHashMap();
+		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
-		IntIntIntCounterMap aggregateDocTopicCounts = new IntIntIntCounterMap();
+		IntIntIntCounterMap aggregateDocTopicCounts = new IntIntIntRAMCounterMap();
 		
 		String fullFilename;
 		BufferedReader r;

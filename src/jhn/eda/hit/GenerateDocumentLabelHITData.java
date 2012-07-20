@@ -19,8 +19,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import jhn.counts.Counter;
-import jhn.counts.IntIntCounter;
-import jhn.counts.IntIntIntCounterMap;
+import jhn.counts.ints.IntIntCounter;
+import jhn.counts.ints.IntIntIntRAMCounterMap;
+import jhn.counts.ints.IntIntIntCounterMap;
 import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.idx.IntIndex;
