@@ -699,8 +699,8 @@ public class EDA implements Serializable {
 	 *  @param max         Print no more than this many topics
 	 */
 	private void printDocumentTopics (PrintStream out, double threshold, int max) {
-		final int numTopics = conf.getInt(Options.NUM_TOPICS);
-
+		if(max < 1) throw new IllegalArgumentException("Max must be 1 or greater");
+		
 		out.print ("#doc source topic proportion ...\n");
 		int[] topicCounts = new int[ numTopics ];
 
@@ -708,10 +708,6 @@ public class EDA implements Serializable {
 		for (int topic = 0; topic < numTopics; topic++) {
 			// Initialize the sorters with dummy values
 			sortedTopics[topic] = new IDSorter(topic, topic);
-		}
-
-		if (max < 0 || max > numTopics) {
-			max = numTopics;
 		}
 
 		for (int docNum = 0; docNum < numDocs; docNum++) {
@@ -728,7 +724,7 @@ public class EDA implements Serializable {
 			
 			Arrays.sort(sortedTopics);
 
-			for (int i = 0; i < max; i++) {
+			for (int i = 0; i < Math.min(max, numTopics); i++) {
 				if (sortedTopics[i].getWeight() < threshold) { break; }
 				
 				out.print (sortedTopics[i].getID() + " " + 
