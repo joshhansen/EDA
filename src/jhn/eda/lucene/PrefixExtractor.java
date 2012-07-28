@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map.Entry;
 
-import jhn.counts.doubles.ObjDoubleCounter;
+import jhn.counts.d.o.ObjDoubleCounter;
 import jhn.wp.Fields;
 
 import org.apache.lucene.document.Document;

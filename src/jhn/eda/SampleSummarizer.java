@@ -15,9 +15,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import jhn.counts.Counter;
-import jhn.counts.ints.IntIntCounter;
-import jhn.counts.ints.IntIntIntRAMCounterMap;
-import jhn.counts.ints.IntIntIntCounterMap;
+import jhn.counts.i.i.IntIntCounter;
+import jhn.counts.i.i.i.IntIntIntCounterMap;
+import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
 import jhn.util.Util;
 
 public class SampleSummarizer {
