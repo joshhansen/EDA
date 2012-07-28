@@ -41,11 +41,10 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import jhn.counts.Counter;
-import jhn.counts.doubles.DoubleCounterMap;
-import jhn.counts.ints.IntIntCounter;
-import jhn.counts.ints.IntIntIntRAMCounterMap;
-import jhn.counts.doubles.ObjObjDoubleCounterMap;
-import jhn.counts.ints.IntIntRAMCounter;
+import jhn.counts.i.i.IntIntCounter;
+import jhn.counts.i.i.IntIntRAMCounter;
+import jhn.counts.i.i.i.IntIntIntCounterMap;
+import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
@@ -585,8 +584,8 @@ public class EDA implements Serializable {
 	};
 	
 		log.print("Counting");
-		DoubleCounterMap<String, Integer> docTopicCounts = new ObjObjDoubleCounterMap<>();
-		IntIntIntRAMCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
+		IntIntIntCounterMap docTopicCounts = new IntIntIntRAMCounterMap();
+		IntIntIntCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
 		
 		final boolean printTopWords = conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS);
 		final boolean printTopTopics = conf.isTrue(Options.PRINT_TOP_DOC_TOPICS);
@@ -596,7 +595,7 @@ public class EDA implements Serializable {
 					topicWordCounts.inc(topics[docNum][i], tokens[docNum][i]);
 				}
 				if(printTopTopics) {
-					docTopicCounts.inc(docNames[docNum], topics[docNum][i]);
+					docTopicCounts.inc(docNum, topics[docNum][i]);
 				}
 			}
 			log.print('.');
@@ -662,24 +661,20 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	private static void printTopDocTopics(DoubleCounterMap<String, Integer> docTopicCounts, PrintStream out, int numWords) {
+	private void printTopDocTopics(IntIntIntCounterMap docTopicCounts, PrintStream out, int numWords) {
 		out.println("Documents topics:");
-		List<Entry<String,Counter<Integer,Double>>> docTopicCounters = new ArrayList<>(docTopicCounts.entrySet());
-		Collections.sort(docTopicCounters, strCounterCmp);
 		
-		for(Entry<String,Counter<Integer,Double>> docTopicCounterEntry : docTopicCounters) {
-			List<Entry<Integer,Double>> countEntries = new ArrayList<>(docTopicCounterEntry.getValue().entries());
-			Collections.sort(countEntries, countCmp);
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			IntIntCounter counter = docTopicCounts.getCounter(docNum);
 			
-			out.print(docTopicCounterEntry.getKey());
+			out.print(docNames[docNum]);
 			out.print(" [total=");
-			out.print(docTopicCounterEntry.getValue().totalCount());
+			out.print(counter.totalCount());
 			out.println("]:");
 			
-			for(Entry<Integer,Double> countEntry : countEntries.subList(0, Math.min(countEntries.size(), numWords))) {
-				Integer topicIdx = countEntry.getKey();
-				
-				Double typeCount = countEntry.getValue();
+			for(Int2IntMap.Entry countEntry : counter.fastTopN(numWords)) {
+				int topicIdx = countEntry.getIntKey();
+				int typeCount = countEntry.getIntValue();
 				out.print("\t");
 				
 				//FIXME
