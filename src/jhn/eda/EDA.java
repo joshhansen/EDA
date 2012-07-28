@@ -623,7 +623,7 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	private static void printTopTopicWords(IntIntIntRAMCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
+	private static void printTopTopicWords(IntIntIntCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
 		out.println("Topic words:");
 		List<Entry<Integer,Counter<Integer,Integer>>> topicWordCounters = new ArrayList<>(topicWordCounts.entrySet());
 		Collections.sort(topicWordCounters, counterCmp);
