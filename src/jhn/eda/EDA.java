@@ -569,20 +569,6 @@ public class EDA implements Serializable {
 	};
 	
 	private void printTopWordsAndTopics(int iteration, int numTopicsToPrint, int numWords) {
-	private static final Comparator<Entry<String,Counter<Integer,Double>>> strCounterCmp = new Comparator<Entry<String,Counter<Integer,Double>>>(){
-		@Override
-		public int compare(Entry<String, Counter<Integer,Double>> o1, Entry<String, Counter<Integer,Double>> o2) {
-			return o2.getValue().totalCount().compareTo(o1.getValue().totalCount());
-		}
-	};
-	
-	private static final Comparator<Entry<Integer,Double>> countCmp = new Comparator<Entry<Integer,Double>>(){
-		@Override
-		public int compare(Entry<Integer, Double> o1, Entry<Integer, Double> o2) {
-			return o2.getValue().compareTo(o1.getValue());
-		}
-	};
-	
 		log.print("Counting");
 		IntIntIntCounterMap docTopicCounts = new IntIntIntRAMCounterMap();
 		IntIntIntCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
