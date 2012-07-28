@@ -588,12 +588,14 @@ public class EDA implements Serializable {
 		DoubleCounterMap<String, Integer> docTopicCounts = new ObjObjDoubleCounterMap<>();
 		IntIntIntRAMCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
 		
+		final boolean printTopWords = conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS);
+		final boolean printTopTopics = conf.isTrue(Options.PRINT_TOP_DOC_TOPICS);
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			for(int i = 0; i < docLengths[docNum]; i++) {
-				if(conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS)) {
+				if(printTopWords) {
 					topicWordCounts.inc(topics[docNum][i], tokens[docNum][i]);
 				}
-				if(conf.isTrue(Options.PRINT_TOP_DOC_TOPICS)) {
+				if(printTopTopics) {
 					docTopicCounts.inc(docNames[docNum], topics[docNum][i]);
 				}
 			}
@@ -601,7 +603,7 @@ public class EDA implements Serializable {
 		}
 		log.println();
 		
-		if(conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS)) {
+		if(printTopWords) {
 			try {
 				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_topic_words/" + iteration + ".log"));
 				printTopTopicWords(topicWordCounts, out, numTopics, numWords);
@@ -611,7 +613,7 @@ public class EDA implements Serializable {
 			}
 		}
 		
-		if(conf.isTrue(Options.PRINT_TOP_DOC_TOPICS)) {
+		if(printTopTopics) {
 			try {
 				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_doc_topics/" + iteration + ".log"));
 				printTopDocTopics(docTopicCounts, out, numWords);
