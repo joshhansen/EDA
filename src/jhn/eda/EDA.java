@@ -569,6 +569,7 @@ public class EDA implements Serializable {
 		}
 	};
 	
+	private void printTopWordsAndTopics(int iteration, int numTopicsToPrint, int numWords) {
 	private static final Comparator<Entry<String,Counter<Integer,Double>>> strCounterCmp = new Comparator<Entry<String,Counter<Integer,Double>>>(){
 		@Override
 		public int compare(Entry<String, Counter<Integer,Double>> o1, Entry<String, Counter<Integer,Double>> o2) {
@@ -583,7 +584,6 @@ public class EDA implements Serializable {
 		}
 	};
 	
-	private void printTopWordsAndTopics(int iteration, int numTopics, int numWords) {
 		log.print("Counting");
 		DoubleCounterMap<String, Integer> docTopicCounts = new ObjObjDoubleCounterMap<>();
 		IntIntIntRAMCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
@@ -606,7 +606,7 @@ public class EDA implements Serializable {
 		if(printTopWords) {
 			try {
 				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_topic_words/" + iteration + ".log"));
-				printTopTopicWords(topicWordCounts, out, numTopics, numWords);
+				printTopTopicWords(topicWordCounts, out, numTopicsToPrint, numWords);
 				out.close();
 			} catch(IOException e) {
 				e.printStackTrace();
