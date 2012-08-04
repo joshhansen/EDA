@@ -201,7 +201,7 @@ public class EDA implements Serializable, AutoCloseable {
 		log.println("Loaded " + tokenCount + " tokens.");
 	}
 
-	public void sample () {
+	public void sample () throws Exception {
 		// Compute alpha from alphaSum
 		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / conf.getInt(Options.NUM_TOPICS);
 		conf.putDouble(Options.ALPHA, startingAlpha);
@@ -235,12 +235,8 @@ public class EDA implements Serializable, AutoCloseable {
 			
 			exec.shutdown();
 			
-			try {
-				while(!exec.awaitTermination(500L, TimeUnit.MILLISECONDS)) {
-					// Do nothing
-				}
-			} catch(InterruptedException e) {
-				e.printStackTrace();
+			while(!exec.awaitTermination(500L, TimeUnit.MILLISECONDS)) {
+				// Do nothing
 			}
 		
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
@@ -252,56 +248,34 @@ public class EDA implements Serializable, AutoCloseable {
 					printTopWordsAndTopics(iteration, 100, 10);
 				}
 				if(conf.isTrue(Options.PRINT_DOC_TOPICS)) {
-					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/doctopics/" + iteration + ".log"));
+					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/doctopics/" + iteration + ".log"))) {
 						printDocumentTopics(out, 0.01, 100);
-						out.close();
-					} catch(IOException e) {
-						e.printStackTrace();
 					}
 				}
 				
-				
 				if(conf.isTrue(Options.PRINT_STATE)) {
-					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/state/" + iteration + ".state"));
+					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/state/" + iteration + ".state"))) {
 						printState(out);
-						out.close();
-					} catch(IOException e) {
-						e.printStackTrace();
 					}
 				}
 				
 				if(conf.isTrue(Options.PRINT_FAST_STATE)) {
-					try {
-						PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(run, iteration)));
+					try(PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(run, iteration)))) {
 						printFastState(out);
-						out.close();
-					} catch(IOException e) {
-						e.printStackTrace();
 					}
 				}
-				
 
 				if(conf.isTrue(Options.PRINT_LOG_LIKELIHOOD)) {
 					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
 				}
 				
 				if(conf.isTrue(Options.PRINT_REDUCED_DOCS)) {
-					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm"));
+					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm"))) {
 						printReducedDocsLibSvm(out);
-						out.close();
-					} catch(IOException e) {
-						e.printStackTrace();
 					}
 					
-					try {
-						PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm_unnorm"));
+					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm_unnorm"))) {
 						printReducedDocsLibSvm(out, false);
-						out.close();
-					} catch(IOException e) {
-						e.printStackTrace();
 					}
 				}
 				
@@ -436,13 +410,11 @@ public class EDA implements Serializable, AutoCloseable {
 				}
 			}//end for position
 			
-			if(topicCounts instanceof Closeable) {
-				try {
-					((Closeable)topicCounts).close();
-				} catch (IOException e) {
-					e.printStackTrace();
-					throw new IllegalArgumentException();
-				}
+			try {
+				Util.closeIfPossible(topicCounts);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new IllegalArgumentException();
 			}
 			
 			samplerFinished();
