@@ -20,6 +20,8 @@ public class MapTopicCounts implements TopicCounter,TopicCounts,AutoCloseable {
 	
 	
 	private final String outputFilename;
+	
+	//FIXME Replace Map<Integer,Integer> with IntIntCounter
 	private Map<Integer,Integer> counts;
 	private boolean creating;
 	public MapTopicCounts(String outputFilename) {
