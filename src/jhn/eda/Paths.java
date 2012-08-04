@@ -5,7 +5,7 @@ public final class Paths {
 	private Paths() {}
 	
 	public static String datasetsDir() {
-		return System.getenv("HOME") + "/Projects/eda/datasets";
+		return jhn.Paths.outputDir("LDA") + "/datasets";
 	}
 	
 		public static String datasetFilename(String datasetName) {
