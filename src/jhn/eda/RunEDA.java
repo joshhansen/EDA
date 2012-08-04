@@ -25,7 +25,7 @@ public final class RunEDA {
 		final String datasetName = "reuters21578";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 		
         System.out.print("Loading target corpus...");
-        InstanceList targetData = InstanceList.load(new File(Paths.datasetFilename(datasetName)));
+        InstanceList targetData = InstanceList.load(new File(Paths.datasetFilename(datasetName+"_noblah")));
         System.out.println("done.");
 
 		System.out.print("Loading type-topic counts...");
