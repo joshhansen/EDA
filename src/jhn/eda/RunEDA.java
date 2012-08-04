@@ -33,11 +33,6 @@ public final class RunEDA {
 		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 
-//		System.out.print("Loading label alphabet...");
-//		String labelAlphabetFilename = Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
-//		LabelAlphabet topicAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
-//		System.out.println("done.");
-
 		System.out.print("Loading topic counts...");
 //		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
 //		final String topicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
