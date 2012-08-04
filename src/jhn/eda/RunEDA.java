@@ -1,7 +1,6 @@
 package jhn.eda;
 
 import java.io.File;
-import java.io.IOException;
 
 import cc.mallet.types.InstanceList;
 
@@ -19,7 +18,7 @@ public final class RunEDA {
 	
 	public static final double DEFAULT_ALPHA_SUM = 50.0;
 	public static final double DEFAULT_BETA = 0.01;
-	public static void main (String[] args) throws IOException, ClassNotFoundException {
+	public static void main (String[] args) throws Exception {
 		final int iterations = 500;
 		final int minCount = 2;
 		final String topicWordIdxName = "wp_lucene4";
@@ -50,41 +49,36 @@ public final class RunEDA {
 		Config props = (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
 		
 		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(null, null);		
-		EDA eda = new EDA (tcFact, ttcs, tdc, props.getInt(Options.NUM_TOPICS), Paths.nextRun());
-		
-		// Cosmetic options:
-//		eda.conf.putBool(Options.PRINT_TOP_DOC_TOPICS, true);
-//		eda.conf.putBool(Options.PRINT_TOP_TOPIC_WORDS, true);
-//		eda.conf.putBool(Options.PRINT_DOC_TOPICS, true);
-		eda.conf.putInt(Options.PRINT_INTERVAL, 1);
-//		eda.conf.putBool(Options.PRINT_REDUCED_DOCS, true);
-//		eda.conf.putInt(Options.REDUCED_DOCS_TOP_N, 1);
-		
-		eda.conf.putBool(Options.PRINT_FAST_STATE, true);
-		
-		
-//		eda.conf.putBool(Options.SERIALIZE_MODEL, true);
-		
-		// Algorithm options:
-		eda.conf.putDouble(Options.ALPHA_SUM, 10000);
-//		eda.conf.putDouble(Options.ALPHA_SUM, 10);
-//		eda.conf.putInt(Options.ALPHA_OPTIMIZE_INTERVAL, 1);
-//		eda.conf.putDouble(Options.ALPHA_SUM, DEFAULT_ALPHA_SUM);
-		eda.conf.putDouble(Options.BETA, 0.01);
-		eda.conf.putInt(Options.ITERATIONS, iterations);
-		
-		System.out.print("Processing target corpus...");
-		eda.setTrainingData(targetData);
-		System.out.println("done.");
-		
-		final int minThreads = Runtime.getRuntime().availableProcessors();
-//		int minThreads = 1;
-		final int maxThreads = Runtime.getRuntime().availableProcessors()*3;
-//		int maxThreads = 2;
-		eda.conf.putInt(Options.MIN_THREADS, minThreads);
-		eda.conf.putInt(Options.MAX_THREADS, maxThreads);
-		
-		
-		eda.sample();
+		try(EDA eda = new EDA (tcFact, ttcs, tdc, props.getInt(Options.NUM_TOPICS), Paths.nextRun())) {
+			// Cosmetic options:
+	//		eda.conf.putBool(Options.PRINT_TOP_DOC_TOPICS, true);
+	//		eda.conf.putBool(Options.PRINT_TOP_TOPIC_WORDS, true);
+	//		eda.conf.putBool(Options.PRINT_DOC_TOPICS, true);
+			eda.conf.putInt(Options.PRINT_INTERVAL, 1);
+	//		eda.conf.putBool(Options.PRINT_REDUCED_DOCS, true);
+	//		eda.conf.putInt(Options.REDUCED_DOCS_TOP_N, 1);
+			
+			eda.conf.putBool(Options.PRINT_FAST_STATE, true);
+	//		eda.conf.putBool(Options.SERIALIZE_MODEL, true);
+			
+			// Algorithm options:
+			eda.conf.putDouble(Options.ALPHA_SUM, 10000);
+	//		eda.conf.putDouble(Options.ALPHA_SUM, 10);
+	//		eda.conf.putInt(Options.ALPHA_OPTIMIZE_INTERVAL, 1);
+	//		eda.conf.putDouble(Options.ALPHA_SUM, DEFAULT_ALPHA_SUM);
+			eda.conf.putDouble(Options.BETA, 0.01);
+			eda.conf.putInt(Options.ITERATIONS, iterations);
+			
+			System.out.print("Processing target corpus...");
+			eda.setTrainingData(targetData);
+			System.out.println("done.");
+			
+			final int minThreads = Runtime.getRuntime().availableProcessors();
+			final int maxThreads = Runtime.getRuntime().availableProcessors()*3;
+			eda.conf.putInt(Options.MIN_THREADS, minThreads);
+			eda.conf.putInt(Options.MAX_THREADS, maxThreads);
+			
+			eda.sample();
+		}
 	}
 }

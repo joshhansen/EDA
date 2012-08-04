@@ -9,9 +9,10 @@ import org.apache.lucene.index.TermDocs;
 
 import cc.mallet.types.Alphabet;
 
+import jhn.util.Util;
 import jhn.wp.Fields;
 
-public class LuceneTypeTopicCounts implements TypeTopicCounts {
+public class LuceneTypeTopicCounts implements TypeTopicCounts, AutoCloseable {
 	private final IndexReader topicWordIdx;
 	private final Alphabet typeAlphabet;
 	
@@ -68,6 +69,12 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts {
 		} catch (IOException e) {
 			throw new TypeTopicCountsException(e);
 		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		topicWordIdx.close();
+		Util.closeIfPossible(typeAlphabet);
 	}
 
 }

@@ -32,7 +32,7 @@ import jhn.idx.IntRAMIndex;
 import jhn.util.Config;
 import jhn.util.Util;
 
-public class CountsExtractor {
+public class CountsExtractor implements AutoCloseable {
 	private TopicCounts srcTopicCounts;
 	private TypeTopicCounts srcTypeTopicCounts;
 	private TopicTypeCounts srcTopicTypeCounts;
@@ -204,6 +204,13 @@ public class CountsExtractor {
 		Util.serialize(new ArrayTopicCounts(filteredTopicCounts), filteredTopicCountsFilename);
 		System.out.println("done.");
 	}
+	
+	@Override
+	public void close() throws Exception {
+		Util.closeIfPossible(srcTopicCounts);
+		Util.closeIfPossible(srcTypeTopicCounts);
+		Util.closeIfPossible(srcTopicTypeCounts);
+	}
 
 //	private void extractLabelAlphabet(Config props, IntIndex newTopicNums) {
 //		System.out.print("Building label alphabet...");
@@ -255,11 +262,11 @@ public class CountsExtractor {
 //		LabelAlphabet srcLabels = new LuceneLabelAlphabet(topicWordIdx);
 		
 		// Run
-		CountsExtractor ce = new CountsExtractor(srcTopicCounts, srcTypeTopicCounts, srcTopicTypeCounts,
+		try(CountsExtractor ce = new CountsExtractor(srcTopicCounts, srcTypeTopicCounts, srcTopicTypeCounts,
 				typeCount, minCount, topicMappingFilename, propsFilename, topicCountsFilename, restrictedTopicCountsFilename,
-				filteredTopicCountsFilename, typeTopicCountsFilename);
-		ce.extract();
-		
-		topicWordIdx.close();
+				filteredTopicCountsFilename, typeTopicCountsFilename)) {
+			
+			ce.extract();
+		}
 	}
 }

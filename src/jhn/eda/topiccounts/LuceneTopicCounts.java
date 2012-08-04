@@ -7,7 +7,7 @@ import org.apache.lucene.index.TermFreqVector;
 
 import jhn.wp.Fields;
 
-public class LuceneTopicCounts implements TopicCounts {
+public class LuceneTopicCounts implements TopicCounts, AutoCloseable {
 	private final IndexReader topicWordIdx;
 	
 	public LuceneTopicCounts(IndexReader topicWordIdx) {
@@ -31,6 +31,11 @@ public class LuceneTopicCounts implements TopicCounts {
 		} catch (IOException e) {
 			throw new TopicCountsException(e);
 		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		topicWordIdx.close();
 	}
 
 }

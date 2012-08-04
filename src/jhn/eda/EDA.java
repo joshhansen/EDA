@@ -6,7 +6,6 @@ version 1.0, as published by http://www.opensource.org.	For further
 information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -66,7 +65,7 @@ import jhn.util.Util;
 * 
 * @author Josh Hansen
 */
-public class EDA implements Serializable {
+public class EDA implements Serializable, AutoCloseable {
 	private static final long serialVersionUID = 1L;
 	
 	protected final int numTopics;
@@ -313,8 +312,6 @@ public class EDA implements Serializable {
 				log.println();
 			}
 		}
-		
-		log.close();
 	}
 
 	private int[] docTopicCounts(final int docNum) {
@@ -788,5 +785,16 @@ public class EDA implements Serializable {
 			}
 			out.println();
 		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		log.close();
+		Util.closeIfPossible(allLabels);
+		Util.closeIfPossible(random);
+		Util.closeIfPossible(typeTopicCounts);
+		Util.closeIfPossible(topicDistCalc);
+		Util.closeIfPossible(maxTopicDistCalc);
+		Util.closeIfPossible(topicCountsFact);
 	}
 }

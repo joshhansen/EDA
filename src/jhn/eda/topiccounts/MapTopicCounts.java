@@ -1,6 +1,5 @@
 package jhn.eda.topiccounts;
 
-import java.io.Closeable;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +7,7 @@ import java.util.Map;
 import jhn.util.Factory;
 import jhn.util.Util;
 
-public class MapTopicCounts implements TopicCounter,TopicCounts,Closeable {
+public class MapTopicCounts implements TopicCounter,TopicCounts,AutoCloseable {
 	public static Factory<TopicCounts> factory(final String filename) {
 		final TopicCounts tcs = new MapTopicCounts(filename);
 		return new Factory<TopicCounts>(){

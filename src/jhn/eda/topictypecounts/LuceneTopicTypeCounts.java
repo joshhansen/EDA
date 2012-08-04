@@ -8,9 +8,10 @@ import org.apache.lucene.index.TermFreqVector;
 
 import cc.mallet.types.Alphabet;
 
+import jhn.util.Util;
 import jhn.wp.Fields;
 
-public class LuceneTopicTypeCounts implements TopicTypeCounts {
+public class LuceneTopicTypeCounts implements TopicTypeCounts, AutoCloseable {
 	private final IndexReader topicWordIdx;
 	private final Alphabet typeAlphabet;
 	
@@ -64,5 +65,11 @@ public class LuceneTopicTypeCounts implements TopicTypeCounts {
 			throw new UnsupportedOperationException();
 		}
 		
+	}
+
+	@Override
+	public void close() throws Exception {
+		topicWordIdx.close();
+		Util.closeIfPossible(typeAlphabet);
 	}
 }
