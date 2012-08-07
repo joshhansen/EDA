@@ -33,6 +33,9 @@ import jhn.util.Config;
 import jhn.util.Util;
 
 public class CountsExtractor implements AutoCloseable {
+	private static final boolean EXTRACT_FULL_COUNTS = false;
+	private static final boolean EXTRACT_RESTRICTED_COUNTS = false;
+	
 	private TopicCounts srcTopicCounts;
 	private TypeTopicCounts srcTypeTopicCounts;
 	private TopicTypeCounts srcTopicTypeCounts;
@@ -80,7 +83,7 @@ public class CountsExtractor implements AutoCloseable {
 		
 		IntIndex newTopicNums = new IntRAMIndex();
 		
-		Int2IntOpenHashMap restrictedTopicCounts = new Int2IntOpenHashMap();
+		Int2IntOpenHashMap restrictedTopicCounts = EXTRACT_RESTRICTED_COUNTS ? new Int2IntOpenHashMap() : null;
 		
 		int[][] typeTopicCounts = new int[typeCount][];
 		IntList currentTypeTopicCounts = new IntArrayList();
@@ -111,7 +114,7 @@ public class CountsExtractor implements AutoCloseable {
 					currentTypeTopicCounts.add(topic);
 					currentTypeTopicCounts.add(ttc.count);
 					
-					restrictedTopicCounts.add(topic, ttc.count);
+					if(EXTRACT_RESTRICTED_COUNTS) restrictedTopicCounts.add(topic, ttc.count);
 				} else {
 					skipped++;
 				}
@@ -134,20 +137,24 @@ public class CountsExtractor implements AutoCloseable {
 		System.out.println("Skipped type-topics: " + skipped + " / " + total);
 		
 		System.out.println("Topics: " + newTopicNums.size());
-		System.out.println("Highest topic frequency: " + Collections.max(restrictedTopicCounts.values()));
+//		System.out.println("Highest topic frequency: " + Collections.max(restrictedTopicCounts.values()));
 		
+		if(EXTRACT_RESTRICTED_COUNTS) {
 		System.out.print("\nSerializing restricted topic counts...");
-		restrictedTopicCounts.trim();
-		Util.serialize(new ArrayTopicCounts(topicCountsArr(restrictedTopicCounts)), restrictedTopicCountsFilename);
-		restrictedTopicCounts = null;
-		System.out.println("done.");
+			restrictedTopicCounts.trim();
+			Util.serialize(new ArrayTopicCounts(topicCountsArr(restrictedTopicCounts)), restrictedTopicCountsFilename);
+			restrictedTopicCounts = null;
+			System.out.println("done.");
+		}
 		
 		System.out.print("Serializing type-topic counts...");
 		Util.serialize(new ArrayTypeTopicCounts(typeTopicCounts), typeTopicCountsFilename);
 		typeTopicCounts = null;
 		System.out.println("done.");
 		
-		extractFullTopicCounts(newTopicNums);
+		if(EXTRACT_FULL_COUNTS) {
+			extractFullTopicCounts(newTopicNums);
+		}
 		
 		extractFilteredTopicCounts(newTopicNums);
 		

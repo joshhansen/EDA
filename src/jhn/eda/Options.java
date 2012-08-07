@@ -1,6 +1,6 @@
 package jhn.eda;
 
-enum Options {
+public enum Options {
 	MIN_THREADS,
 	MAX_THREADS,
 	
