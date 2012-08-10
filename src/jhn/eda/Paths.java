@@ -99,11 +99,57 @@ public final class Paths {
 					return runDir(run) + "/aggregate_last" + lastN + "_min" + minCount + ".state";
 				}
 				
+				public static String stateDir(int run) {
+					return runDir(run) + "/state";
+				}
+				
+					public static String stateFilename(int run, int iteration) {
+						return stateDir(run) + "/" + iteration + ".state";
+					}
+				
 				public static String fastStateDir(int run) {
 					return runDir(run) + "/fast_state";
 				}
 					public static String fastStateFilename(int run, int iteration) {
 						return fastStateDir(run) + "/" + iteration + ".fast_state";
+					}
+				
+				public static String reducedDir(int run) {
+					return runDir(run) + "/reduced";
+				}
+				
+					public static String libSvmReducedFilename(int run, int iteration, boolean normalize) {
+						return runDir(run) + "/" + iteration + (normalize ? ".libsvm" : ".libsvm_unnorm");
+					}
+				
+				public static String modelDir(int run) {
+					return runDir(run) + "/model";
+				}
+				
+					public static String modelFilename(int run, int iteration) {
+						return modelDir(run) + "/" + iteration + ".ser";
+					}
+				
+				public static String docTopicsDir(int run) {
+					return runDir(run) + "/doctopics";
+				}
+				
+					public static String docTopicsFilename(int run, int iteration) {
+						return docTopicsDir(run) + "/" + iteration + ".log";
+					}
+				
+				public static String topDocTopicsDir(int run) {
+					return runDir(run) + "/top_doc_topics";
+				}
+					public static String topDocTopicsFilename(int run, int iteration) {
+						return topDocTopicsDir(run) + "/" + iteration + ".log";
+					}
+					
+				public static String topTopicWordsDir(int run) {
+					return runDir(run) + "/top_topic_words";
+				}
+					public static String topTopicWordsFilename(int run, int iteration) {
+						return topTopicWordsDir(run) + "/" + iteration + ".log";
 					}
 				
 				public static String topicLabelHitDataFilename(int run, int iteration) {

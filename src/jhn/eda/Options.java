@@ -34,27 +34,4 @@ public enum Options {
 	
 	ITERATIONS,
 	
-	// Console and Log Output
-	PRINT_INTERVAL,
-	
-	PRINT_LOG_LIKELIHOOD,
-	
-	PRINT_TOP_TOPIC_WORDS,
-	
-	PRINT_TOP_DOC_TOPICS,
-	
-	SERIALIZE_MODEL,
-	
-	PRINT_DOC_TOPICS,
-	
-	/** Print state with one line per token */
-	PRINT_STATE,
-	
-	/** Print state with one line per document, and only indices */
-	PRINT_FAST_STATE,
-
-	PRINT_REDUCED_DOCS,
-	
-	REDUCED_DOCS_TOP_N
-	
 }
