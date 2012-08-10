@@ -8,17 +8,11 @@ package jhn.eda;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
@@ -28,22 +22,18 @@ import java.util.concurrent.TimeUnit;
 
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
-import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.Randoms;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import jhn.counts.Counter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
-import jhn.counts.i.i.i.IntIntIntCounterMap;
-import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
+import jhn.eda.listeners.EDAListener;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
@@ -85,6 +75,7 @@ public class EDA implements Serializable, AutoCloseable {
 	protected transient Log log;
 	public final Config conf = new Config();
 	protected Randoms random;
+	private List<EDAListener> listeners = new ArrayList<>();
 	
 	// Data sources and other helpers
 	protected transient TypeTopicCounts typeTopicCounts;
@@ -123,25 +114,6 @@ public class EDA implements Serializable, AutoCloseable {
 		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
 		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
 		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
-		
-		Object[][] outputs = new Object[][] {
-				{Options.PRINT_DOC_TOPICS, "doctopics"},
-				{Options.PRINT_STATE, "state"},
-				{Options.PRINT_REDUCED_DOCS, "reduced"},
-				{Options.PRINT_TOP_DOC_TOPICS, "top_doc_topics"},
-				{Options.PRINT_TOP_TOPIC_WORDS, "top_topic_words"},
-				{Options.SERIALIZE_MODEL, "model"},
-				{Options.PRINT_FAST_STATE, "fast_state"}
-		};
-		
-		for(Object[] output : outputs) {
-			if(conf.isTrue((Enum<?>)output[0])) {
-				File f = new File(logDir + "/" + output[1]);
-				if(!f.exists()) {
-					f.mkdirs();
-				}
-			}
-		}
 	}
 
 	public void setTrainingData (InstanceList training) throws FileNotFoundException {
@@ -219,7 +191,9 @@ public class EDA implements Serializable, AutoCloseable {
 		final int minThreads = conf.getInt(Options.MIN_THREADS);
 		final int maxThreads = conf.getInt(Options.MAX_THREADS);
 		
-		for (int iteration = 1; iteration <= iterations; iteration++) {			
+		for (int iteration = 1; iteration <= iterations; iteration++) {		
+			fireIterationStarted(iteration);
+			
 			log.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
 			
@@ -242,59 +216,17 @@ public class EDA implements Serializable, AutoCloseable {
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
 			log.println("Iteration " + iteration + " duration: " + elapsedMillis + "ms\t");
 			
-			if(iteration % conf.getInt(Options.PRINT_INTERVAL) == 0) {
-				log.println("Printing output");
-				if(conf.isTrue(Options.PRINT_TOP_DOC_TOPICS) || conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS)) {
-					printTopWordsAndTopics(iteration, 100, 10);
-				}
-				if(conf.isTrue(Options.PRINT_DOC_TOPICS)) {
-					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/doctopics/" + iteration + ".log"))) {
-						printDocumentTopics(out, 0.01, 100);
-					}
-				}
-				
-				if(conf.isTrue(Options.PRINT_STATE)) {
-					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/state/" + iteration + ".state"))) {
-						printState(out);
-					}
-				}
-				
-				if(conf.isTrue(Options.PRINT_FAST_STATE)) {
-					try(PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(run, iteration)))) {
-						printFastState(out);
-					}
-				}
-
-				if(conf.isTrue(Options.PRINT_LOG_LIKELIHOOD)) {
-					log.println("<" + iteration + "> Log Likelihood: " + modelLogLikelihood());
-				}
-				
-				if(conf.isTrue(Options.PRINT_REDUCED_DOCS)) {
-					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm"))) {
-						printReducedDocsLibSvm(out);
-					}
-					
-					try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced/" + iteration + ".libsvm_unnorm"))) {
-						printReducedDocsLibSvm(out, false);
-					}
-				}
-				
-				if(conf.isTrue(Options.SERIALIZE_MODEL)) {
-					Util.serialize(this, logDir + "/model/" + iteration + ".ser");
-				}
-				
-				log.println();
-			}
+			fireIterationEnded(iteration);
 		}
 	}
 
-	private int[] docTopicCounts(final int docNum) {
+	public int[] docTopicCounts(final int docNum) {
 		int[] docTopicCounts = new int[numTopics];
 		docTopicCounts(docNum, docTopicCounts);
 		return docTopicCounts;
 	}
 	
-	private IntIntCounter docTopicCounter(final int docNum) {
+	public IntIntCounter docTopicCounter(final int docNum) {
 		IntIntCounter counts = new IntIntRAMCounter();
 		for(int topic : topics[docNum]) {
 			counts.inc(topic);
@@ -526,236 +458,51 @@ public class EDA implements Serializable, AutoCloseable {
 		return logLikelihood;
 	}
 
-	// 
-	// Methods for displaying and saving results
-	//
-
-	private static final Comparator<Entry<Integer,Counter<Integer,Integer>>> counterCmp = new Comparator<Entry<Integer,Counter<Integer,Integer>>>(){
-		@Override
-		public int compare(Entry<Integer, Counter<Integer,Integer>> o1, Entry<Integer, Counter<Integer,Integer>> o2) {
-			return o2.getValue().totalCount().compareTo(o1.getValue().totalCount());
-		}
-	};
+	public int numDocs() {
+		return numDocs;
+	}
 	
-	private void printTopWordsAndTopics(int iteration, int numTopicsToPrint, int numWords) {
-		log.print("Counting");
-		IntIntIntCounterMap docTopicCounts = new IntIntIntRAMCounterMap();
-		IntIntIntCounterMap topicWordCounts = new IntIntIntRAMCounterMap();
-		
-		final boolean printTopWords = conf.isTrue(Options.PRINT_TOP_TOPIC_WORDS);
-		final boolean printTopTopics = conf.isTrue(Options.PRINT_TOP_DOC_TOPICS);
-		for(int docNum = 0; docNum < numDocs; docNum++) {
-			for(int i = 0; i < docLengths[docNum]; i++) {
-				if(printTopWords) {
-					topicWordCounts.inc(topics[docNum][i], tokens[docNum][i]);
-				}
-				if(printTopTopics) {
-					docTopicCounts.inc(docNum, topics[docNum][i]);
-				}
-			}
-			log.print('.');
-		}
-		log.println();
-		
-		if(printTopWords) {
-			try {
-				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_topic_words/" + iteration + ".log"));
-				printTopTopicWords(topicWordCounts, out, numTopicsToPrint, numWords);
-				out.close();
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		if(printTopTopics) {
-			try {
-				PrintStream out = new PrintStream(new FileOutputStream(logDir + "/top_doc_topics/" + iteration + ".log"));
-				printTopDocTopics(docTopicCounts, out, numWords);
-				out.close();
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
+	public int numTopics() {
+		return numTopics;
+	}
+	
+	public int docLength(int docNum) {
+		return docLengths[docNum];
+	}
+	
+	public String docName(int docNum) {
+		return docNames[docNum];
+	}
+	
+	public int token(int docNum, int position) {
+		return tokens[docNum][position];
+	}
+	
+	public int topic(int docNum, int position) {
+		return topics[docNum][position];
+	}
+	
+	public void addListener(EDAListener l) {
+		listeners.add(l);
+	}
+	
+	public Index<String> allLabels() {
+		return allLabels;
+	}
+	
+	public String docLabel(int docNum) {
+		return docLabels[docNum];
+	}
+	
+	private void fireIterationStarted(int iteration) throws Exception {
+		for(EDAListener sl : listeners) {
+			sl.iterationStarted(iteration);
 		}
 	}
 	
-	private static void printTopTopicWords(IntIntIntCounterMap topicWordCounts, PrintStream out, int numTopics, int numWords) {
-		out.println("Topic words:");
-		List<Entry<Integer,Counter<Integer,Integer>>> topicWordCounters = new ArrayList<>(topicWordCounts.entrySet());
-		Collections.sort(topicWordCounters, counterCmp);
-		
-		for(Entry<Integer,Counter<Integer,Integer>> counterEntry : topicWordCounters.subList(0, numTopics)) {
-			out.print("#");
-			out.print(counterEntry.getKey());
-			out.print(" \"");
-			
-			//FIXME
-//			out.print(topicAlphabet.lookupObject(counterEntry.getKey()));
-			out.print(counterEntry.getKey());
-			
-			out.print("\" [total=");
-			out.print(counterEntry.getValue().totalCount());
-			out.println("]:");
-			out.print('\t');
-			
-			for(Entry<Integer,Integer> countEntry : counterEntry.getValue().topN(numWords)) {
-				Integer typeIdx = countEntry.getKey();
-				Integer typeCount = countEntry.getValue();
-				
-				//FIXME
-//				String type = alphabet.lookupObject(typeIdx).toString();
-//				log.print('\t');
-//				out.print(type);
-				out.print(typeIdx);
-				
-				out.print("[");
-				out.print(typeCount);
-				out.print("] ");
-			}
-			out.println();
-			out.println();
-		}
-	}
-	
-	private void printTopDocTopics(IntIntIntCounterMap docTopicCounts, PrintStream out, int numWords) {
-		out.println("Documents topics:");
-		
-		for(int docNum = 0; docNum < numDocs; docNum++) {
-			IntIntCounter counter = docTopicCounts.getCounter(docNum);
-			
-			out.print(docNames[docNum]);
-			out.print(" [total=");
-			out.print(counter.totalCount());
-			out.println("]:");
-			
-			for(Int2IntMap.Entry countEntry : counter.fastTopN(numWords)) {
-				int topicIdx = countEntry.getIntKey();
-				int typeCount = countEntry.getIntValue();
-				out.print("\t");
-				
-				//FIXME
-//				String topicLabel = topicAlphabet.lookupObject(topicIdx).toString();
-//				out.print(topicLabel);
-				out.print(topicIdx);
-				out.print("[");
-				out.print(typeCount);
-				out.println("]");
-			}
-			out.println();
-		}
-	}
-
-
-	/**
-	 *  @param file        The filename to print to
-	 *  @param threshold   Only print topics with proportion greater than this number
-	 *  @param max         Print no more than this many topics
-	 */
-	private void printDocumentTopics (PrintStream out, double threshold, int max) {
-		if(max < 1) throw new IllegalArgumentException("Max must be 1 or greater");
-		
-		out.print ("#doc source topic proportion ...\n");
-		int[] topicCounts = new int[ numTopics ];
-
-		IDSorter[] sortedTopics = new IDSorter[ numTopics ];
-		for (int topic = 0; topic < numTopics; topic++) {
-			// Initialize the sorters with dummy values
-			sortedTopics[topic] = new IDSorter(topic, topic);
-		}
-
-		for (int docNum = 0; docNum < numDocs; docNum++) {
-			out.print (docNum); out.print (' ');
-			out.print(docNames[docNum]);
-			out.print (' ');
-
-			topicCounts = docTopicCounts(docNum);
-
-			// And normalize
-			for (int topic = 0; topic < numTopics; topic++) {
-				sortedTopics[topic].set(topic, (double) topicCounts[topic] / (double) docLengths[docNum]);
-			}
-			
-			Arrays.sort(sortedTopics);
-
-			for (int i = 0; i < Math.min(max, numTopics); i++) {
-				if (sortedTopics[i].getWeight() < threshold) { break; }
-				
-				out.print (sortedTopics[i].getID() + " " + 
-						  sortedTopics[i].getWeight() + " ");
-			}
-			out.print (" \n");
-
-			Arrays.fill(topicCounts, 0);
-		}
-		
-	}
-	
-	private void printState (PrintStream out) {
-//		out.println ("#doc source pos typeindex type topic");
-		out.println("#doc source pos typeindex topic");
-		for (int docNum = 0; docNum < numDocs; docNum++) {
-			for (int position = 0; position < docLengths[docNum]; position++) {
-				out.print(docNum); out.print(' ');
-				out.print(docNames[docNum]); out.print(' '); 
-				out.print(position); out.print(' ');
-				out.print(tokens[docNum][position]); out.print(' ');
-//				out.print(alphabet.lookupObject(tokens[docNum][position])); out.print(' ');
-				out.print(topics[docNum][position]); out.println();
-			}
-		}
-	}
-	
-	private void printFastState(PrintStream out) {
-		out.println ("#docnum class source token1topic token2topic ... tokenNtopic");
-		for (int docNum = 0; docNum < numDocs; docNum++) {
-			out.print(docNum);
-			out.print(' ');
-			out.print(allLabels.indexOf(docLabels[docNum], false));
-			out.print(' ');
-			out.print(docNames[docNum]);
-			for (int position = 0; position < docLengths[docNum]; position++) {
-				out.print(' ');
-				out.print(topics[docNum][position]);
-			}
-			out.println();
-		}
-	}
-	
-	public static final Comparator<Int2IntMap.Entry> fastKeyCmp = new Comparator<Int2IntMap.Entry>(){
-		@Override
-		public int compare(Int2IntMap.Entry o1, Int2IntMap.Entry o2) {
-			return Util.compareInts(o1.getIntKey(), o2.getIntKey());
-		}
-	};
-	
-	private void printReducedDocsLibSvm(PrintStream out) {
-		printReducedDocsLibSvm(out, true);
-	}
-	
-	private void printReducedDocsLibSvm(PrintStream out, boolean normalize) {
-		int classNum;
-		IntIntCounter docTopicCounts;
-		double docLength;
-		for(int docNum = 0; docNum < numDocs; docNum++) {
-			classNum = allLabels.indexOf(docLabels[docNum], false);
-			docTopicCounts = docTopicCounter(docNum);
-			docLength = docLengths[docNum];
-			
-			out.print(classNum);
-			
-			Int2IntMap.Entry[] entries = docTopicCounts.int2IntEntrySet().toArray(new Int2IntMap.Entry[0]);
-			Arrays.sort(entries, fastKeyCmp);
-			
-			for(Int2IntMap.Entry entry : entries) {
-				out.print(' ');
-				out.print(entry.getIntKey());
-				out.print(':');
-				if(normalize) {
-					out.print( entry.getIntValue() / docLength);
-				} else {
-					out.print(entry.getIntValue());
-				}
-			}
-			out.println();
+	private void fireIterationEnded(int iteration) throws Exception {
+		for(EDAListener sl : listeners) {
+			sl.iterationEnded(iteration);
 		}
 	}
 

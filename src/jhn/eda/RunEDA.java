@@ -4,6 +4,7 @@ import java.io.File;
 
 import cc.mallet.types.InstanceList;
 
+import jhn.eda.listeners.PrintFastState;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topicdistance.ConstTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
@@ -12,6 +13,7 @@ import jhn.util.Config;
 import jhn.util.ConstFactory;
 import jhn.util.Factory;
 import jhn.util.Util;
+
 
 public final class RunEDA {
 	private RunEDA() {}
@@ -44,34 +46,35 @@ public final class RunEDA {
 		Config props = (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
 		
 		TopicDistanceCalculator tdc = new ConstTopicDistanceCalculator(0);
-		try(EDA eda = new EDA (tcFact, ttcs, tdc, props.getInt(Options.NUM_TOPICS), Paths.nextRun())) {
-			// Cosmetic options:
-	//		eda.conf.putBool(Options.PRINT_TOP_DOC_TOPICS, true);
-	//		eda.conf.putBool(Options.PRINT_TOP_TOPIC_WORDS, true);
-	//		eda.conf.putBool(Options.PRINT_DOC_TOPICS, true);
-			eda.conf.putInt(Options.PRINT_INTERVAL, 1);
-	//		eda.conf.putBool(Options.PRINT_REDUCED_DOCS, true);
-	//		eda.conf.putInt(Options.REDUCED_DOCS_TOP_N, 1);
-			
-			eda.conf.putBool(Options.PRINT_FAST_STATE, true);
-	//		eda.conf.putBool(Options.SERIALIZE_MODEL, true);
+		final int run = Paths.nextRun();
+		try(EDA eda = new EDA (tcFact, ttcs, tdc, props.getInt(Options.NUM_TOPICS), run)) {
+			final int PRINT_INTERVAL = 1;
 			
 			// Algorithm options:
 			eda.conf.putDouble(Options.ALPHA_SUM, 10000);
-	//		eda.conf.putDouble(Options.ALPHA_SUM, 10);
-	//		eda.conf.putInt(Options.ALPHA_OPTIMIZE_INTERVAL, 1);
-	//		eda.conf.putDouble(Options.ALPHA_SUM, DEFAULT_ALPHA_SUM);
+//			eda.conf.putDouble(Options.ALPHA_SUM, 10);
+//			eda.conf.putInt(Options.ALPHA_OPTIMIZE_INTERVAL, 1);
+//			eda.conf.putDouble(Options.ALPHA_SUM, DEFAULT_ALPHA_SUM);
 			eda.conf.putDouble(Options.BETA, 0.01);
 			eda.conf.putInt(Options.ITERATIONS, iterations);
+			
+			// Add Listeners
+//			eda.addListener(new PrintState(PRINT_INTERVAL, run));
+			eda.addListener(new PrintFastState(PRINT_INTERVAL, run));
+//			eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, run));
+//			eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, run, false));
+//			eda.addListener(new PrintDocTopics(PRINT_INTERVAL, run));
+//			eda.addListener(new SerializeModel(PRINT_INTERVAL, run));
+//			eda.addListener(new PrintTopDocTopics(PRINT_INTERVAL, run, 10));
+//			eda.addListener(new PrintTopTopicWords(PRINT_INTERVAL, run, 10));
 			
 			System.out.print("Processing target corpus...");
 			eda.setTrainingData(targetData);
 			System.out.println("done.");
 			
-			final int minThreads = Runtime.getRuntime().availableProcessors();
-			final int maxThreads = Runtime.getRuntime().availableProcessors()*3;
-			eda.conf.putInt(Options.MIN_THREADS, minThreads);
-			eda.conf.putInt(Options.MAX_THREADS, maxThreads);
+			final int procs = Runtime.getRuntime().availableProcessors();
+			eda.conf.putInt(Options.MIN_THREADS, procs);
+			eda.conf.putInt(Options.MAX_THREADS, procs*3);
 			
 			eda.sample();
 		}
