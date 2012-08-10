@@ -35,7 +35,6 @@ import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.eda.listeners.EDAListener;
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
 import jhn.eda.topicdistance.StandardMaxTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
@@ -118,7 +117,6 @@ public class EDA implements Serializable, AutoCloseable {
 
 	public void setTrainingData (InstanceList training) throws FileNotFoundException {
 		initLogging();
-		
 		
 		numDocs = training.size();
 		
@@ -337,7 +335,7 @@ public class EDA implements Serializable, AutoCloseable {
 //					System.err.print(alphabet.lookupObject(typeIdx).toString() + " ");
 					System.err.print(typeIdx);
 					System.err.print(' ');
-				} catch(TopicCountsException e) {
+				} catch(Exception e) {
 					e.printStackTrace();
 				}
 			}//end for position

@@ -4,13 +4,7 @@ import java.io.File;
 
 import cc.mallet.types.InstanceList;
 
-import jhn.eda.listeners.PrintDocTopics;
 import jhn.eda.listeners.PrintFastState;
-import jhn.eda.listeners.PrintReducedDocsLibSVM;
-import jhn.eda.listeners.PrintState;
-import jhn.eda.listeners.PrintTopDocTopics;
-import jhn.eda.listeners.PrintTopTopicWords;
-import jhn.eda.listeners.SerializeModel;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topicdistance.ConstTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
