@@ -3,7 +3,9 @@ package jhn.eda.topicdistance;
 import org.apache.lucene.index.IndexReader;
 
 public class LuceneTopicDistanceCalculator implements TopicDistanceCalculator {
+	@SuppressWarnings("unused")
 	private IndexReader articleCategories;
+	@SuppressWarnings("unused")
 	private IndexReader categoryCategories;
 	
 	public LuceneTopicDistanceCalculator(IndexReader articleCategories,

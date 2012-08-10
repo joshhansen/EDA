@@ -11,4 +11,9 @@ public class TopicTypeCountsException extends Exception {
 	public TopicTypeCountsException(Exception originalException) {
 		this.originalException = originalException;
 	}
+
+	public Exception getOriginalException() {
+		return originalException;
+	}
+	
 }
