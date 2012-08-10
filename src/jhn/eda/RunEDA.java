@@ -5,7 +5,7 @@ import java.io.File;
 import cc.mallet.types.InstanceList;
 
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.topicdistance.LuceneTopicDistanceCalculator;
+import jhn.eda.topicdistance.ConstTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Config;
@@ -43,7 +43,7 @@ public final class RunEDA {
 
 		Config props = (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
 		
-		TopicDistanceCalculator tdc = new LuceneTopicDistanceCalculator(null, null);		
+		TopicDistanceCalculator tdc = new ConstTopicDistanceCalculator(0);
 		try(EDA eda = new EDA (tcFact, ttcs, tdc, props.getInt(Options.NUM_TOPICS), Paths.nextRun())) {
 			// Cosmetic options:
 	//		eda.conf.putBool(Options.PRINT_TOP_DOC_TOPICS, true);
