@@ -8,13 +8,13 @@ import jhn.eda.Paths;
 
 /** Print state with one line per document, and only indices */
 public class PrintFastState extends IntervalListener {
-	private final int run;
+	private final String runDir;
 	
-	public PrintFastState(int printInterval, int run) {
+	public PrintFastState(int printInterval, String runDir) {
 		super(printInterval);
-		this.run = run;
+		this.runDir = runDir;
 		
-		File dir = new File(Paths.fastStateDir(run));
+		File dir = new File(Paths.fastStateDir(runDir));
 		if(!dir.exists()) {
 			dir.mkdirs();
 		}
@@ -22,7 +22,7 @@ public class PrintFastState extends IntervalListener {
 
 	@Override
 	protected void iterationEndedAtInterval(int iteration) throws Exception {
-		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(run, iteration)))) {
+		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(runDir, iteration)))) {
 			out.println ("#docnum class source token1topic token2topic ... tokenNtopic");
 			for (int docNum = 0; docNum < eda.numDocs(); docNum++) {
 				out.print(docNum);

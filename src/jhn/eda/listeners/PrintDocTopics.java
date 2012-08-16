@@ -10,24 +10,26 @@ import jhn.eda.Paths;
 import cc.mallet.types.IDSorter;
 
 public class PrintDocTopics extends IntervalListener {
-	private final int run;
+//	private final int run;
+	private final String runDir;
 	private final double threshold;
 	private final int max;
 	
-	public PrintDocTopics(int printInterval, int run) {
-		this(printInterval, run, 0.01, 100);
+	public PrintDocTopics(int printInterval, String runDir) {
+		this(printInterval, runDir, 0.01, 100);
 	}
 	
-	public PrintDocTopics(int printInterval, int run, double threshold, int max) {
+	public PrintDocTopics(int printInterval, String runDir, double threshold, int max) {
 		super(printInterval);
 		
 		if(max < 1) throw new IllegalArgumentException("Max must be 1 or greater");
 		
-		this.run = run;
+		this.runDir = runDir;
+//		this.run = run;
 		this.threshold = threshold;
 		this.max = max;
 		
-		File dir = new File(Paths.docTopicsDir(run));
+		File dir = new File(Paths.docTopicsDir(runDir));
 		if(!dir.exists()) {
 			dir.mkdirs();
 		}
@@ -35,7 +37,7 @@ public class PrintDocTopics extends IntervalListener {
 
 	@Override
 	protected void iterationEndedAtInterval(int iteration) throws Exception {
-		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.docTopicsFilename(run, iteration)))) {
+		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.docTopicsFilename(runDir, iteration)))) {
 			out.print ("#doc source topic proportion ...\n");
 			final int numTopics = eda.numTopics();
 			int[] topicCounts = new int[numTopics];

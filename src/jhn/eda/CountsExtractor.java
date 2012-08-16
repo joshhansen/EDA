@@ -211,8 +211,10 @@ public class CountsExtractor implements AutoCloseable {
 	
 	public static void main(String[] args) throws Exception {
 		// Config
-		int minCount = 2;
-		String datasetName = "reuters21578_noblah";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+//		int minCount = 2;
+//		String datasetName = "reuters21578_noblah";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		String datasetName = "toy_dataset4";
+		int minCount = 0;
 		String topicWordIdxName = "wp_lucene4";
 		System.out.println("Extracting " + datasetName);
 		String datasetFilename = Paths.datasetFilename(datasetName);

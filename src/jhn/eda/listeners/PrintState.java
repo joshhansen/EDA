@@ -9,10 +9,10 @@ import jhn.eda.Paths;
 
 /** Print state with one line per token */
 public class PrintState extends IntervalListener {
-	private final int run;
-	public PrintState(int printInterval, int run) {
+	private final String runDir;
+	public PrintState(int printInterval, String run) {
 		super(printInterval);
-		this.run = run;
+		this.runDir = run;
 		
 		File dir = new File(Paths.stateDir(run));
 		if(!dir.exists()) {
@@ -22,7 +22,7 @@ public class PrintState extends IntervalListener {
 
 	@Override
 	protected void iterationEndedAtInterval(int iteration) throws FileNotFoundException{
-		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.stateFilename(run, iteration)))) {
+		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.stateFilename(runDir, iteration)))) {
 			out.println("#doc source pos typeindex topic");
 			for (int docNum = 0; docNum < eda.numDocs(); docNum++) {
 				for (int position = 0; position < eda.docLength(docNum); position++) {

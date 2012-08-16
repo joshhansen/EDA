@@ -44,7 +44,6 @@ import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.idx.Index;
 import jhn.idx.RAMIndex;
 import jhn.util.Config;
-import jhn.util.Factory;
 import jhn.util.Log;
 import jhn.util.Util;
 
@@ -70,7 +69,6 @@ public class EDA implements Serializable, AutoCloseable {
 	protected Index<String> allLabels;
 	
 	protected final String logDir;
-	protected final int run;
 	protected transient Log log;
 	public final Config conf = new Config();
 	protected Randoms random;
@@ -80,17 +78,17 @@ public class EDA implements Serializable, AutoCloseable {
 	protected transient TypeTopicCounts typeTopicCounts;
 	protected transient TopicDistanceCalculator topicDistCalc;
 	protected transient MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
-	protected transient Factory<TopicCounts> topicCountsFact;
+	protected transient TopicCounts topicCounts;
 	
-	public EDA (Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts,
-			TopicDistanceCalculator topicDistCalc, final int numTopics, final int run) {
-		this(topicCountsFact, typeTopicCounts, topicDistCalc, numTopics, run, new Randoms());
+	public EDA (TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
+			TopicDistanceCalculator topicDistCalc, final int numTopics, final String logDir) {
+		this(topicCountsFact, typeTopicCounts, topicDistCalc, numTopics, logDir, new Randoms());
 	}
 	
-	public EDA(Factory<TopicCounts> topicCountsFact, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
-			final int numTopics, final int run, Randoms random) {
+	public EDA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
+			final int numTopics, final String logDir, Randoms random) {
 		
-		this.topicCountsFact = topicCountsFact;
+		this.topicCounts = topicCounts;
 		this.typeTopicCounts = typeTopicCounts;
 		this.topicDistCalc = topicDistCalc;
 		this.random = random;
@@ -98,8 +96,7 @@ public class EDA implements Serializable, AutoCloseable {
 		this.numTopics = numTopics;
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
-		this.logDir = Paths.runDir(run);
-		this.run = run;
+		this.logDir = logDir;
 	}
 	
 	private void initLogging() throws FileNotFoundException {
@@ -172,6 +169,8 @@ public class EDA implements Serializable, AutoCloseable {
 	}
 
 	public void sample () throws Exception {
+		fireSamplerInit();
+		
 		// Compute alpha from alphaSum
 		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / conf.getInt(Options.NUM_TOPICS);
 		conf.putDouble(Options.ALPHA, startingAlpha);
@@ -202,7 +201,7 @@ public class EDA implements Serializable, AutoCloseable {
 			
 			// Loop over every document in the corpus
 			for (int docNum = 0; docNum < numDocs; docNum++) {
-				exec.execute(new DocumentSampler(docNum, maxTopicDistance, topicCountsFact.create()));
+				exec.execute(new DocumentSampler(docNum, maxTopicDistance));
 			}
 			
 			exec.shutdown();
@@ -216,6 +215,8 @@ public class EDA implements Serializable, AutoCloseable {
 			
 			fireIterationEnded(iteration);
 		}
+		
+		fireSamplerTerminate();
 	}
 
 	public int[] docTopicCounts(final int docNum) {
@@ -232,20 +233,19 @@ public class EDA implements Serializable, AutoCloseable {
 		return counts;
 	}
 	
-	private void docTopicCounts(final int docNum, final int[] topicCounts) {
+	private void docTopicCounts(final int docNum, final int[] topicCountsArr) {
 		for(int topic : topics[docNum]) {
-			topicCounts[topic]++;
+			topicCountsArr[topic]++;
 		}
 	}
 	
 	private class DocumentSampler implements Runnable {
 		private final int docNum;
 		private final double maxTopicDistance;
-		private TopicCounts topicCounts;
-		public DocumentSampler(int docNum, double maxTopicDistance, TopicCounts topicCounts) {
+		
+		public DocumentSampler(int docNum, double maxTopicDistance) {
 			this.docNum = docNum;
 			this.maxTopicDistance = maxTopicDistance;
-			this.topicCounts = topicCounts;
 		}
 		
 		@Override
@@ -382,7 +382,7 @@ public class EDA implements Serializable, AutoCloseable {
 		double logLikelihood = 0.0;
 
 		// Do the documents first
-		int[] topicCounts = new int[numTopics];
+		int[] topicCountsArr = new int[numTopics];
 		double[] topicLogGammas = new double[numTopics];
 
 		for (int topic=0; topic < numTopics; topic++) {
@@ -391,12 +391,12 @@ public class EDA implements Serializable, AutoCloseable {
 	
 		for (int docNum=0; docNum < numDocs; docNum++) {
 			for(int topic : topics[docNum]) {
-				topicCounts[topic]++;
+				topicCountsArr[topic]++;
 			}
 
 			for (int topic=0; topic < numTopics; topic++) {
-				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGamma(alpha + topicCounts[topic]) -
+				if (topicCountsArr[topic] > 0) {
+					logLikelihood += (Dirichlet.logGamma(alpha + topicCountsArr[topic]) -
 									  topicLogGammas[ topic ]);
 				}
 			}
@@ -404,7 +404,7 @@ public class EDA implements Serializable, AutoCloseable {
 			// subtract the (count + parameter) sum term
 			logLikelihood -= Dirichlet.logGamma(alphaSum + docLengths[docNum]);
 
-			Arrays.fill(topicCounts, 0);
+			Arrays.fill(topicCountsArr, 0);
 		}
 	
 		// add the parameter sum term
@@ -492,6 +492,12 @@ public class EDA implements Serializable, AutoCloseable {
 		return docLabels[docNum];
 	}
 	
+	private void fireSamplerInit() throws Exception {
+		for(EDAListener l : listeners) {
+			l.samplerInit(this);
+		}
+	}
+	
 	private void fireIterationStarted(int iteration) throws Exception {
 		for(EDAListener sl : listeners) {
 			sl.iterationStarted(iteration);
@@ -503,15 +509,21 @@ public class EDA implements Serializable, AutoCloseable {
 			sl.iterationEnded(iteration);
 		}
 	}
+	
+	private void fireSamplerTerminate() throws Exception {
+		for(EDAListener l : listeners) {
+			l.samplerTerminate();
+		}
+	}
 
 	@Override
 	public void close() throws Exception {
 		log.close();
-		Util.closeIfPossible(allLabels);
-		Util.closeIfPossible(random);
-		Util.closeIfPossible(typeTopicCounts);
-		Util.closeIfPossible(topicDistCalc);
-		Util.closeIfPossible(maxTopicDistCalc);
-		Util.closeIfPossible(topicCountsFact);
+//		Util.closeIfPossible(allLabels);
+//		Util.closeIfPossible(random);
+//		Util.closeIfPossible(typeTopicCounts);
+//		Util.closeIfPossible(topicDistCalc);
+//		Util.closeIfPossible(maxTopicDistCalc);
+//		Util.closeIfPossible(topicCounts);
 	}
 }
