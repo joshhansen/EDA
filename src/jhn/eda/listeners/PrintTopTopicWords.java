@@ -15,11 +15,11 @@ import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
 import jhn.eda.Paths;
 
 public class PrintTopTopicWords extends IntervalListener {
-	private final int run;
+	private final String runDir;
 	private final int numWords;
-	public PrintTopTopicWords(int printInterval, int run, int numWords) {
+	public PrintTopTopicWords(int printInterval, String run, int numWords) {
 		super(printInterval);
-		this.run = run;
+		this.runDir = run;
 		this.numWords = numWords;
 		
 		File dir = new File(Paths.topTopicWordsDir(run));
@@ -45,12 +45,12 @@ public class PrintTopTopicWords extends IntervalListener {
 			}
 		}
 		
-		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.topTopicWordsFilename(run, iteration)))) {
+		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.topTopicWordsFilename(runDir, iteration)))) {
 			out.println("Topic words:");
 			List<Entry<Integer,Counter<Integer,Integer>>> topicWordCounters = new ArrayList<>(topicWordCounts.entrySet());
 			Collections.sort(topicWordCounters, counterCmp);
 			
-			for(Entry<Integer,Counter<Integer,Integer>> counterEntry : topicWordCounters.subList(0, eda.numTopics())) {
+			for(Entry<Integer,Counter<Integer,Integer>> counterEntry : topicWordCounters.subList(0, Math.min(eda.numTopics(), topicWordCounters.size()))) {
 				out.print("#");
 				out.print(counterEntry.getKey());
 				out.print(" \"");

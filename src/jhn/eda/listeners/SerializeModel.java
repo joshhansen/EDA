@@ -6,10 +6,10 @@ import jhn.eda.Paths;
 import jhn.util.Util;
 
 public class SerializeModel extends IntervalListener {
-	private final int run;
-	public SerializeModel(int printInterval, int run) {
+	private final String runDir;
+	public SerializeModel(int printInterval, String run) {
 		super(printInterval);
-		this.run = run;
+		this.runDir = run;
 		
 		File dir = new File(Paths.modelDir(run));
 		if(!dir.exists()) {
@@ -19,7 +19,7 @@ public class SerializeModel extends IntervalListener {
 	
 	@Override
 	protected void iterationEndedAtInterval(int iteration) throws Exception {
-		Util.serialize(eda, Paths.modelFilename(run, iteration));
+		Util.serialize(eda, Paths.modelFilename(runDir, iteration));
 	}
 	
 }

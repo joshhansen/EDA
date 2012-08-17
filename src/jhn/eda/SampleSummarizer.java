@@ -40,9 +40,9 @@ public class SampleSummarizer {
 		}
 	};
 	
-	private static void summarize(int run, int lastN, int minCount, boolean classOnly) throws IOException {
-		String fastStateDir = Paths.fastStateDir(run);
-		String summaryFilename = Paths.sampleSummaryFilename(run, lastN, minCount);
+	public static void summarize(String runDir, int lastN, int minCount, boolean classOnly) throws IOException {
+		String fastStateDir = Paths.fastStateDir(runDir);
+		String summaryFilename = Paths.sampleSummaryFilename(runDir, lastN, minCount);
 		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
 		Int2IntMap classes = new Int2IntOpenHashMap();
@@ -98,47 +98,47 @@ public class SampleSummarizer {
 		IntIntCounter counts;
 		Int2IntMap.Entry[] entries;
 		
-		PrintStream w = new PrintStream(new FileOutputStream(summaryFilename));
-		w.print("#class");
-		if(!classOnly) {
-			w.print(" docnum docsrc");
-		}
-		w.println(" topic1id:topic1count topic2id:topic2count ... topicNid:topicNcount");
-		for(Int2ObjectMap.Entry<Counter<Integer, Integer>> entry : aggregateDocTopicCounts.int2ObjectEntrySet()) {
-			docNum = entry.getIntKey();
-			docClass = classes.get(docNum);
-			w.print(docClass);
+		try(PrintStream w = new PrintStream(new FileOutputStream(summaryFilename))) {
+			w.print("#class");
 			if(!classOnly) {
-				w.print(' ');
-				w.print(docNum);
-				w.print(' ');
-				w.print(sources.get(docNum));
+				w.print(" docnum docsrc");
 			}
-			
-			counts = (IntIntCounter) entry.getValue();
-			entries = counts.int2IntEntrySet().toArray(new Int2IntMap.Entry[0]);
-			
-			Arrays.sort(entries, cmp);
-			
-			for(Int2IntMap.Entry count : entries) {
-				topic = count.getIntKey();
-				if(count.getIntValue() >= minCount) {
+			w.println(" topic1id:topic1count topic2id:topic2count ... topicNid:topicNcount");
+			for(Int2ObjectMap.Entry<Counter<Integer, Integer>> entry : aggregateDocTopicCounts.int2ObjectEntrySet()) {
+				docNum = entry.getIntKey();
+				docClass = classes.get(docNum);
+				w.print(docClass);
+				if(!classOnly) {
 					w.print(' ');
-					w.print(topic);
-					w.print(':');
-					w.print(count.getIntValue());
+					w.print(docNum);
+					w.print(' ');
+					w.print(sources.get(docNum));
 				}
+				
+				counts = (IntIntCounter) entry.getValue();
+				entries = counts.int2IntEntrySet().toArray(new Int2IntMap.Entry[0]);
+				
+				Arrays.sort(entries, cmp);
+				
+				for(Int2IntMap.Entry count : entries) {
+					topic = count.getIntKey();
+					if(count.getIntValue() >= minCount) {
+						w.print(' ');
+						w.print(topic);
+						w.print(':');
+						w.print(count.getIntValue());
+					}
+				}
+				w.println();
 			}
-			w.println();
 		}
-		
-		w.close();
 	}
 	
 	public static void main(String[] args) throws IOException {
 		final int lastN = 50;
 		final int run = 17;
 		final int minCount = 0;
-		summarize(run, lastN, minCount, false);
+		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
+		summarize(runDir, lastN, minCount, false);
 	}
 }

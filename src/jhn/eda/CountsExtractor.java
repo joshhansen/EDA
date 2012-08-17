@@ -1,7 +1,6 @@
 package jhn.eda;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Iterator;
 
 import org.apache.lucene.index.IndexReader;
@@ -18,7 +17,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import jhn.eda.topiccounts.ArrayTopicCounts;
 import jhn.eda.topiccounts.LuceneTopicCounts;
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.topiccounts.TopicCountsException;
 import jhn.eda.topictypecounts.LuceneTopicTypeCounts;
 import jhn.eda.topictypecounts.TopicTypeCount;
 import jhn.eda.topictypecounts.TopicTypeCounts;
@@ -166,7 +164,7 @@ public class CountsExtractor implements AutoCloseable {
 		Util.serialize(props, extractedPropsFilename);
 	}
 
-	private void extractFullTopicCounts(IntIndex newTopicNums) throws TopicCountsException {
+	private void extractFullTopicCounts(IntIndex newTopicNums) throws Exception {
 		System.out.print("Building full topic counts...");
 		int[] topicCounts = new int[newTopicNums.size()];
 		for(int topicNum = 0; topicNum < newTopicNums.size(); topicNum++) {
@@ -213,8 +211,10 @@ public class CountsExtractor implements AutoCloseable {
 	
 	public static void main(String[] args) throws Exception {
 		// Config
-		int minCount = 2;
-		String datasetName = "reuters21578_noblah";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+//		int minCount = 2;
+//		String datasetName = "reuters21578_noblah";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		String datasetName = "toy_dataset4";
+		int minCount = 0;
 		String topicWordIdxName = "wp_lucene4";
 		System.out.println("Extracting " + datasetName);
 		String datasetFilename = Paths.datasetFilename(datasetName);

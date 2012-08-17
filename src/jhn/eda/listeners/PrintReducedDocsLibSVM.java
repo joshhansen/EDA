@@ -13,16 +13,16 @@ import jhn.eda.Paths;
 import jhn.util.Util;
 
 public class PrintReducedDocsLibSVM extends IntervalListener {
-	private final int run;
+	private final String runDir;
 	private final boolean normalize;
 	
-	public PrintReducedDocsLibSVM(int printInterval, int run) {
+	public PrintReducedDocsLibSVM(int printInterval, String run) {
 		this(printInterval, run, true);
 	}
 	
-	public PrintReducedDocsLibSVM(int printInterval, int run, boolean normalize) {
+	public PrintReducedDocsLibSVM(int printInterval, String run, boolean normalize) {
 		super(printInterval);
-		this.run = run;
+		this.runDir = run;
 		this.normalize = normalize;
 		
 		File dir = new File(Paths.reducedDir(run));
@@ -40,7 +40,7 @@ public class PrintReducedDocsLibSVM extends IntervalListener {
 
 	@Override
 	protected void iterationEndedAtInterval(int iteration) throws Exception {
-		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.libSvmReducedFilename(run, iteration, normalize)))) {
+		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.libSvmReducedFilename(runDir, iteration, normalize)))) {
 			int classNum;
 			IntIntCounter docTopicCounts;
 			double docLength;
@@ -59,7 +59,7 @@ public class PrintReducedDocsLibSVM extends IntervalListener {
 					out.print(entry.getIntKey());
 					out.print(':');
 					if(normalize) {
-						out.print( entry.getIntValue() / docLength);
+						out.print(entry.getIntValue() / docLength);
 					} else {
 						out.print(entry.getIntValue());
 					}

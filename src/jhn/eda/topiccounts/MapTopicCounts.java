@@ -1,9 +1,9 @@
 package jhn.eda.topiccounts;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
+import jhn.counts.i.i.IntIntCounter;
+import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.util.Factory;
 import jhn.util.Util;
 
@@ -21,17 +21,17 @@ public class MapTopicCounts implements TopicCounter,TopicCounts,AutoCloseable {
 	
 	private final String outputFilename;
 	
-	//FIXME Replace Map<Integer,Integer> with IntIntCounter
-	private Map<Integer,Integer> counts;
+	private IntIntCounter counts;
 	private boolean creating;
+
 	public MapTopicCounts(String outputFilename) {
 		this.outputFilename = outputFilename;
 		creating = ! new File(outputFilename).exists();
 		if(creating) {
-			counts = new HashMap<>();
+			counts = new IntIntRAMCounter();
 		} else {
 			try {
-				counts = (Map<Integer, Integer>) Util.deserialize(outputFilename);
+				counts = (IntIntCounter) Util.deserialize(outputFilename);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -41,7 +41,7 @@ public class MapTopicCounts implements TopicCounter,TopicCounts,AutoCloseable {
 	
 	@Override
 	public void setTotalCount(int topic, int count) {
-		counts.put(topic, count);
+		counts.set(topic, count);
 	}
 
 	@Override
@@ -52,12 +52,8 @@ public class MapTopicCounts implements TopicCounter,TopicCounts,AutoCloseable {
 	}
 
 	@Override
-	public int topicCount(int topicID) throws TopicCountsException {
-		Integer count = counts.get(topicID);
-		if(count == null) {
-			throw new TopicCountsException();
-		}
-		return count.intValue();
+	public int topicCount(int topicID) {
+		return counts.getCount(topicID);
 	}
 
 }

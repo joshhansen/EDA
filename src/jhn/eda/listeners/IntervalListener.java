@@ -15,7 +15,10 @@ public abstract class IntervalListener extends EDAListener {
 		}
 	}
 	
-	protected void iterationStartedAtInterval(int iteration) throws Exception {}
+	@SuppressWarnings("unused")
+	protected void iterationStartedAtInterval(int iteration) throws Exception {
+		// Override me
+	}
 
 	@Override
 	public void iterationEnded(int iteration) throws Exception {
@@ -24,6 +27,9 @@ public abstract class IntervalListener extends EDAListener {
 		}
 	}
 	
-	protected void iterationEndedAtInterval(int iteration) throws Exception {}
+	@SuppressWarnings("unused")
+	protected void iterationEndedAtInterval(int iteration) throws Exception {
+		// Override me
+	}
 	
 }

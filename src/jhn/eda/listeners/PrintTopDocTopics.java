@@ -12,11 +12,11 @@ import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
 import jhn.eda.Paths;
 
 public class PrintTopDocTopics extends IntervalListener {
-	private final int run;
+	private final String runDir;
 	private final int numWords;
-	public PrintTopDocTopics(int printInterval, int run, int numWords) {
+	public PrintTopDocTopics(int printInterval, String run, int numWords) {
 		super(printInterval);
-		this.run = run;
+		this.runDir = run;
 		this.numWords = numWords;
 		
 		File dir = new File(Paths.topDocTopicsDir(run));
@@ -34,7 +34,7 @@ public class PrintTopDocTopics extends IntervalListener {
 			}
 		}
 		
-		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.topDocTopicsFilename(run, iteration)))) {
+		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.topDocTopicsFilename(runDir, iteration)))) {
 			out.println("Documents topics:");
 			
 			for(int docNum = 0; docNum < eda.numDocs(); docNum++) {
