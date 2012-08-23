@@ -50,22 +50,6 @@ public final class Paths {
 				public static String typeTopicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
 					return typeTopicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
 				}
-		
-		public static String indicesDir() {
-			return outputDir() + "/indices";
-		}
-		
-			public static String indexDir(String indexName) {
-				return indicesDir() + "/" + indexName;
-			}
-			
-				public static String topicWordIndicesDir() {
-					return indexDir("topic_words");
-				}
-			
-				public static String topicWordIndexDir(String name) {
-					return topicWordIndicesDir() + "/" + name;
-				}
 			
 			public static String topicMappingsDir() {
 				return outputDir() + "/topic_mappings";
