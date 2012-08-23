@@ -112,7 +112,7 @@ public class RunEDA {
 	
 	protected InstanceList loadTargetData() {
 		System.out.print("Loading target corpus...");
-		InstanceList theTargetData = InstanceList.load(new File(Paths.datasetFilename(datasetName)));
+		InstanceList theTargetData = InstanceList.load(new File(jhn.Paths.malletDatasetFilename(datasetName)));
 		System.out.println("done.");
 		return theTargetData;
 	}

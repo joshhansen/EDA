@@ -4,14 +4,6 @@ package jhn.eda;
 public final class Paths {
 	private Paths() {}
 	
-	public static String datasetsDir() {
-		return jhn.Paths.outputDir("LDA") + "/datasets";
-	}
-	
-		public static String datasetFilename(String datasetName) {
-			return datasetsDir() + "/" + datasetName + ".mallet";
-		}
-	
 	public static String outputDir() {
 		return jhn.Paths.outputDir("EDA");
 	}

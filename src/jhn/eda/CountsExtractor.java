@@ -217,7 +217,7 @@ public class CountsExtractor implements AutoCloseable {
 		int minCount = 0;
 		String topicWordIdxName = "wp_lucene4";
 		System.out.println("Extracting " + datasetName);
-		String datasetFilename = Paths.datasetFilename(datasetName);
+		String datasetFilename = jhn.Paths.malletDatasetFilename(datasetName);
 		String topicWordIdxLuceneDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
 		
 		String topicMappingFilename =              Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
