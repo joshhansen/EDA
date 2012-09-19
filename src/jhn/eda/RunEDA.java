@@ -8,8 +8,6 @@ import cc.mallet.types.InstanceList;
 
 import jhn.eda.listeners.PrintFastState;
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.topicdistance.ConstTopicDistanceCalculator;
-import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Config;
 import jhn.util.Util;
@@ -31,7 +29,6 @@ public class RunEDA {
 	protected TypeTopicCounts ttcs;
 	protected TopicCounts tcs;
 	protected Config props;
-	protected TopicDistanceCalculator tdc;
 	
 	public RunEDA() {
 		runsDir = Paths.defaultRunsDir();
@@ -53,7 +50,6 @@ public class RunEDA {
 		Util.closeIfPossible(ttcs);
 		Util.closeIfPossible(tcs);
 		Util.closeIfPossible(props);
-		tdc = loadTopicDistanceCalculator();
 	}
 	
 	public void run() throws Exception {
@@ -87,11 +83,6 @@ public class RunEDA {
 
 	protected Config loadProps() throws FileNotFoundException, IOException, ClassNotFoundException {
 		return (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
-	}
-
-	@SuppressWarnings("static-method")
-	protected ConstTopicDistanceCalculator loadTopicDistanceCalculator() {
-		return new ConstTopicDistanceCalculator(0);
 	}
 	
 	protected void configure(Config conf) {

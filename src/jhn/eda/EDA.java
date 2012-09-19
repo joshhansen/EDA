@@ -35,9 +35,6 @@ import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.eda.listeners.EDAListener;
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
-import jhn.eda.topicdistance.StandardMaxTopicDistanceCalculator;
-import jhn.eda.topicdistance.TopicDistanceCalculator;
 import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
@@ -76,21 +73,18 @@ public class EDA implements Serializable {
 	
 	// Data sources and other helpers
 	protected transient TypeTopicCounts typeTopicCounts;
-	protected transient TopicDistanceCalculator topicDistCalc;
-	protected transient MaxTopicDistanceCalculator maxTopicDistCalc = new StandardMaxTopicDistanceCalculator();
 	protected transient TopicCounts topicCounts;
 	
 	public EDA (TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
-			TopicDistanceCalculator topicDistCalc, final int numTopics, final String logDir) {
-		this(topicCountsFact, typeTopicCounts, topicDistCalc, numTopics, logDir, new Randoms());
+			final int numTopics, final String logDir) throws FileNotFoundException {
+		this(topicCountsFact, typeTopicCounts, numTopics, logDir, new Randoms());
 	}
 	
-	public EDA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, TopicDistanceCalculator topicDistCalc,
-			final int numTopics, final String logDir, Randoms random) {
+	public EDA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts,
+			final int numTopics, final String logFilename, Randoms random) throws FileNotFoundException {
 		
 		this.topicCounts = topicCounts;
 		this.typeTopicCounts = typeTopicCounts;
-		this.topicDistCalc = topicDistCalc;
 		this.random = random;
 		
 		this.numTopics = numTopics;
@@ -108,8 +102,6 @@ public class EDA implements Serializable {
 		log = new Log(System.out, logDir + "/main.log");
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
 		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
-		log.println("Topic Distance Calc: " + topicDistCalc.getClass().getSimpleName());
-		log.println("Max Topic Distance Calc: " + maxTopicDistCalc.getClass().getSimpleName());
 	}
 
 	public void setTrainingData (InstanceList training) throws FileNotFoundException {
@@ -194,14 +186,12 @@ public class EDA implements Serializable {
 			log.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
 			
-			final double maxTopicDistance = maxTopicDistCalc.maxTopicDistance(iteration, iterations);
-			
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
 			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
 			
 			// Loop over every document in the corpus
 			for (int docNum = 0; docNum < numDocs; docNum++) {
-				exec.execute(new DocumentSampler(docNum, maxTopicDistance));
+				exec.execute(new DocumentSampler(docNum));
 			}
 			
 			exec.shutdown();
@@ -241,11 +231,9 @@ public class EDA implements Serializable {
 	
 	private class DocumentSampler implements Runnable {
 		private final int docNum;
-		private final double maxTopicDistance;
 		
-		public DocumentSampler(int docNum, double maxTopicDistance) {
+		public DocumentSampler(int docNum) {
 			this.docNum = docNum;
-			this.maxTopicDistance = maxTopicDistance;
 		}
 		
 		@Override
@@ -287,22 +275,17 @@ public class EDA implements Serializable {
 					ttcIt = typeTopicCounts.typeTopicCounts(typeIdx);
 					while(ttcIt.hasNext()) {
 						ttc = ttcIt.next();
+						topicCount = topicCounts.topicCount(ttc.topic);
 						
-						topicInRange = topicDistCalc.topicDistance(oldTopic, ttc.topic) <= maxTopicDistance;
+						countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
+						score = (alphas[ttc.topic] + docTopicCounts[ttc.topic] - countDelta) *
+								(beta + ttc.count) /
+								(betaSum + topicCount - countDelta);
 						
-						if(topicInRange) {
-							topicCount = topicCounts.topicCount(ttc.topic);
-							
-							countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
-							score = (alphas[ttc.topic] + docTopicCounts[ttc.topic] - countDelta) *
-									(beta + ttc.count) /
-									(betaSum + topicCount - countDelta);
-							
-							sum += score;
-							
-							ccTopics.add(ttc.topic);
-							ccScores.add(score);
-						}
+						sum += score;
+						
+						ccTopics.add(ttc.topic);
+						ccScores.add(score);
 					}
 					
 					if(sum <= 0.0) {
