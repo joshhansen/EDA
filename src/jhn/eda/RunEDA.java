@@ -14,7 +14,7 @@ import jhn.util.Util;
 
 
 public class RunEDA {
-	protected static final int PRINT_INTERVAL = 1;
+	private static final int PRINT_INTERVAL = 1;
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 	public static final double DEFAULT_ALPHA_SUM = 50.0;
 	public static final double DEFAULT_BETA = 0.01;
