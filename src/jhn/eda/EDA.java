@@ -443,8 +443,18 @@ public class EDA implements Serializable {
 		return docLengths[docNum];
 	}
 	
+	// NOTE: gives public access to internals of private member
+	public int[] docLengths() {
+		return docLengths;
+	}
+	
 	public String docName(int docNum) {
 		return docNames[docNum];
+	}
+	
+	// NOTE: gives public access to internals of private member
+	public String[] docNames() {
+		return docNames;
 	}
 	
 	public int token(int docNum, int position) {
@@ -453,6 +463,11 @@ public class EDA implements Serializable {
 	
 	public int topic(int docNum, int position) {
 		return topics[docNum][position];
+	}
+	
+	// NOTE: gives public access to internals of private member
+	public int[][] topics() {
+		return topics;
 	}
 	
 	public void addListener(EDAListener l) {
@@ -465,6 +480,11 @@ public class EDA implements Serializable {
 	
 	public String docLabel(int docNum) {
 		return docLabels[docNum];
+	}
+	
+	// NOTE: gives public access to internals of private member
+	public String[] docLabels() {
+		return docLabels;
 	}
 	
 	private void fireSamplerInit() throws Exception {
