@@ -142,14 +142,6 @@ public final class Paths {
 				public static String topicLabelHitDataFilename(String runDir, int iteration) {
 					return runDir + "/topic_label_hit_data_it" + iteration + ".csv";
 				}
-				
-				public static String documentLabelHitDataFilename(String runDir, int iteration) {
-					return runDir + "/document_label_hit_data_it" + iteration + ".csv";
-				}
-				
-				public static String documentLabelHitDataFilename(String runDir, int lastN, int minCount) {
-					return runDir + "/document_label_hit_data_last" + lastN + "_min" + minCount + ".csv";
-				}
 	
 	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
 		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
