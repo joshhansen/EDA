@@ -6,7 +6,6 @@ version 1.0, as published by http://www.opensource.org.	For further
 information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,7 +41,6 @@ import jhn.idx.Index;
 import jhn.idx.RAMIndex;
 import jhn.util.Config;
 import jhn.util.Log;
-import jhn.util.Util;
 
 /**
 * An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew
@@ -65,7 +63,6 @@ public class EDA implements Serializable {
 	protected String[] docLabels;
 	protected Index<String> allLabels;
 	
-	protected final String logDir;
 	protected transient Log log;
 	public final Config conf = new Config();
 	protected Randoms random;
@@ -90,23 +87,16 @@ public class EDA implements Serializable {
 		this.numTopics = numTopics;
 		conf.putInt(Options.NUM_TOPICS, numTopics);
 		
-		this.logDir = logDir;
+		initLogging(logFilename);
 	}
 	
-	private void initLogging() throws FileNotFoundException {
-		File logFile = new File(logDir);
-		if(!logFile.exists()) {
-			logFile.mkdirs();
-		}
-		
-		log = new Log(System.out, logDir + "/main.log");
+	private void initLogging(String logFilename) throws FileNotFoundException {
+		log = new Log(System.out, logFilename);
 		log.println(EDA.class.getName() + ": " + numTopics + " topics");
 		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
 	}
 
 	public void setTrainingData (InstanceList training) throws FileNotFoundException {
-		initLogging();
-		
 		numDocs = training.size();
 		
 		log.println("Dataset instances: " + training.size());
