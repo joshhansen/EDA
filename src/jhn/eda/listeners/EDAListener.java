@@ -9,10 +9,12 @@ public class EDAListener {
 		this.eda = sampler;
 	}
 	
+	@SuppressWarnings("unused")
 	public void iterationStarted(int iteration) throws Exception {
 		// Override me
 	}
 	
+	@SuppressWarnings("unused")
 	public void iterationEnded(int iteration) throws Exception {
 		// Override me
 	}
