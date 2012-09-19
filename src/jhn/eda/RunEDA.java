@@ -46,6 +46,13 @@ public class RunEDA {
 		ttcs = loadTypeTopicCounts();
 		tcs = loadTopicCounts();
 		props = loadProps();
+	}
+	
+	protected void unloadAll() throws Exception {
+		Util.closeIfPossible(targetData);
+		Util.closeIfPossible(ttcs);
+		Util.closeIfPossible(tcs);
+		Util.closeIfPossible(props);
 		tdc = loadTopicDistanceCalculator();
 	}
 	
@@ -53,15 +60,15 @@ public class RunEDA {
 		moveToNextRun();
 		loadAll();
 		runEDA();
+		unloadAll();
 	}
 
 	protected void runEDA() throws FileNotFoundException, Exception {
-		try(EDA eda = new EDA (tcs, ttcs, tdc, props.getInt(Options.NUM_TOPICS), runDir())) {
-			configure(eda.conf);
-			addListeners(eda);
-			processTargetData(eda);
-			eda.sample();
-		}
+		EDA eda = new EDA (tcs, ttcs, props.getInt(Options.NUM_TOPICS), runDir()+"/main.log");
+		configure(eda.conf);
+		addListeners(eda);
+		processTargetData(eda);
+		eda.sample();
 	}
 	
 	protected void moveToNextRun() {

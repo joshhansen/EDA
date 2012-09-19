@@ -53,7 +53,7 @@ import jhn.util.Util;
 * 
 * @author Josh Hansen
 */
-public class EDA implements Serializable, AutoCloseable {
+public class EDA implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	protected final int numTopics;
@@ -339,13 +339,6 @@ public class EDA implements Serializable, AutoCloseable {
 				}
 			}//end for position
 			
-			try {
-				Util.closeIfPossible(topicCounts);
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new IllegalArgumentException();
-			}
-			
 			samplerFinished();
 		}
 		
@@ -513,16 +506,5 @@ public class EDA implements Serializable, AutoCloseable {
 		for(EDAListener l : listeners) {
 			l.samplerTerminate();
 		}
-	}
-
-	@Override
-	public void close() throws Exception {
-		log.close();
-//		Util.closeIfPossible(allLabels);
-//		Util.closeIfPossible(random);
-//		Util.closeIfPossible(typeTopicCounts);
-//		Util.closeIfPossible(topicDistCalc);
-//		Util.closeIfPossible(maxTopicDistCalc);
-//		Util.closeIfPossible(topicCounts);
 	}
 }
