@@ -9,10 +9,16 @@ import jhn.eda.Paths;
 /** Print state with one line per document, and only indices */
 public class PrintFastState extends IntervalListener {
 	private final String runDir;
+	private final boolean outputClass;
 	
 	public PrintFastState(int printInterval, String runDir) {
+		this(printInterval, runDir, false);
+	}
+	
+	public PrintFastState(int printInterval, String runDir, boolean outputClass) {
 		super(printInterval);
 		this.runDir = runDir;
+		this.outputClass = outputClass;
 		
 		File dir = new File(Paths.fastStateDir(runDir));
 		if(!dir.exists()) {
@@ -22,17 +28,31 @@ public class PrintFastState extends IntervalListener {
 
 	@Override
 	protected void iterationEndedAtInterval(int iteration) throws Exception {
+		String[] docNames = eda.docNames();
+		int[] docLengths = eda.docLengths();
+		int[][] topics = eda.topics();
+		String[] docLabels = outputClass ? eda.docLabels() : null;
+		
 		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.fastStateFilename(runDir, iteration)))) {
-			out.println ("#docnum class source token1topic token2topic ... tokenNtopic");
+			
+			// Header
+			out.print("#docnum ");
+			if(outputClass) out.print("class ");
+			out.println("source token1topic token2topic ... tokenNtopic");
+			
+			// Body
+			
 			for (int docNum = 0; docNum < eda.numDocs(); docNum++) {
 				out.print(docNum);
 				out.print(' ');
-				out.print(eda.allLabels().indexOf(eda.docLabel(docNum), false));
-				out.print(' ');
-				out.print(eda.docName(docNum));
-				for (int position = 0; position < eda.docLength(docNum); position++) {
+				if(outputClass) {
+					out.print(eda.allLabels().indexOf(docLabels[docNum], false));
 					out.print(' ');
-					out.print(eda.topic(docNum, position));
+				}
+				out.print(docNames[docNum]);
+				for (int position = 0; position < docLengths[docNum]; position++) {
+					out.print(' ');
+					out.print(topics[docNum][position]);
 				}
 				out.println();
 			}
