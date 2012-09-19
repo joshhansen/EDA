@@ -39,12 +39,16 @@ public class SampleSummarizer {
 		}
 	};
 	
-	public static void summarize(String runDir, int lastN, int minCount, boolean classOnly) throws IOException {
+	public static void summarize(String runDir, int lastN, int minCount) throws IOException {
+		summarize(runDir, lastN, minCount, false);
+	}
+	
+	public static void summarize(String runDir, int lastN, int minCount, boolean includeClass) throws IOException {
 		String fastStateDir = Paths.fastStateDir(runDir);
 		String summaryFilename = Paths.sampleSummaryFilename(runDir, lastN, minCount);
 		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
-		Int2IntMap classes = new Int2IntOpenHashMap();
+		Int2IntMap classes = includeClass ? new Int2IntOpenHashMap() : null;
 		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
 		IntIntIntCounterMap aggregateDocTopicCounts = new IntIntIntRAMCounterMap();
@@ -112,6 +116,6 @@ public class SampleSummarizer {
 		final int run = 17;
 		final int minCount = 0;
 		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
-		summarize(runDir, lastN, minCount, false);
+		summarize(runDir, lastN, minCount);
 	}
 }
