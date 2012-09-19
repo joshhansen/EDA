@@ -1,11 +1,7 @@
 package jhn.eda;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -18,6 +14,9 @@ import jhn.counts.Counter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
+import jhn.eda.tokentopics.DocTokenTopics;
+import jhn.eda.tokentopics.FastStateFileReader;
+import jhn.eda.tokentopics.SampleSummaryFileWriter;
 import jhn.util.Util;
 
 public class SampleSummarizer {
@@ -51,13 +50,9 @@ public class SampleSummarizer {
 		IntIntIntCounterMap aggregateDocTopicCounts = new IntIntIntRAMCounterMap();
 		
 		String fullFilename;
-		BufferedReader r;
-		String tmp;
-		String[] parts;
 		int docNum;
 		int docClass;
 		int topic;
-		int j;
 		
 		File[] files = new File(fastStateDir).listFiles();
 		Arrays.sort(files, fileCmp);
@@ -67,52 +62,33 @@ public class SampleSummarizer {
 			fullFilename = files[i].getPath();
 			System.out.println(files[i].getName());
 			
-			r = new BufferedReader(new FileReader(fullFilename));
-			tmp = null;
-			while( (tmp=r.readLine()) != null) {
-				if(!tmp.startsWith("#")) {
-					parts = tmp.split("\\s+");
-					
-					docNum = Integer.parseInt(parts[0]);
-					docClass = Integer.parseInt(parts[1]);
-					classes.put(docNum, docClass);
-					sources.put(docNum, parts[2]);
-					
-					for(j = 3; j < parts.length; j++) {
-						topic = Integer.parseInt(parts[j]);
-						aggregateDocTopicCounts.inc(docNum, topic);
+			try(FastStateFileReader stateFile = new FastStateFileReader(fullFilename)) {
+				for(DocTokenTopics topics : stateFile) {
+					docNum = topics.docNum();
+					sources.put(docNum, topics.docSource());
+					while(topics.hasNext()) {
+						aggregateDocTopicCounts.inc(docNum, topics.nextInt());
 					}
-					
 				}
 			}
-			
-			r.close();
 		}
 		
 		fullFilename = null;
-		r = null;
-		tmp = null;
-		parts = null;
 		
 		
 		IntIntCounter counts;
 		Int2IntMap.Entry[] entries;
+		String docSrc;
 		
-		try(PrintStream w = new PrintStream(new FileOutputStream(summaryFilename))) {
-			w.print("#class");
-			if(!classOnly) {
-				w.print(" docnum docsrc");
-			}
-			w.println(" topic1id:topic1count topic2id:topic2count ... topicNid:topicNcount");
+		try(SampleSummaryFileWriter w = new SampleSummaryFileWriter(summaryFilename, includeClass)) {
 			for(Int2ObjectMap.Entry<Counter<Integer, Integer>> entry : aggregateDocTopicCounts.int2ObjectEntrySet()) {
 				docNum = entry.getIntKey();
-				docClass = classes.get(docNum);
-				w.print(docClass);
-				if(!classOnly) {
-					w.print(' ');
-					w.print(docNum);
-					w.print(' ');
-					w.print(sources.get(docNum));
+				docSrc = sources.get(docNum);
+				if(includeClass) {
+					docClass = classes.get(docNum);
+					w.startDocument(docNum, docSrc, docClass);
+				} else {
+					w.startDocument(docNum, docSrc);
 				}
 				
 				counts = (IntIntCounter) entry.getValue();
@@ -123,13 +99,10 @@ public class SampleSummarizer {
 				for(Int2IntMap.Entry count : entries) {
 					topic = count.getIntKey();
 					if(count.getIntValue() >= minCount) {
-						w.print(' ');
-						w.print(topic);
-						w.print(':');
-						w.print(count.getIntValue());
+						w.topicCount(topic, count.getIntValue());
 					}
 				}
-				w.println();
+				w.endDocument();
 			}
 		}
 	}
