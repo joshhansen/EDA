@@ -4,5 +4,5 @@ import java.util.Iterator;
 
 
 public interface TypeTopicCounts {
-	Iterator<TypeTopicCount> typeTopicCounts(int typeIdx) throws TypeTopicCountsException;
+	Iterator<TopicCount> typeTopicCounts(int typeIdx) throws TypeTopicCountsException;
 }

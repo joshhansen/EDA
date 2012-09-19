@@ -21,8 +21,8 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts, AutoCloseable {
 		this.typeAlphabet = typeAlphabet;
 	}
 
-	private class TermDocsTopicCountIterator implements Iterator<TypeTopicCount> {
-		private final TypeTopicCount topicCount = new TypeTopicCount();
+	private class TermDocsTopicCountIterator implements Iterator<TopicCount> {
+		private final TopicCount topicCount = new TopicCount();
 		private Term typeTopicTerm = new Term(Fields.text);
 		
 		private TermDocs termDocs;
@@ -48,7 +48,7 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts, AutoCloseable {
 		}
 
 		@Override
-		public TypeTopicCount next() {
+		public TopicCount next() {
 			topicCount.topic = termDocs.doc();
 			topicCount.count = termDocs.freq();
 			
@@ -62,7 +62,7 @@ public class LuceneTypeTopicCounts implements TypeTopicCounts, AutoCloseable {
 	}
 	
 	@Override
-	public Iterator<TypeTopicCount> typeTopicCounts(int typeIdx) throws TypeTopicCountsException {
+	public Iterator<TopicCount> typeTopicCounts(int typeIdx) throws TypeTopicCountsException {
 		String type = typeAlphabet.lookupObject(typeIdx).toString();
 		try {
 			return new TermDocsTopicCountIterator(type);

@@ -12,9 +12,9 @@ public class ArrayTypeTopicCounts implements TypeTopicCounts, Serializable {
 	}
 	
 	@Override
-	public Iterator<TypeTopicCount> typeTopicCounts(final int typeIdx) throws TypeTopicCountsException {
-		return new Iterator<TypeTopicCount>(){
-			TypeTopicCount ttc = new TypeTopicCount();
+	public Iterator<TopicCount> typeTopicCounts(final int typeIdx) throws TypeTopicCountsException {
+		return new Iterator<TopicCount>(){
+			TopicCount ttc = new TopicCount();
 			int idx = 0;
 			@Override
 			public boolean hasNext() {
@@ -22,7 +22,7 @@ public class ArrayTypeTopicCounts implements TypeTopicCounts, Serializable {
 			}
 
 			@Override
-			public TypeTopicCount next() {
+			public TopicCount next() {
 				ttc.topic = counts[typeIdx][idx++];
 				ttc.count = counts[typeIdx][idx++];
 				return ttc;

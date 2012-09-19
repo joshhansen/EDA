@@ -23,7 +23,7 @@ import jhn.eda.topictypecounts.TopicTypeCounts;
 import jhn.eda.topictypecounts.TopicTypeCountsException;
 import jhn.eda.typetopiccounts.ArrayTypeTopicCounts;
 import jhn.eda.typetopiccounts.LuceneTypeTopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCount;
+import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.IntIndex;
 import jhn.idx.IntRAMIndex;
@@ -91,8 +91,8 @@ public class CountsExtractor implements AutoCloseable {
 		int emptyTypes = 0;
 		int uniTopicTypes = 0;
 		
-		TypeTopicCount ttc;
-		Iterator<TypeTopicCount> ttcs;
+		TopicCount ttc;
+		Iterator<TopicCount> ttcs;
 		int topic;
 		
 		for(int typeIdx = 0; typeIdx < typeCount; typeIdx++) {

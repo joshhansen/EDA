@@ -38,7 +38,7 @@ import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.topicdistance.MaxTopicDistanceCalculator;
 import jhn.eda.topicdistance.StandardMaxTopicDistanceCalculator;
 import jhn.eda.topicdistance.TopicDistanceCalculator;
-import jhn.eda.typetopiccounts.TypeTopicCount;
+import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.idx.Index;
@@ -264,9 +264,8 @@ public class EDA implements Serializable, AutoCloseable {
 			int i;
 			int topicCount;
 			double score, sum, sample, countDelta;
-			TypeTopicCount ttc;
-			Iterator<TypeTopicCount> ttcIt;
-			boolean topicInRange;
+			TopicCount ttc;
+			Iterator<TopicCount> ttcIt;
 			
 			//	Iterate over the positions (words) in the document 
 			for (int position = 0; position < docLength; position++) {
@@ -415,9 +414,9 @@ public class EDA implements Serializable, AutoCloseable {
 
 		for (int type=0; type < numTypes; type++) {
 			try {
-				Iterator<TypeTopicCount> tcIt = typeTopicCounts.typeTopicCounts(type);
+				Iterator<TopicCount> tcIt = typeTopicCounts.typeTopicCounts(type);
 				while(tcIt.hasNext()) {
-					TypeTopicCount tc = tcIt.next();
+					TopicCount tc = tcIt.next();
 					nonZeroTypeTopics++;
 					logLikelihood += Dirichlet.logGamma(beta + tc.count);
 					if (Double.isNaN(logLikelihood)) {

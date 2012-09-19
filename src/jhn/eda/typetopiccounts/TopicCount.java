@@ -2,17 +2,17 @@ package jhn.eda.typetopiccounts;
 
 import java.io.Serializable;
 
-public class TypeTopicCount implements Serializable {
+public class TopicCount implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	public int topic;
 	public int count;
 	
-	public TypeTopicCount() {
+	public TopicCount() {
 		this(-1, -1);
 	}
 	
-	public TypeTopicCount(int topic, int count) {
+	public TopicCount(int topic, int count) {
 		this.topic = topic;
 		this.count = count;
 	}
