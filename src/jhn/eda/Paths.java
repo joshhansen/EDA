@@ -4,6 +4,10 @@ package jhn.eda;
 public final class Paths {
 	private Paths() {}
 	
+	public static final String FAST_STATE_EXT = ".fast_state";
+	public static final String PROPS_EXT = ".conf.ser";
+	public static final String TOPIC_COUNTS_EXT = ".topic_counts";
+	
 	public static String outputDir() {
 		return jhn.Paths.outputDir("EDA");
 	}
@@ -12,7 +16,7 @@ public final class Paths {
 			return outputDir() + "/props";
 		}
 			public static String propsFilename(String topicWordIdxName, String datasetName, int minCount) {
-				return propsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".conf.ser";
+				return propsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + PROPS_EXT;
 			}
 	
 		public static String countsDir() {
@@ -23,17 +27,17 @@ public final class Paths {
 				return countsDir() + "/topics";
 			}
 				public static String topicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
-					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
+					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + TOPIC_COUNTS_EXT;
 				}
 				
 				/** Topic counts that are sums of type-topic counts where type is in target corpus and count >= minCount */
 				public static String restrictedTopicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
-					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_restricted.ser";
+					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_restricted" + TOPIC_COUNTS_EXT;
 				}
 				
 				/** Topic counts that are sums of type-topic counts where topic has at least one type in corpus and count >= minCount */
 				public static String filteredTopicCountsFilename(String topicWordIdxName, String datasetName, int minCount) {
-					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_filtered.ser";
+					return topicCountsDir() + "/" + extractedDataID(topicWordIdxName, datasetName, minCount) + "_filtered" + TOPIC_COUNTS_EXT;
 				}
 			
 			public static String typeTopicCountsDir() {
@@ -70,11 +74,11 @@ public final class Paths {
 				}
 				
 				public static String sampleSummaryFilename(String runDir, int lastN) {
-					return runDir + "/aggregate_last" + lastN + ".state";
+					return runDir + "/aggregate_last" + lastN + jhn.Paths.STATE_EXT;
 				}
 				
 				public static String sampleSummaryFilename(String runDir, int lastN, int minCount) {
-					return runDir + "/aggregate_last" + lastN + "_min" + minCount + ".state";
+					return runDir + "/aggregate_last" + lastN + "_min" + minCount + jhn.Paths.STATE_EXT;
 				}
 				
 				public static String stateDir(String runDir) {
@@ -82,7 +86,7 @@ public final class Paths {
 				}
 					
 						public static String stateFilename(String runDir, int iteration) {
-							return stateDir(runDir) + "/" + iteration + ".state";
+							return stateDir(runDir) + "/" + iteration + jhn.Paths.STATE_EXT;
 						}
 				
 				public static String fastStateDir(String runDir) {
@@ -90,7 +94,7 @@ public final class Paths {
 				}
 					
 					public static String fastStateFilename(String runDir, int iteration) {
-						return fastStateDir(runDir) + "/" + iteration + ".log";
+						return fastStateDir(runDir) + "/" + iteration + FAST_STATE_EXT;
 					}
 				
 				
@@ -116,7 +120,7 @@ public final class Paths {
 				}
 				
 					public static String docTopicsFilename(String runDir, int iteration) {
-						return docTopicsDir(runDir) + "/" + iteration + ".log";
+						return docTopicsDir(runDir) + "/" + iteration + jhn.Paths.DOCTOPICS_EXT;
 					}
 				
 				public static String topDocTopicsDir(String runDir) {
