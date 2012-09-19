@@ -17,12 +17,12 @@ import jhn.eda.Paths;
 public class PrintTopTopicWords extends IntervalListener {
 	private final String runDir;
 	private final int numWords;
-	public PrintTopTopicWords(int printInterval, String run, int numWords) {
+	public PrintTopTopicWords(int printInterval, String runDir, int numWords) {
 		super(printInterval);
-		this.runDir = run;
+		this.runDir = runDir;
 		this.numWords = numWords;
 		
-		File dir = new File(Paths.topTopicWordsDir(run));
+		File dir = new File(Paths.topTopicWordsDir(runDir));
 		if(!dir.exists()) {
 			dir.mkdirs();
 		}
