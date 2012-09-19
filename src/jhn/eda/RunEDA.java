@@ -104,7 +104,7 @@ public class RunEDA {
 //		eda.addListener(new PrintTopTopicWords(PRINT_INTERVAL, runDir(), 10));
 	}
 	
-	protected void processTargetData(EDA eda) throws FileNotFoundException {
+	protected void processTargetData(EDA eda) {
 		System.out.print("Processing target corpus...");
 		eda.setTrainingData(targetData);
 		System.out.println("done.");

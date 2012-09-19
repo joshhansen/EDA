@@ -98,7 +98,7 @@ public class EDA implements Serializable {
 		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
 	}
 
-	public void setTrainingData (InstanceList training) throws FileNotFoundException {
+	public void setTrainingData (InstanceList training) {
 		numDocs = training.size();
 		
 		log.println("Dataset instances: " + training.size());
