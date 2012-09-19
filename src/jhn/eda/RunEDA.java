@@ -64,6 +64,8 @@ public class RunEDA {
 	}
 
 	protected void runEDA() throws FileNotFoundException, Exception {
+		new File(runDir()).mkdirs();
+		
 		EDA eda = new EDA (tcs, ttcs, props.getInt(Options.NUM_TOPICS), runDir()+"/main.log");
 		configure(eda.conf);
 		addListeners(eda);
