@@ -99,7 +99,7 @@ public class RunEDA {
 		conf.putDouble(Options.BETA, 0.01);
 		conf.putInt(Options.ITERATIONS, iterations);
 		conf.putInt(Options.MIN_THREADS, NUM_CORES);
-		conf.putInt(Options.MAX_THREADS, NUM_CORES*3);
+		conf.putInt(Options.MAX_THREADS, NUM_CORES);
 	}
 	
 	protected void addListeners(EDA eda) {
