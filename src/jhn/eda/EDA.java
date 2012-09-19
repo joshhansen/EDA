@@ -47,6 +47,8 @@ import jhn.util.Log;
 * McCallum.
 * 
 * @author Josh Hansen
+* @author David Mimno
+* @author Andrew McCallum
 */
 public class EDA implements Serializable {
 	private static final long serialVersionUID = 1L;
