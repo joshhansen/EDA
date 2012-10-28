@@ -45,8 +45,8 @@ public class EDA2 extends EDA {
 		}
 		
 		@Override
-		protected double ccScore(TopicCount ttc, int oldTopic) {
-			return topicCount*(maybeMinusOne(docTopicCounts[ttc.topic]) + alphas[docNum]);
+		protected double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) {
+			return ttc.count*(maybeMinusOne(docTopicCounts[ttc.topic]) + alphas[docNum]);
 		}
 	}//end class DocumentSampler2
 }

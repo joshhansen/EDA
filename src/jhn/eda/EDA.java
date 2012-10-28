@@ -60,7 +60,6 @@ public class EDA implements Serializable {
 	protected int[] docLengths;
 	protected String[] docNames;
 	protected double[] alphas;
-	protected double alphaSum;
 	protected double beta;
 	protected double betaSum;
 	
@@ -159,14 +158,12 @@ public class EDA implements Serializable {
 		fireSamplerInit();
 		
 		// Compute alpha from alphaSum
-		alphaSum = conf.getDouble(Options.ALPHA_SUM);
-		final double startingAlpha = alphaSum / conf.getInt(Options.NUM_TOPICS);
+		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / conf.getInt(Options.NUM_TOPICS);
 		conf.putDouble(Options.ALPHA, startingAlpha);
 		alphas = new double[numTopics];
 		Arrays.fill(alphas, startingAlpha);
 		
 		// Compute betaSum from beta
-
 		beta = conf.getDouble(Options.BETA);
 		betaSum = beta * conf.getInt(Options.NUM_TYPES);
 		conf.putDouble(Options.BETA_SUM, betaSum);
@@ -189,7 +186,7 @@ public class EDA implements Serializable {
 			
 			// Loop over every document in the corpus
 			for (int docNum = 0; docNum < numDocs; docNum++) {
-				exec.execute(new DocumentSampler(docNum));
+				exec.execute(samplerInstance(docNum));
 			}
 			
 			exec.shutdown();
@@ -205,6 +202,10 @@ public class EDA implements Serializable {
 		}
 		
 		fireSamplerTerminate();
+	}
+	
+	protected Runnable samplerInstance(int docNum) {
+		return new DocumentSampler(docNum);
 	}
 
 	public int[] docTopicCounts(final int docNum) {
@@ -227,22 +228,16 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	protected Runnable samplerInstance(int docNum) {
-		return new DocumentSampler(docNum);
-	}
-	
 	protected class DocumentSampler implements Runnable {
 		protected final int docNum;
-		protected int[] docTopicCounts;
 		
 		public DocumentSampler(int docNum) {
 			this.docNum = docNum;
-			this.docTopicCounts = docTopicCounts(this.docNum);
 		}
 		
-		int topicCount;
-		double countDelta;
-		protected double ccScore(TopicCount ttc, int oldTopic) throws Exception {
+		private double countDelta;
+		private int topicCount;
+		protected double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) throws Exception {
 			topicCount = topicCounts.topicCount(ttc.topic);
 			
 			countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
@@ -255,6 +250,8 @@ public class EDA implements Serializable {
 		public void run() {
 			int typeIdx, oldTopic, newTopic;
 			int docLength = docLengths[docNum];
+
+			int[] docTopicCounts = docTopicCounts(this.docNum);
 			
 			IntList ccTopics = new IntArrayList();
 			DoubleList ccScores = new DoubleArrayList();
@@ -284,7 +281,8 @@ public class EDA implements Serializable {
 					ttcIt = typeTopicCounts.typeTopicCounts(typeIdx);
 					while(ttcIt.hasNext()) {
 						ttc = ttcIt.next();
-						score = ccScore(ttc, oldTopic);
+						
+						score = completeConditional(ttc, oldTopic, docTopicCounts);
 						
 						sum += score;
 						
@@ -354,6 +352,8 @@ public class EDA implements Serializable {
 	 */
 	public double modelLogLikelihood() {
 		final double alpha = conf.getDouble(Options.ALPHA);
+		final double alphaSum = conf.getDouble(Options.ALPHA_SUM);
+		final double beta = conf.getDouble(Options.BETA);
 		final int numTypes = conf.getInt(Options.NUM_TYPES);
 		
 		double logLikelihood = 0.0;
