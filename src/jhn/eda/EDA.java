@@ -355,7 +355,6 @@ public class EDA implements Serializable {
 	public double modelLogLikelihood() {
 		final double alpha = conf.getDouble(Options.ALPHA);
 		final double alphaSum = conf.getDouble(Options.ALPHA_SUM);
-		final double beta = conf.getDouble(Options.BETA);
 		final int numTypes = conf.getInt(Options.NUM_TYPES);
 		
 		double logLikelihood = 0.0;
