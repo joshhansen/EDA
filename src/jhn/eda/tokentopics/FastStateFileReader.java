@@ -1,10 +1,21 @@
 package jhn.eda.tokentopics;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.store.FSDirectory;
+
+import cc.mallet.types.LabelAlphabet;
+
+import jhn.eda.Paths;
+import jhn.eda.lucene.LuceneLabelAlphabet;
+import jhn.idx.IntIndex;
+import jhn.util.Util;
 
 public class FastStateFileReader implements Iterable<DocTokenTopics>, Iterator<DocTokenTopics>, AutoCloseable {
 	private BufferedReader r;
@@ -66,19 +77,38 @@ public class FastStateFileReader implements Iterable<DocTokenTopics>, Iterator<D
 	}
 	
 	public static void main(String[] args) throws Exception {
-		try(FastStateFileReader dtt = new FastStateFileReader(jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDAValidation")+"/sotu_chunks_subset1/eda_runs/0", 5))) {
-			for(DocTokenTopics topics : dtt) {
-				System.out.print(topics.docNum());
-				System.out.print(": ");
-				while(topics.hasNext()) {
-					System.out.print(topics.nextTokenIndex());
-					System.out.print(':');
-					System.out.print(topics.nextInt());
+		final int minCount = 2;
+		final String datasetName = "reuters21578_noblah2";
+		final String topicWordIdxName = "wp_lucene4";
+		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
+		IntIndex topicMapping = (IntIndex) Util.deserialize(topicMappingFilename);
+		String topicWordIdxDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
+		try(IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)))) {
+			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
+			
+			try(FastStateFileReader dtt = new FastStateFileReader(jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2))) {
+				for(DocTokenTopics topics : dtt) {
+					System.out.print(topics.docNum());
 					System.out.print(' ');
+					System.out.print(topics.docSource());
+					System.out.print(": ");
+					while(topics.hasNext()) {
+						int tokenIdx = topics.nextTokenIndex();
+						int topic = topics.nextInt();
+						int globalTopic = topicMapping.objectAtI(topic);
+						String label = labels.lookupObject(globalTopic).toString();
+						System.out.print(tokenIdx);
+						System.out.print(':');
+						System.out.print(topic);
+						System.out.print(" (");
+						System.out.print(globalTopic);
+						System.out.print(") ");
+						System.out.print(label);
+						System.out.print(' ');
+					}
+					System.out.println();
 				}
-				System.out.println();
 			}
 		}
 	}
-
 }
