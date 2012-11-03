@@ -29,7 +29,7 @@ public class EDA2 extends EDA {
 	}
 	
 	@Override
-	protected Runnable samplerInstance(int docNum) {
+	protected DocumentSampler samplerInstance(int docNum) {
 		return new DocumentSampler2(this, docNum);
 	}
 

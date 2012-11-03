@@ -113,8 +113,8 @@ public class SampleSummarizer {
 	
 	public static void main(String[] args) throws IOException {
 		final int lastN = 50;
-		final int run = 18;
-		final int minCount = 0;
+		final int run = 47;
+		final int minCount = 2;
 		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
 		summarize(runDir, lastN, minCount);
 	}

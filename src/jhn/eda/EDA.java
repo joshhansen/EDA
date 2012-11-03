@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +49,7 @@ import jhn.util.Log;
 * @author David Mimno
 * @author Andrew McCallum
 */
-public class EDA implements Serializable {
+public abstract class EDA implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	protected final int numTopics;
@@ -58,10 +57,14 @@ public class EDA implements Serializable {
 	protected int[][] tokens;
 	protected int[][] topics;
 	protected int[] docLengths;
+	protected int[] docLengthCounts;
+	protected int maxDocLength;
+	
 	protected String[] docNames;
 	protected double[] alphas;
-	protected double beta;
-	protected double betaSum;
+	protected double alphaSum;
+	protected int alphaOptimizeInterval;
+	
 	
 	// Classification helpers
 	protected String[] docLabels;
@@ -113,6 +116,7 @@ public class EDA implements Serializable {
 		log.print("Loading: ");
 		int tokenCount = 0;
 		int docLength;
+		maxDocLength = 0;
 		tokens = new int[numDocs][];
 		topics = new int[numDocs][];
 		docLengths = new int[numDocs];
@@ -123,12 +127,17 @@ public class EDA implements Serializable {
 		
 		Instance instance;
 		String label;
+		IntIntCounter docLengthFreqs = new IntIntRAMCounter();
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			instance = training.get(docNum);
 			docNames[docNum] = instance.getName().toString();
 			tokens[docNum] = ((FeatureSequence) instance.getData()).getFeatures();
 			docLength = tokens[docNum].length;
 			docLengths[docNum] = docLength;
+			docLengthFreqs.inc(docLength);
+			if(docLength > maxDocLength) {
+				maxDocLength = docLength;
+			}
 			
 			label = instance.getTarget().toString();
 			docLabels[docNum] = label;
@@ -144,6 +153,12 @@ public class EDA implements Serializable {
 			
 			tokenCount += docLength;
 		}
+		// Alpha optimization stuff:
+		docLengthCounts = new int[maxDocLength];
+		for(int i = 0; i < docLengthCounts.length; i++) {
+			docLengthCounts[i] = docLengthFreqs.getCount(i);
+		}
+		topicDocCounts = new int[numTopics][maxDocLength+1];
 		
 		allLabels = new RAMIndex<>();
 		allLabels.indexOf("none");//Needed for use in SparseInstance
@@ -160,15 +175,13 @@ public class EDA implements Serializable {
 		fireSamplerInit();
 		
 		// Compute alpha from alphaSum
-		final double startingAlpha = conf.getDouble(Options.ALPHA_SUM) / conf.getInt(Options.NUM_TOPICS);
+		alphaSum = conf.getDouble(Options.ALPHA_SUM);
+		final double startingAlpha = alphaSum / conf.getInt(Options.NUM_TOPICS);
 		conf.putDouble(Options.ALPHA, startingAlpha);
 		alphas = new double[numTopics];
 		Arrays.fill(alphas, startingAlpha);
 		
-		// Compute betaSum from beta
-		beta = conf.getDouble(Options.BETA);
-		betaSum = beta * conf.getInt(Options.NUM_TYPES);
-		conf.putDouble(Options.BETA_SUM, betaSum);
+		alphaOptimizeInterval = conf.getInt(Options.ALPHA_OPTIMIZE_INTERVAL);
 		
 		final int iterations = conf.getInt(Options.ITERATIONS);
 		log.println("Going to sample " + iterations + " iterations with configuration:");
@@ -177,14 +190,17 @@ public class EDA implements Serializable {
 		final int minThreads = conf.getInt(Options.MIN_THREADS);
 		final int maxThreads = conf.getInt(Options.MAX_THREADS);
 		
+		
 		for (int iteration = 1; iteration <= iterations; iteration++) {		
 			fireIterationStarted(iteration);
 			
 			log.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
 			
-			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS, queue);
+			clearAlphaOptimizationHistogram();
+			
+			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS,
+																new LinkedBlockingQueue<Runnable>());
 			
 			// Loop over every document in the corpus
 			for (int docNum = 0; docNum < numDocs; docNum++) {
@@ -196,6 +212,14 @@ public class EDA implements Serializable {
 			while(!exec.awaitTermination(500L, TimeUnit.MILLISECONDS)) {
 				// Do nothing
 			}
+			
+			if(iteration % alphaOptimizeInterval == 0) {
+				System.out.print("Optimizing alphas...");
+				
+				optimizeAlphas();
+				
+				System.out.println("done.");
+			}
 		
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
 			log.println("Iteration " + iteration + " duration: " + elapsedMillis + "ms\t");
@@ -206,9 +230,7 @@ public class EDA implements Serializable {
 		fireSamplerTerminate();
 	}
 	
-	protected Runnable samplerInstance(int docNum) {
-		return new DocumentSampler(docNum);
-	}
+	protected abstract DocumentSampler samplerInstance(int docNum);
 
 	public int[] docTopicCounts(final int docNum) {
 		int[] docTopicCounts = new int[numTopics];
@@ -230,23 +252,14 @@ public class EDA implements Serializable {
 		}
 	}
 	
-	protected class DocumentSampler implements Runnable {
+	protected abstract class DocumentSampler implements Runnable {
 		protected final int docNum;
 		
 		public DocumentSampler(int docNum) {
 			this.docNum = docNum;
 		}
 		
-		private double countDelta;
-		private int topicCount;
-		protected double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) throws Exception {
-			topicCount = topicCounts.topicCount(ttc.topic);
-			
-			countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
-			return (alphas[ttc.topic] + docTopicCounts[ttc.topic] - countDelta) *
-					(beta + ttc.count) /
-					(betaSum + topicCount - countDelta);
-		}
+		protected abstract double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) throws Exception;
 		
 		@Override
 		public void run() {
@@ -326,6 +339,15 @@ public class EDA implements Serializable {
 				}
 			}//end for position
 			
+			// Update topicDocCounts
+			System.out.print("Updating topicDocCounts...");
+			synchronized(topicDocCounts) {
+				for(int topic = 0; topic < numTopics; topic++) {
+					topicDocCounts[topic][docNum] += docTopicCounts[topic];
+				}
+			}
+			System.out.println("done.");
+			
 			samplerFinished();
 		}
 		
@@ -337,102 +359,64 @@ public class EDA implements Serializable {
 		}
 	}//end class DocumentSampler
 	
-
+	//BEGIN from ParallelTopicModel
+	// for dirichlet estimation
+//	public int[] docLengthCounts; // histogram of document sizes
 	
-	/**
-	 * The likelihood of the model is a combination of a Dirichlet-multinomial
-	 * for the words in each topic and a Dirichlet-multinomial for the topics in
-	 * each document.
-	 * 
-	 * The likelihood function of a dirichlet multinomial is Gamma( sum_i
-	 * alpha_i ) prod_i Gamma( alpha_i + N_i ) prod_i Gamma( alpha_i ) Gamma(
-	 * sum_i (alpha_i + N_i) )
-	 * 
-	 * So the log likelihood is logGamma ( sum_i alpha_i ) - logGamma ( sum_i
-	 * (alpha_i + N_i) ) + sum_i [ logGamma( alpha_i + N_i) - logGamma( alpha_i
-	 * ) ]
-	 */
-	public double modelLogLikelihood() {
-		final double alpha = conf.getDouble(Options.ALPHA);
-		final double alphaSum = conf.getDouble(Options.ALPHA_SUM);
-		final int numTypes = conf.getInt(Options.NUM_TYPES);
-		
-		double logLikelihood = 0.0;
-
-		// Do the documents first
-		int[] topicCountsArr = new int[numTopics];
-		double[] topicLogGammas = new double[numTopics];
-
-		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGamma( alpha );
+	public int[][] topicDocCounts; // histogram of document/topic counts, indexed by <topic index, sequence position index>
+	
+	private void clearAlphaOptimizationHistogram() {
+//		Arrays.fill(docLengthCounts, 0);
+		for (int topic = 0; topic < topicDocCounts.length; topic++) {
+			Arrays.fill(topicDocCounts[topic], 0);
 		}
-	
-		for (int docNum=0; docNum < numDocs; docNum++) {
-			for(int topic : topics[docNum]) {
-				topicCountsArr[topic]++;
-			}
-
-			for (int topic=0; topic < numTopics; topic++) {
-				if (topicCountsArr[topic] > 0) {
-					logLikelihood += (Dirichlet.logGamma(alpha + topicCountsArr[topic]) -
-									  topicLogGammas[ topic ]);
-				}
-			}
-
-			// subtract the (count + parameter) sum term
-			logLikelihood -= Dirichlet.logGamma(alphaSum + docLengths[docNum]);
-
-			Arrays.fill(topicCountsArr, 0);
-		}
-	
-		// add the parameter sum term
-		logLikelihood += numDocs * Dirichlet.logGamma(alphaSum);
-
-		// Count the number of type-topic pairs
-		int nonZeroTypeTopics = 0;
-
-		for (int type=0; type < numTypes; type++) {
-			try {
-				Iterator<TopicCount> tcIt = typeTopicCounts.typeTopicCounts(type);
-				while(tcIt.hasNext()) {
-					TopicCount tc = tcIt.next();
-					nonZeroTypeTopics++;
-					logLikelihood += Dirichlet.logGamma(beta + tc.count);
-					if (Double.isNaN(logLikelihood)) {
-						log.println(tc.count);
-						System.exit(1);
-					}
-				}
-			} catch(TypeTopicCountsException e) {
-				// Words that occur in none of the topics will lead us here
-				// Do nothing
-			}
-		}
-	
-		//FIXME
-//		for (int topic=0; topic < numTopics; topic++) {
-//			logLikelihood -= 
-//				Dirichlet.logGamma( (beta * numTopics) +
-//											tokensPerTopic[ topic ] );
-//			if (Double.isNaN(logLikelihood)) {
-//				log.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
-//				System.exit(1);
-//			}
-//
-//		}
-	
-		logLikelihood += 
-			(Dirichlet.logGamma(beta * numTopics)) -
-			(Dirichlet.logGamma(beta) * nonZeroTypeTopics);
-
-		if (Double.isNaN(logLikelihood)) {
-			log.println("at the end");
-			System.exit(1);
-		}
-
-
-		return logLikelihood;
 	}
+	
+	private static final boolean usingSymmetricAlpha = false;
+	public void optimizeAlphas() {
+//		for (int thread = 0; thread < numThreads; thread++) {
+//			int[][] sourceTopicCounts = runnables[thread].getTopicDocCounts();
+//
+//			for (int topic=0; topic < numTopics; topic++) {
+//
+//				if (! usingSymmetricAlpha) {
+//					for (int count=0; count < sourceTopicCounts[topic].length; count++) {
+//						if (sourceTopicCounts[topic][count] > 0) {
+//							topicDocCounts[topic][count] += sourceTopicCounts[topic][count];
+//							sourceTopicCounts[topic][count] = 0;
+//						}
+//					}
+//				}
+//				else {
+//					// For the symmetric version, we only need one 
+//					//  count array, which I'm putting in the same 
+//					//  data structure, but for topic 0. All other
+//					//  topic histograms will be empty.
+//					// I'm duplicating this for loop, which 
+//					//  isn't the best thing, but it means only checking
+//					//  whether we are symmetric or not numTopics times, 
+//					//  instead of numTopics * longest document length.
+//					for (int count=0; count < sourceTopicCounts[topic].length; count++) {
+//						if (sourceTopicCounts[topic][count] > 0) {
+//							topicDocCounts[0][count] += sourceTopicCounts[topic][count];
+//							//			 ^ the only change
+//							sourceTopicCounts[topic][count] = 0;
+//						}
+//					}
+//				}
+//			}
+//		}
+
+		if (usingSymmetricAlpha) {
+			alphaSum = Dirichlet.learnSymmetricConcentration(topicDocCounts[0], docLengthCounts, numTopics, alphaSum);
+			for (int topic = 0; topic < numTopics; topic++) {
+				alphas[topic] = alphaSum / numTopics;
+			}
+		} else {
+			alphaSum = Dirichlet.learnParameters(alphas, topicDocCounts, docLengthCounts, 1.001, 1.0, 1);
+		}
+	}
+	// END from ParallelTopicModel
 
 	public int numDocs() {
 		return numDocs;

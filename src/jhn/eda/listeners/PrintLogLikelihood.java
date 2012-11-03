@@ -9,8 +9,8 @@ public class PrintLogLikelihood extends IntervalListener {
 		this.out = out;
 	}
 
-	@Override
-	protected void iterationEndedAtInterval(int iteration) {
-		out.println("<" + iteration + "> Log Likelihood: " + eda.modelLogLikelihood());
-	}
+//	@Override
+//	protected void iterationEndedAtInterval(int iteration) {
+//		out.println("<" + iteration + "> Log Likelihood: " + eda.modelLogLikelihood());
+//	}
 }
