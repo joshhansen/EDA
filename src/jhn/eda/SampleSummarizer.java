@@ -23,7 +23,7 @@ public class SampleSummarizer {
 	private static final Comparator<Int2IntMap.Entry> cmp = new Comparator<Int2IntMap.Entry>(){
 		@Override
 		public int compare(Int2IntMap.Entry o1, Int2IntMap.Entry o2) {
-			return Util.compareInts(o1.getIntKey(), o2.getIntKey());
+			return Util.compareInts(o2.getIntValue(), o1.getIntValue());
 		}
 	};
 	
@@ -113,7 +113,7 @@ public class SampleSummarizer {
 	
 	public static void main(String[] args) throws IOException {
 		final int lastN = 50;
-		final int run = 46;
+		final int run = 18;
 		final int minCount = 0;
 		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
 		summarize(runDir, lastN, minCount);

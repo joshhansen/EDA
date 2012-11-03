@@ -67,9 +67,9 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 	
 	public static void main(String[] args) throws IOException, Exception {
 		final int minCount = 2;
-		final int summaryMinCount = 0;
+		final int summaryMinCount = 4;
 		final int lastN = 50;
-		final int run = 46;
+		final int run = 18;
 		final String datasetName = "reuters21578_noblah2";
 		final String topicWordIdxName = "wp_lucene4";
 		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
@@ -85,22 +85,37 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 			try(SampleSummaryFileReader r = new SampleSummaryFileReader(sampleSummaryFilename)) {
 				for(DocTopicCounts dtc : r) {
 					int docNum = dtc.docNum();
-					System.out.print(docNum);
-					System.out.print(": ");
-					while(dtc.hasNext()) {
+					String[] parts = dtc.docSource().split("/");
+					
+					System.out.print(parts[parts.length-2]);
+					System.out.print('/');
+					System.out.print(parts[parts.length-1]);
+//					System.out.print(docNum);
+					System.out.print(":\t");
+					int i = 0;
+					
+					while(dtc.hasNext() && i < 5) {
 						int topicNum = dtc.nextInt();
 						int count = dtc.nextDocTopicCount();
 						int globalTopic = topicMapping.objectAtI(topicNum);
 						String label = labels.lookupObject(globalTopic).toString();
-						System.out.print(topicNum);
-						System.out.print("(");
-						System.out.print(globalTopic);
-						System.out.print("):");
-						System.out.print(count);
-						System.out.print(':');
+//						System.out.print(topicNum);
+//						System.out.print("(");
+//						System.out.print(globalTopic);
+//						System.out.print("):");
+//						System.out.print(count);
+//						System.out.print(':');
+//						System.out.print(label);
+//						System.out.print(' ');
+						
 						System.out.print(label);
-						System.out.print(' ');
+						System.out.print(" [");
+						System.out.print(count);
+						System.out.print("] ");
+						
+						i++;
 					}
+					System.out.println();
 				}
 			}
 		}
