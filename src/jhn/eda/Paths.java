@@ -77,8 +77,8 @@ public final class Paths {
 					return runDir + "/aggregate_last" + lastN + jhn.Paths.STATE_EXT;
 				}
 				
-				public static String sampleSummaryFilename(String runDir, int lastN, int minCount) {
-					return runDir + "/aggregate_last" + lastN + "_min" + minCount + jhn.Paths.STATE_EXT;
+				public static String sampleSummaryFilename(String runDir, int start, int stop, int minCount) {
+					return runDir + "/aggregate_iters" + start + "-" + stop + "_min" + minCount + jhn.Paths.STATE_EXT;
 				}
 				
 				public static String stateDir(String runDir) {

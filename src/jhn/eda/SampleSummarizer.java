@@ -8,7 +8,9 @@ import java.util.Comparator;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import jhn.counts.Counter;
 import jhn.counts.i.i.IntIntCounter;
@@ -39,13 +41,19 @@ public class SampleSummarizer {
 		}
 	};
 	
-	public static void summarize(String runDir, int lastN, int minCount) throws IOException {
-		summarize(runDir, lastN, minCount, false);
+	public static void summarize(String runDir, int burn, int length, int minCount) throws IOException {
+		summarize(runDir, burn, length, minCount, false);
 	}
 	
-	public static void summarize(String runDir, int lastN, int minCount, boolean includeClass) throws IOException {
+	public static void summarize(String runDir, int burn, int length, int minCount, boolean includeClass) throws IOException {
 		String fastStateDir = Paths.fastStateDir(runDir);
-		String summaryFilename = Paths.sampleSummaryFilename(runDir, lastN, minCount);
+		File[] files = new File(fastStateDir).listFiles();
+		Arrays.sort(files, fileCmp);
+		final int startIter = burn;
+		final int stopIter = Math.min(files.length, burn+length);
+		
+		// +1 because iteration filenames are 1-indexed
+		String summaryFilename = Paths.sampleSummaryFilename(runDir, startIter+1, stopIter, minCount);
 		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
 		Int2IntMap classes = includeClass ? new Int2IntOpenHashMap() : null;
@@ -58,11 +66,7 @@ public class SampleSummarizer {
 		int docClass;
 		int topic;
 		
-		File[] files = new File(fastStateDir).listFiles();
-		Arrays.sort(files, fileCmp);
-		
-		
-		for(int i = Math.max(files.length - lastN, 0); i < files.length; i++) {
+		for(int i = startIter; i < stopIter; i++) {
 			fullFilename = files[i].getPath();
 			System.out.println(files[i].getName());
 			
@@ -85,7 +89,9 @@ public class SampleSummarizer {
 		String docSrc;
 		
 		try(SampleSummaryFileWriter w = new SampleSummaryFileWriter(summaryFilename, includeClass)) {
-			for(Int2ObjectMap.Entry<Counter<Integer, Integer>> entry : aggregateDocTopicCounts.int2ObjectEntrySet()) {
+			int i = 0;
+			ObjectSet<Entry<Counter<Integer, Integer>>> docTopicEntries = aggregateDocTopicCounts.int2ObjectEntrySet();
+			for(Int2ObjectMap.Entry<Counter<Integer, Integer>> entry : docTopicEntries) {
 				docNum = entry.getIntKey();
 				docSrc = sources.get(docNum);
 				if(includeClass) {
@@ -107,15 +113,21 @@ public class SampleSummarizer {
 					}
 				}
 				w.endDocument();
+				
+				if(i % 100 == 0) {
+					System.out.println(i + " / " + docTopicEntries.size());
+				}
+				i++;
 			}
 		}
 	}
 	
 	public static void main(String[] args) throws IOException {
-		final int lastN = 50;
+		final int burn = 10;
+		final int length = 500;
 		final int run = 47;
-		final int minCount = 2;
+		final int minCount = 5;
 		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
-		summarize(runDir, lastN, minCount);
+		summarize(runDir, burn, length, minCount);
 	}
 }
