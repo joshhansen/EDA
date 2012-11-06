@@ -340,7 +340,7 @@ public abstract class EDA implements Serializable {
 			}//end for position
 			
 			// Update topicDocCounts
-			System.out.print("Updating topicDocCounts...");
+			System.out.print("Updating topicDocCounts " + docNum + "...");
 			synchronized(topicDocCounts) {
 				for(int topic = 0; topic < numTopics; topic++) {
 					topicDocCounts[topic][docTopicCounts[topic]] += 1;
@@ -415,6 +415,7 @@ public abstract class EDA implements Serializable {
 		} else {
 			alphaSum = Dirichlet.learnParameters(alphas, topicDocCounts, docLengthCounts, 1.001, 1.0, 1);
 		}
+		System.out.println("New alphaSum: " + alphaSum);
 	}
 	// END from ParallelTopicModel
 
