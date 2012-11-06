@@ -36,6 +36,7 @@ public class RunEDA {
 		minCount = 2;
 		topicWordIdxName = "wp_lucene4";
 		datasetName = "reuters21578_noblah2";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+//		datasetName = "toy_dataset4";
 	}
 
 	protected void loadAll() throws Exception {
@@ -86,7 +87,8 @@ public class RunEDA {
 	}
 	
 	protected void configure(Config conf) {
-		conf.putDouble(Options.ALPHA_SUM, 10000);
+//		conf.putDouble(Options.ALPHA_SUM, 10000);
+		conf.putInt(Options.ALPHA_OPTIMIZE_INTERVAL, 1);
 		conf.putDouble(Options.BETA, 0.01);
 		conf.putInt(Options.ITERATIONS, iterations);
 		conf.putInt(Options.MIN_THREADS, NUM_CORES);
