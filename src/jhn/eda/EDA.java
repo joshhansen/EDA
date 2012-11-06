@@ -343,7 +343,7 @@ public abstract class EDA implements Serializable {
 			System.out.print("Updating topicDocCounts...");
 			synchronized(topicDocCounts) {
 				for(int topic = 0; topic < numTopics; topic++) {
-					topicDocCounts[topic][docNum] += docTopicCounts[topic];
+					topicDocCounts[topic][docTopicCounts[topic]] += 1;
 				}
 			}
 			System.out.println("done.");
