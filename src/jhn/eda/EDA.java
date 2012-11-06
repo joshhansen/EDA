@@ -174,10 +174,20 @@ public abstract class EDA implements Serializable {
 	public void sample () throws Exception {
 		fireSamplerInit();
 		
-		// Compute alpha from alphaSum
-		alphaSum = conf.getDouble(Options.ALPHA_SUM);
-		final double startingAlpha = alphaSum / conf.getInt(Options.NUM_TOPICS);
+		double startingAlpha;
+		if(conf.containsKey(Options.ALPHA)) {
+			startingAlpha = conf.getDouble(Options.ALPHA);
+			alphaSum = startingAlpha * numTopics;
+		} else if(conf.containsKey(Options.ALPHA_SUM)) {
+			alphaSum = conf.getDouble(Options.ALPHA_SUM);
+			startingAlpha = alphaSum / numTopics;
+		} else {
+			alphaSum = 50.0;
+			startingAlpha = alphaSum / numTopics;
+		}
+		conf.putDouble(Options.ALPHA_SUM, alphaSum);
 		conf.putDouble(Options.ALPHA, startingAlpha);
+		
 		alphas = new double[numTopics];
 		Arrays.fill(alphas, startingAlpha);
 		
