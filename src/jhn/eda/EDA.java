@@ -191,7 +191,9 @@ public abstract class EDA implements Serializable {
 		alphas = new double[numTopics];
 		Arrays.fill(alphas, startingAlpha);
 		
-		alphaOptimizeInterval = conf.getInt(Options.ALPHA_OPTIMIZE_INTERVAL);
+		alphaOptimizeInterval = conf.containsKey(Options.ALPHA_OPTIMIZE_INTERVAL) ?
+								conf.getInt(Options.ALPHA_OPTIMIZE_INTERVAL) :
+								-1;
 		
 		final int iterations = conf.getInt(Options.ITERATIONS);
 		log.println("Going to sample " + iterations + " iterations with configuration:");
@@ -223,7 +225,7 @@ public abstract class EDA implements Serializable {
 				// Do nothing
 			}
 			
-			if(iteration % alphaOptimizeInterval == 0) {
+			if(alphaOptimizeInterval > 0 && iteration % alphaOptimizeInterval == 0) {
 				System.out.print("Optimizing alphas...");
 				
 				optimizeAlphas();
