@@ -1,4 +1,4 @@
-package jhn.eda.tokentopics;
+package jhn.eda.summarize;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

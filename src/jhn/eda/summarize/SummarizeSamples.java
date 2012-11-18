@@ -1,9 +1,10 @@
-package jhn.eda;
+package jhn.eda.summarize;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -15,13 +16,10 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import jhn.counts.Counter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.i.IntIntIntCounterMap;
-import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
-import jhn.eda.tokentopics.DocTokenTopics;
-import jhn.eda.tokentopics.FastStateFileReader;
-import jhn.eda.tokentopics.SampleSummaryFileWriter;
+import jhn.eda.Paths;
 import jhn.util.Util;
 
-public class SampleSummarizer {
+public class SummarizeSamples {
 	private static final Comparator<Int2IntMap.Entry> cmp = new Comparator<Int2IntMap.Entry>(){
 		@Override
 		public int compare(Int2IntMap.Entry o1, Int2IntMap.Entry o2) {
@@ -41,47 +39,51 @@ public class SampleSummarizer {
 		}
 	};
 	
-	public static void summarize(String runDir, int burn, int length, int minCount) throws IOException {
-		summarize(runDir, burn, length, minCount, false);
+	public static void summarize(SampleSummarizer summarizer, String runDir, int burn, int length, int minCount) throws Exception {
+		summarize(summarizer, runDir, burn, length, minCount, false);
 	}
 	
-	public static void summarize(String runDir, int burn, int length, int minCount, boolean includeClass) throws IOException {
+	public static void summarize(SampleSummarizer summarizer, String runDir, int burn, int length, int minCount, boolean includeClass) throws Exception {
 		String fastStateDir = Paths.fastStateDir(runDir);
-		File[] files = new File(fastStateDir).listFiles();
-		Arrays.sort(files, fileCmp);
+		File[] allFiles = new File(fastStateDir).listFiles();
+		Arrays.sort(allFiles, fileCmp);
 		final int startIter = burn;
-		final int stopIter = Math.min(files.length, burn+length);
+		final int stopIter = Math.min(allFiles.length, burn+length);
 		
 		// +1 because iteration filenames are 1-indexed
-		String summaryFilename = Paths.sampleSummaryFilename(runDir, startIter+1, stopIter, minCount);
+		String summaryFilename = Paths.sampleSummaryFilename(summarizer.name(), runDir, startIter+1, stopIter, minCount);
 		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
 		Int2IntMap classes = includeClass ? new Int2IntOpenHashMap() : null;
 		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
-		IntIntIntCounterMap aggregateDocTopicCounts = new IntIntIntRAMCounterMap();
-		
-		String fullFilename;
+		List<File> files = new ArrayList<>();
+		for(int i = startIter; i < stopIter; i++) {
+			files.add(allFiles[i]);
+		}
+		IntIntIntCounterMap aggregateDocTopicCounts = summarizer.summarize(files.toArray(new File[0]), sources);
+//		
+//		String fullFilename;
 		int docNum;
 		int docClass;
 		int topic;
+//		
+//		for(int i = startIter; i < stopIter; i++) {
+//			fullFilename = files[i].getPath();
+//			System.out.println(files[i].getName());
+//			
+//			try(FastStateFileReader stateFile = new FastStateFileReader(fullFilename)) {
+//				for(DocTokenTopics topics : stateFile) {
+//					docNum = topics.docNum();
+//					sources.put(docNum, topics.docSource());
+//					while(topics.hasNext()) {
+//						aggregateDocTopicCounts.inc(docNum, topics.nextInt());
+//					}
+//				}
+//			}
+//		}
 		
-		for(int i = startIter; i < stopIter; i++) {
-			fullFilename = files[i].getPath();
-			System.out.println(files[i].getName());
-			
-			try(FastStateFileReader stateFile = new FastStateFileReader(fullFilename)) {
-				for(DocTokenTopics topics : stateFile) {
-					docNum = topics.docNum();
-					sources.put(docNum, topics.docSource());
-					while(topics.hasNext()) {
-						aggregateDocTopicCounts.inc(docNum, topics.nextInt());
-					}
-				}
-			}
-		}
-		
-		fullFilename = null;
+//		fullFilename = null;
 		
 		
 		IntIntCounter counts;
@@ -122,12 +124,13 @@ public class SampleSummarizer {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		final int burn = 10;
 		final int length = 500;
-		final int run = 47;
+		final int run = 67;
 		final int minCount = 5;
 		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
-		summarize(runDir, burn, length, minCount);
+		SampleSummarizer s = new SumSampleSummarizer();
+		summarize(s, runDir, burn, length, minCount);
 	}
 }

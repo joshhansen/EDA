@@ -1,4 +1,4 @@
-package jhn.eda.tokentopics;
+package jhn.eda.summarize;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +14,7 @@ import cc.mallet.types.LabelAlphabet;
 
 import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
+import jhn.eda.tokentopics.DocTopicCounts;
 import jhn.idx.IntIndex;
 import jhn.util.Util;
 
@@ -69,10 +70,11 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 		final int minCount = 2;
 		final int summaryMinCount = 5;
 		final int startIter = 11;
-		final int stopIter = 105;
-		final int run = 47;
+		final int stopIter = 149;
+		final int run = 67;
 		final String datasetName = "reuters21578_noblah2";
 		final String topicWordIdxName = "wp_lucene4";
+		final String summarizer = "majority";
 		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
 		System.out.println(topicMappingFilename);
 		IntIndex topicMapping = (IntIndex) Util.deserialize(topicMappingFilename);
@@ -81,7 +83,7 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 
 			final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
-			String sampleSummaryFilename = Paths.sampleSummaryFilename(runDir, startIter, stopIter, summaryMinCount);
+			String sampleSummaryFilename = Paths.sampleSummaryFilename(summarizer, runDir, startIter, stopIter, summaryMinCount);
 			
 			try(SampleSummaryFileReader r = new SampleSummaryFileReader(sampleSummaryFilename)) {
 				for(DocTopicCounts dtc : r) {
