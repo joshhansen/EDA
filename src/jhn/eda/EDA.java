@@ -102,6 +102,10 @@ public abstract class EDA implements Serializable {
 		log.println(getClass().getName() + ": " + numTopics + " topics");
 		log.println("Topic Counts Source: " + typeTopicCounts.getClass().getSimpleName());
 	}
+	
+	protected boolean optimizingAlphas() {
+		return conf.containsKey(Options.ALPHA_OPTIMIZE_INTERVAL);
+	}
 
 	public void setTrainingData (InstanceList training) {
 		numDocs = training.size();
@@ -153,12 +157,15 @@ public abstract class EDA implements Serializable {
 			
 			tokenCount += docLength;
 		}
+		
 		// Alpha optimization stuff:
-		docLengthCounts = new int[maxDocLength];
-		for(int i = 0; i < docLengthCounts.length; i++) {
-			docLengthCounts[i] = docLengthFreqs.getCount(i);
+		if(optimizingAlphas()) {
+			docLengthCounts = new int[maxDocLength];
+			for(int i = 0; i < docLengthCounts.length; i++) {
+				docLengthCounts[i] = docLengthFreqs.getCount(i);
+			}
+			topicDocCounts = new int[numTopics][maxDocLength+1];
 		}
-		topicDocCounts = new int[numTopics][maxDocLength+1];
 		
 		allLabels = new RAMIndex<>();
 		allLabels.indexOf("none");//Needed for use in SparseInstance
@@ -209,7 +216,9 @@ public abstract class EDA implements Serializable {
 			log.println("Iteration " + iteration);
 			long iterationStart = System.currentTimeMillis();
 			
-			clearAlphaOptimizationHistogram();
+			if(alphaOptimizeInterval > 0) {
+				clearAlphaOptimizationHistogram();
+			}
 			
 			ThreadPoolExecutor exec = new ThreadPoolExecutor(minThreads, maxThreads, 500L, TimeUnit.MILLISECONDS,
 																new LinkedBlockingQueue<Runnable>());
@@ -351,14 +360,16 @@ public abstract class EDA implements Serializable {
 				}
 			}//end for position
 			
-			// Update topicDocCounts
-			System.out.print("Updating topicDocCounts " + docNum + "...");
-			synchronized(topicDocCounts) {
-				for(int topic = 0; topic < numTopics; topic++) {
-					topicDocCounts[topic][docTopicCounts[topic]] += 1;
+			if(optimizingAlphas()) {
+				// Update topicDocCounts
+				System.out.print("Updating topicDocCounts " + docNum + "...");
+				synchronized(topicDocCounts) {
+					for(int topic = 0; topic < numTopics; topic++) {
+						topicDocCounts[topic][docTopicCounts[topic]] += 1;
+					}
 				}
+				System.out.println("done.");
 			}
-			System.out.println("done.");
 			
 			samplerFinished();
 		}
