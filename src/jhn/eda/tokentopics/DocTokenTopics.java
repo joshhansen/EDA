@@ -29,6 +29,7 @@ public class DocTokenTopics implements IntIterator {
 		throw new UnsupportedOperationException();
 	}
 
+	/** The next topic */
 	@Override
 	public int nextInt() {
 		return topics[++tokenIdx];
