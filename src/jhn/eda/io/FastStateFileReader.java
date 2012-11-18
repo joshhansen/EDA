@@ -1,4 +1,4 @@
-package jhn.eda.tokentopics;
+package jhn.eda.io;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +14,7 @@ import cc.mallet.types.LabelAlphabet;
 
 import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
+import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.idx.IntIndex;
 import jhn.util.Util;
 

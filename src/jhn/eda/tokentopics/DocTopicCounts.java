@@ -5,27 +5,40 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 public class DocTopicCounts implements IntIterator {
 	private final int docNum;
 	private final String docSource;
+	private int docClass;
 	private final int[] topics;
 	private final int[] docTopicCounts;
 	private int pos = -1;
 	
 	public DocTopicCounts(String line) {
+		this(line, false);
+	}
+	
+	public DocTopicCounts(String line, boolean includesClass) {
 		if(line.startsWith("#")) {
 			throw new IllegalArgumentException("Commented lines can't be processed");
 		}
 		String[] parts = line.split("\\s+");
 		
-		topics = new int[parts.length - 2];
-		docTopicCounts = new int[parts.length - 2];
+		final int headerSize = includesClass ? 3 : 2;
+		topics = new int[parts.length - headerSize];
+		docTopicCounts = new int[parts.length - headerSize];
 		
-		docNum = Integer.parseInt(parts[0]);
-		docSource = parts[1];
+		int i = 0;
+		docNum = Integer.parseInt(parts[i++]);
+		docSource = parts[i++];
+		
+		if(includesClass) {
+			docClass = Integer.parseInt(parts[i++]);
+		} else {
+			docClass = -1;
+		}
 		
 		String[] subparts;
-		for(int i = 2; i < parts.length; i++) {
+		for(; i < parts.length; i++) {
 			subparts = parts[i].split(":");
-			topics[i-2] = Integer.parseInt(subparts[0]);
-			docTopicCounts[i-2] = Integer.parseInt(subparts[1]);
+			topics[i-headerSize] = Integer.parseInt(subparts[0]);
+			docTopicCounts[i-headerSize] = Integer.parseInt(subparts[1]);
 		}
 	}
 
@@ -60,6 +73,13 @@ public class DocTopicCounts implements IntIterator {
 	
 	public String docSource() {
 		return docSource;
+	}
+	
+	public int docClass() {
+		if(docClass < 0) {
+			throw new UnsupportedOperationException("Document class cannot be retrieved when includesClass==false");
+		}
+		return docClass;
 	}
 
 	@Override

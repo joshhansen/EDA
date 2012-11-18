@@ -1,8 +1,7 @@
-package jhn.eda.summarize;
+package jhn.eda.io;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
@@ -22,9 +21,15 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 	
 	private final BufferedReader r;
 	private String nextLine;
+	private boolean includesClass;
 	
 	public SampleSummaryFileReader(String sampleSummaryFilename) throws IOException {
+		this(sampleSummaryFilename, false);
+	}
+	
+	public SampleSummaryFileReader(String sampleSummaryFilename, boolean includesClass) throws IOException {
 		r = new BufferedReader(new FileReader(sampleSummaryFilename));
+		this.includesClass = includesClass;
 		getNextNonCommentLine();
 	}
 	
@@ -46,7 +51,7 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 
 	@Override
 	public DocTopicCounts next() {
-		DocTopicCounts dtc = new DocTopicCounts(nextLine);
+		DocTopicCounts dtc = new DocTopicCounts(nextLine, includesClass);
 		try {
 			getNextNonCommentLine();
 		} catch (IOException e) {
@@ -87,6 +92,7 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 			
 			try(SampleSummaryFileReader r = new SampleSummaryFileReader(sampleSummaryFilename)) {
 				for(DocTopicCounts dtc : r) {
+					@SuppressWarnings("unused")
 					int docNum = dtc.docNum();
 					String[] parts = dtc.docSource().split("/");
 					

@@ -1,4 +1,4 @@
-package jhn.eda.summarize;
+package jhn.eda.io;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

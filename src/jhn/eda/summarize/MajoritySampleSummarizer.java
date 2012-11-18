@@ -10,8 +10,8 @@ import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
+import jhn.eda.io.FastStateFileReader;
 import jhn.eda.tokentopics.DocTokenTopics;
-import jhn.eda.tokentopics.FastStateFileReader;
 
 public class MajoritySampleSummarizer implements SampleSummarizer {
 

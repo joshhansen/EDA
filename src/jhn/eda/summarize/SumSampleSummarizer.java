@@ -7,8 +7,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
+import jhn.eda.io.FastStateFileReader;
 import jhn.eda.tokentopics.DocTokenTopics;
-import jhn.eda.tokentopics.FastStateFileReader;
 
 public class SumSampleSummarizer implements SampleSummarizer {
 

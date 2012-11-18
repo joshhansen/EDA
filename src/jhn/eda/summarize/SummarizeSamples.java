@@ -17,6 +17,7 @@ import jhn.counts.Counter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.eda.Paths;
+import jhn.eda.io.SampleSummaryFileWriter;
 import jhn.util.Util;
 
 public class SummarizeSamples {
@@ -125,12 +126,13 @@ public class SummarizeSamples {
 	}
 	
 	public static void main(String[] args) throws Exception {
+		final boolean includeClass = true;
 		final int burn = 10;
 		final int length = 500;
 		final int run = 67;
 		final int minCount = 5;
 		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
 		SampleSummarizer s = new SumSampleSummarizer();
-		summarize(s, runDir, burn, length, minCount);
+		summarize(s, runDir, burn, length, minCount, includeClass);
 	}
 }
