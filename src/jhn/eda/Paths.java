@@ -9,6 +9,8 @@ public final class Paths {
 	public static final String FAST_STATE_EXT = ".fast_state";
 	public static final String PROPS_EXT = ".conf.ser";
 	public static final String TOPIC_COUNTS_EXT = ".topic_counts";
+	public static final String LIBSVM_EXT = ".libsvm";
+	public static final String LIBSVM_UNNORM_EXT = ".libsvm_unnorm";
 	
 	public static String outputDir() {
 		return jhn.Paths.outputDir("EDA");
@@ -105,7 +107,7 @@ public final class Paths {
 				}
 				
 					public static String libSvmReducedFilename(String runDir, int iteration, boolean normalize) {
-						return runDir + "/" + iteration + (normalize ? ".libsvm" : ".libsvm_unnorm");
+						return runDir + "/" + iteration + (normalize ? LIBSVM_EXT : LIBSVM_UNNORM_EXT);
 					}
 				
 				
