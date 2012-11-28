@@ -17,7 +17,9 @@ import jhn.counts.Counter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.eda.Paths;
+import jhn.eda.io.FastStateFileReader;
 import jhn.eda.io.SampleSummaryFileWriter;
+import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.util.Util;
 
 public class SummarizeSamples {
@@ -52,10 +54,9 @@ public class SummarizeSamples {
 		final int stopIter = Math.min(allFiles.length, burn+length);
 		
 		// +1 because iteration filenames are 1-indexed
-		String summaryFilename = Paths.sampleSummaryFilename(summarizer.name(), runDir, startIter+1, stopIter, minCount);
+		String summaryFilename = Paths.sampleSummaryFilename(summarizer.name(), runDir, startIter+1, stopIter, minCount, includeClass);
 		
 		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
-		Int2IntMap classes = includeClass ? new Int2IntOpenHashMap() : null;
 		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
 		List<File> files = new ArrayList<>();
@@ -63,6 +64,20 @@ public class SummarizeSamples {
 			files.add(allFiles[i]);
 		}
 		IntIntIntCounterMap aggregateDocTopicCounts = summarizer.summarize(files.toArray(new File[0]), sources);
+		
+		Int2IntMap classes;
+		if(includeClass) {
+			classes = new Int2IntOpenHashMap();
+			try(FastStateFileReader stateFile = new FastStateFileReader(files.get(0).getPath())) {
+				for(DocTokenTopics dtt : stateFile) {
+					classes.put(dtt.docNum(), dtt.docClass());
+				}
+			}
+		} else {
+			classes = null;
+		}
+		
+		
 //		
 //		String fullFilename;
 		int docNum;
