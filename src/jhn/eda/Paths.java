@@ -1,6 +1,5 @@
 package jhn.eda;
 
-import jhn.eda.summarize.SampleSummarizer;
 
 
 public final class Paths {
@@ -82,7 +81,30 @@ public final class Paths {
 				}
 				
 				public static String sampleSummaryFilename(String summarizerName, String runDir, int start, int stop, int minCount) {
-					return runDir + "/summary-" + summarizerName + "_iters" + start + "-" + stop + "_min" + minCount + jhn.Paths.STATE_EXT;
+					return sampleSummaryFilename(summarizerName, runDir, start, stop, minCount, false);
+				}
+				
+				public static String sampleSummaryKey(String summarizerName, int start, int stop, int minCount, boolean includesClass) {
+					StringBuilder s = new StringBuilder();
+					s.append(summarizerName);
+					s.append("_iters");
+					s.append(start);
+					s.append('-');
+					s.append(stop);
+					s.append("_min");
+					s.append(minCount);
+					if(includesClass) {
+						s.append("_classy");
+					}
+					return s.toString();
+				}
+				
+				public static String sampleSummaryFilename(String summarizerName, String runDir, int start, int stop, int minCount, boolean includesClass) {
+					StringBuilder s = new StringBuilder(runDir);
+					s.append("/summary-");
+					s.append(sampleSummaryKey(summarizerName, start, stop, minCount, includesClass));
+					s.append(jhn.Paths.STATE_EXT);
+					return s.toString();
 				}
 				
 				public static String stateDir(String runDir) {
