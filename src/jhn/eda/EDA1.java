@@ -7,8 +7,8 @@ import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 
 /** Actually LDA with static topic-word counts */
-public class OldEDA extends EDA {
-	public OldEDA(TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
+public class EDA1 extends EDA {
+	public EDA1(TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
 			int numTopics, String logDir) throws FileNotFoundException {
 		super(topicCountsFact, typeTopicCounts, numTopics, logDir);
 		// TODO Auto-generated constructor stub
