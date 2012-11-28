@@ -17,6 +17,7 @@ public class LibSVMFileWriter implements AutoCloseable {
 	public void featureValue(int featNum, double value) {
 		out.print(' ');
 		out.print(featNum);
+		out.print(':');
 		out.print(value);
 	}
 	
