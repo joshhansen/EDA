@@ -24,19 +24,15 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 	private boolean includesClass;
 	
 	public SampleSummaryFileReader(String sampleSummaryFilename) throws IOException {
-		this(sampleSummaryFilename, false);
-	}
-	
-	public SampleSummaryFileReader(String sampleSummaryFilename, boolean includesClass) throws IOException {
 		r = new BufferedReader(new FileReader(sampleSummaryFilename));
-		this.includesClass = includesClass;
+		includesClass = r.readLine().contains(" class ");
 		getNextNonCommentLine();
 	}
 	
 	private void getNextNonCommentLine() throws IOException {
 		do {
 			nextLine = r.readLine();
-		} while(nextLine.startsWith("#"));
+		} while(nextLine != null && nextLine.startsWith("#"));
 	}
 	
 	@Override
