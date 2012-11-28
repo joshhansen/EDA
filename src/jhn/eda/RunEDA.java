@@ -3,6 +3,7 @@ package jhn.eda;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 
 import cc.mallet.types.InstanceList;
 
@@ -19,10 +20,12 @@ public class RunEDA {
 	public static final double DEFAULT_ALPHA_SUM = 50.0;
 	public static final double DEFAULT_BETA = 0.01;
 	
+	protected Class<? extends EDA> algo;
 	protected String runsDir;
 	protected int run;
 	protected int iterations;
 	protected int minCount;
+	protected boolean outputClass;
 	protected String topicWordIdxName;
 	protected String datasetName;
 	protected InstanceList targetData;
@@ -31,12 +34,18 @@ public class RunEDA {
 	protected Config props;
 	
 	public RunEDA() {
-		runsDir = Paths.defaultRunsDir();
-		iterations = 500;
-		minCount = 2;
-		topicWordIdxName = "wp_lucene4";
-		datasetName = "reuters21578_noblah2";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
-//		datasetName = "toy_dataset4";
+		this(EDA2.class, Paths.defaultRunsDir(), 500, 2, false, "wp_lucene4", "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+	}
+	
+	public RunEDA(Class<? extends EDA> algo, String runsDir, int iterations, int minCount, boolean outputClass,
+			String topicWordIdxName, String datasetName) {
+		this.algo = algo;
+		this.runsDir = runsDir;
+		this.iterations = iterations;
+		this.minCount = minCount;
+		this.outputClass = outputClass;
+		this.topicWordIdxName = topicWordIdxName;
+		this.datasetName = datasetName;
 	}
 
 	protected void loadAll() throws Exception {
@@ -63,7 +72,13 @@ public class RunEDA {
 	protected void runEDA() throws FileNotFoundException, Exception {
 		new File(runDir()).mkdirs();
 		
-		EDA eda = new EDA2 (tcs, ttcs, props.getInt(Options.NUM_TOPICS), runDir()+"/main.log");
+		for(Constructor<?> ctor : algo.getDeclaredConstructors()) {
+			System.out.println(ctor);
+		}
+		
+		EDA eda = algo.getConstructor(TopicCounts.class, TypeTopicCounts.class, Integer.class, String.class)
+				.newInstance(tcs, ttcs, Integer.valueOf(props.getInt(Options.NUM_TOPICS)), runDir()+"/main.log");
+		
 		configure(eda.conf);
 		addListeners(eda);
 		processTargetData(eda);
@@ -95,9 +110,9 @@ public class RunEDA {
 		conf.putInt(Options.MAX_THREADS, NUM_CORES);
 	}
 	
-	protected void addListeners(EDA eda) {
+	protected void addListeners(EDA eda) throws Exception {
 //		eda.addListener(new PrintState(PRINT_INTERVAL, runDir()));
-		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir()));
+		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
 //		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir()));
 //		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir(), false));
 //		eda.addListener(new PrintDocTopics(PRINT_INTERVAL, runDir()));
