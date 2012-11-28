@@ -26,8 +26,8 @@ public class SampleSummaryFileWriter implements AutoCloseable {
 	
 	public void startDocument(int docNum, String docSource, int docClass) {
 		_startDocument(docNum, docSource);
-		w.print(docClass);
 		w.print(' ');
+		w.print(docClass);
 	}
 	
 	private void _startDocument(int docNum, String docSource) {
