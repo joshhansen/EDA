@@ -1,8 +1,8 @@
 package jhn.eda.io;
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -11,58 +11,46 @@ import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.LabelAlphabet;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.idx.IntIndex;
 import jhn.util.Util;
 
-public class FastStateFileReader implements StateFileReader {
+public class FasterStateFileReader implements StateFileReader {
 	private final boolean includesClass;
-	private BufferedReader r;
-	private int[] topics;
+	private DataInputStream r;
+	private IntList topics = new IntArrayList();
 	private int docNum = -1;
 	private String docSource;
 	private int docClass;
-	private int idx;
+	private int topic;
 	
-	public FastStateFileReader(String filename) throws IOException {
-		r = new BufferedReader(new FileReader(filename));
-		includesClass = r.readLine().contains(" class ");
+	public FasterStateFileReader(String filename) throws IOException {
+		r = new DataInputStream(new FileInputStream(filename));
+		includesClass = r.readBoolean();
 	}
 	
 	@Override
 	public Iterator<DocTokenTopics> iterator() {
 		return this;
 	}
-
 	
 	@Override
 	public boolean hasNext() {
 		try {
-			String line;
-			while(true) {
-				line = r.readLine();
-				if(line == null) {
-					return false;
-				}
-				if(!line.startsWith("#")) {
-					break;
-				}
-			}
-			
-			String[] parts = line.split("\\s+");
-			idx = 0;
-			
-			docNum = Integer.parseInt(parts[idx++]);
+			docNum = r.readInt();
+			docSource = r.readUTF();
 			if(includesClass) {
-				docClass = Integer.parseInt(parts[idx++]);
+				docClass = r.readInt();
 			}
-			docSource = parts[idx++];
 			
-			topics = new int[parts.length - 2];
-			for(; idx < parts.length; idx++) {
-				topics[idx-2] = Integer.parseInt(parts[idx]);
+			topics.clear();
+			while( (topic=r.readInt()) >= 0) {
+				topics.add(topic);
 			}
 			return true;
 		} catch(IOException e) {
@@ -72,7 +60,7 @@ public class FastStateFileReader implements StateFileReader {
 
 	@Override
 	public DocTokenTopics next() {
-		return new DocTokenTopics(docNum, docSource, topics, docClass);
+		return new DocTokenTopics(docNum, docSource, topics.toIntArray(), docClass);
 	}
 
 	@Override
@@ -95,7 +83,7 @@ public class FastStateFileReader implements StateFileReader {
 		try(IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)))) {
 			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 			
-			try(StateFileReader dtt = new FastStateFileReader(jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2))) {
+			try(StateFileReader dtt = new FasterStateFileReader(jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2))) {
 				for(DocTokenTopics topics : dtt) {
 					System.out.print(topics.docNum());
 					System.out.print(' ');
