@@ -5,12 +5,19 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 public class DocTokenTopics implements IntIterator {
 	private final int docNum;
 	private final String docSource;
+	private final int docClass;
 	private int tokenIdx;
 	private int[] topics;
+	
 	public DocTokenTopics(int docNum, String docSource, int[] topics) {
+		this(docNum, docSource, topics, -1);
+	}
+	
+	public DocTokenTopics(int docNum, String docSource, int[] topics, int docClass) {
 		this.docNum = docNum;
 		this.docSource = docSource;
 		this.topics = topics;
+		this.docClass = docClass;
 		tokenIdx = -1;
 	}
 	
@@ -54,5 +61,10 @@ public class DocTokenTopics implements IntIterator {
 	
 	public String docSource() {
 		return docSource;
+	}
+	
+	/** -1 if class was not set */
+	public int docClass() {
+		return docClass;
 	}
 }
