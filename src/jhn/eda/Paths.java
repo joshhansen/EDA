@@ -6,6 +6,7 @@ public final class Paths {
 	private Paths() {}
 	
 	public static final String FAST_STATE_EXT = ".fast_state";
+	public static final String FASTER_STATE_EXT = ".faster_state";
 	public static final String PROPS_EXT = ".conf.ser";
 	public static final String TOPIC_COUNTS_EXT = ".topic_counts";
 	public static final String LIBSVM_EXT = ".libsvm";
@@ -123,6 +124,14 @@ public final class Paths {
 						return fastStateDir(runDir) + "/" + iteration + FAST_STATE_EXT;
 					}
 				
+				public static String fasterStateDir(String runDir) {
+					return runDir + "/faster_state";
+				}
+					public static String fasterStateFilename(String runDir, int iteration) {
+						return fasterStateDir(runDir) + "/" + iteration + FASTER_STATE_EXT;
+					}
+
+				
 				
 				public static String reducedDir(String runDir) {
 					return runDir + "/reduced";
@@ -176,5 +185,4 @@ public final class Paths {
 	public static int nextRun(String runsDir) {
 		return jhn.Paths.nextRun(runsDir);
 	}
-
 }
