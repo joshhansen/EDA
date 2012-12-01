@@ -8,7 +8,7 @@ import java.util.Comparator;
 
 import jhn.counts.i.i.IntIntCounter;
 import jhn.eda.Paths;
-import jhn.eda.io.LibSVMFileWriter;
+import jhn.io.LibSVMFileWriter;
 import jhn.util.Util;
 
 public class PrintReducedDocsLibSVM extends IntervalListener {

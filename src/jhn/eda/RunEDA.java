@@ -8,10 +8,10 @@ import java.lang.reflect.Constructor;
 import cc.mallet.types.InstanceList;
 
 import jhn.eda.listeners.PrintFastState;
-import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Config;
 import jhn.util.Util;
+import jhn.wp.topiccounts.TopicCounts;
+import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 
 public class RunEDA {
@@ -136,7 +136,7 @@ public class RunEDA {
 	
 	protected TypeTopicCounts loadTypeTopicCounts() throws FileNotFoundException, IOException, ClassNotFoundException {
 		System.out.print("Loading type-topic counts...");
-		final String ttCountsFilename = Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String ttCountsFilename = jhn.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TypeTopicCounts theTTCs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 		return theTTCs;
@@ -144,7 +144,7 @@ public class RunEDA {
 	
 	protected TopicCounts loadTopicCounts() throws FileNotFoundException, IOException, ClassNotFoundException {
 		System.out.print("Loading topic counts...");
-		final String topicCountsFilename = Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts theTCs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		System.out.println("done.");
 		return theTCs;

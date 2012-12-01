@@ -8,9 +8,9 @@ package jhn.eda;
 
 import java.io.FileNotFoundException;
 
-import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TopicCount;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.wp.topiccounts.TopicCounts;
+import jhn.wp.typetopiccounts.TopicCount;
+import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 /**
 * An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew

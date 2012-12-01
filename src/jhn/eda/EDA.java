@@ -32,14 +32,14 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.eda.listeners.EDAListener;
-import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TopicCount;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCountsException;
 import jhn.idx.Index;
 import jhn.idx.RAMIndex;
 import jhn.util.Config;
 import jhn.util.Log;
+import jhn.wp.topiccounts.TopicCounts;
+import jhn.wp.typetopiccounts.TopicCount;
+import jhn.wp.typetopiccounts.TypeTopicCounts;
+import jhn.wp.typetopiccounts.TypeTopicCountsException;
 
 /**
 * An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew

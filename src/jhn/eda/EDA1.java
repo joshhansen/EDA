@@ -2,9 +2,9 @@ package jhn.eda;
 
 import java.io.FileNotFoundException;
 
-import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TopicCount;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.wp.topiccounts.TopicCounts;
+import jhn.wp.typetopiccounts.TopicCount;
+import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 /** Actually LDA with static topic-word counts */
 public class EDA1 extends EDA {

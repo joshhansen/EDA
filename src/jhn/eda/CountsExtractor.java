@@ -14,21 +14,21 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import jhn.eda.topiccounts.ArrayTopicCounts;
-import jhn.eda.topiccounts.LuceneTopicCounts;
-import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.topictypecounts.LuceneTopicTypeCounts;
-import jhn.eda.topictypecounts.TopicTypeCount;
-import jhn.eda.topictypecounts.TopicTypeCounts;
-import jhn.eda.topictypecounts.TopicTypeCountsException;
-import jhn.eda.typetopiccounts.ArrayTypeTopicCounts;
-import jhn.eda.typetopiccounts.LuceneTypeTopicCounts;
-import jhn.eda.typetopiccounts.TopicCount;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.IntIndex;
 import jhn.idx.IntRAMIndex;
 import jhn.util.Config;
 import jhn.util.Util;
+import jhn.wp.topiccounts.ArrayTopicCounts;
+import jhn.wp.topiccounts.LuceneTopicCounts;
+import jhn.wp.topiccounts.TopicCounts;
+import jhn.wp.topictypecounts.LuceneTopicTypeCounts;
+import jhn.wp.topictypecounts.TopicTypeCount;
+import jhn.wp.topictypecounts.TopicTypeCounts;
+import jhn.wp.topictypecounts.TopicTypeCountsException;
+import jhn.wp.typetopiccounts.ArrayTypeTopicCounts;
+import jhn.wp.typetopiccounts.LuceneTypeTopicCounts;
+import jhn.wp.typetopiccounts.TopicCount;
+import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 public class CountsExtractor implements AutoCloseable {
 	private static final boolean EXTRACT_FULL_COUNTS = false;
@@ -222,10 +222,10 @@ public class CountsExtractor implements AutoCloseable {
 		
 		String topicMappingFilename =              Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
 		String propsFilename =                 Paths.propsFilename(topicWordIdxName, datasetName, minCount);
-		String topicCountsFilename =           Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String restrictedTopicCountsFilename = Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String filteredTopicCountsFilename =   Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String typeTopicCountsFilename =       Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String topicCountsFilename =           jhn.Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String restrictedTopicCountsFilename = jhn.Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String filteredTopicCountsFilename =   jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String typeTopicCountsFilename =       jhn.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		
 		// Load
 		InstanceList targetData = InstanceList.load(new File(datasetFilename));

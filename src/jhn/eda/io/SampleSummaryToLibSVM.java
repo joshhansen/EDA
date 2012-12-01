@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.List;
 
 import jhn.eda.tokentopics.DocTopicCounts;
-import jhn.eda.typetopiccounts.TopicCount;
+import jhn.io.LibSVMFileWriter;
+import jhn.wp.typetopiccounts.TopicCount;
 
 public class SampleSummaryToLibSVM {
 	public static void convert(String sampleSummaryFilename, String libSvmFilename) throws IOException, Exception {
