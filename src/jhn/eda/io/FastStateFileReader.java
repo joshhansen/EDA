@@ -24,6 +24,7 @@ public class FastStateFileReader implements StateFileReader {
 	private String docSource;
 	private int docClass;
 	private int idx;
+	private int offset;
 	
 	public FastStateFileReader(String filename) throws IOException {
 		r = new BufferedReader(new FileReader(filename));
@@ -59,9 +60,11 @@ public class FastStateFileReader implements StateFileReader {
 			}
 			docSource = parts[idx++];
 			
-			topics = new int[parts.length - 2];
+			offset = idx;//adjusts for size of row header
+			
+			topics = new int[parts.length - offset];
 			for(; idx < parts.length; idx++) {
-				topics[idx-2] = Integer.parseInt(parts[idx]);
+				topics[idx-offset] = Integer.parseInt(parts[idx]);
 			}
 			return true;
 		} catch(IOException e) {
