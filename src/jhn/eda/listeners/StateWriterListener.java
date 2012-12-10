@@ -27,7 +27,7 @@ public abstract class StateWriterListener extends IntervalListener {
 			dir.mkdirs();
 		}
 		
-		writerCtor = cls.getConstructor(String.class, Boolean.class);
+		writerCtor = cls.getConstructor(String.class, Boolean.TYPE);
 	}
 	
 	protected abstract String outputDir();

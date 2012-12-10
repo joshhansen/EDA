@@ -76,7 +76,7 @@ public class RunEDA {
 			System.out.println(ctor);
 		}
 		
-		EDA eda = algo.getConstructor(TopicCounts.class, TypeTopicCounts.class, Integer.class, String.class)
+		EDA eda = algo.getConstructor(TopicCounts.class, TypeTopicCounts.class, Integer.TYPE, String.class)
 				.newInstance(tcs, ttcs, Integer.valueOf(props.getInt(Options.NUM_TOPICS)), runDir()+"/main.log");
 		
 		configure(eda.conf);
