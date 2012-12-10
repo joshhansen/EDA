@@ -11,7 +11,6 @@ import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.LabelAlphabet;
 
-import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.idx.IntIndex;
@@ -89,7 +88,7 @@ public class FastStateFileReader implements StateFileReader {
 		final int minCount = 2;
 		final String datasetName = "reuters21578_noblah2";
 		final String topicWordIdxName = "wp_lucene4";
-		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
+		String topicMappingFilename = jhn.Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
 		IntIndex topicMapping = (IntIndex) Util.deserialize(topicMappingFilename);
 		String topicWordIdxDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
 		try(IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)))) {

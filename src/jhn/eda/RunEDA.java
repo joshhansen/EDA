@@ -98,7 +98,7 @@ public class RunEDA {
 	}
 
 	protected Config loadProps() throws FileNotFoundException, IOException, ClassNotFoundException {
-		return (Config) Util.deserialize(Paths.propsFilename(topicWordIdxName, datasetName, minCount));
+		return (Config) Util.deserialize(jhn.Paths.propsFilename(topicWordIdxName, datasetName, minCount));
 	}
 	
 	protected void configure(Config conf) {

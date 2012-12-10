@@ -76,7 +76,7 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 		final String datasetName = "reuters21578_noblah2";
 		final String topicWordIdxName = "wp_lucene4";
 		final String summarizer = "majority";
-		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
+		String topicMappingFilename = jhn.Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
 		System.out.println(topicMappingFilename);
 		IntIndex topicMapping = (IntIndex) Util.deserialize(topicMappingFilename);
 		String topicWordIdxDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);

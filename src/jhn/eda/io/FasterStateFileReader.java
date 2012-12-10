@@ -14,7 +14,6 @@ import cc.mallet.types.LabelAlphabet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
-import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.idx.IntIndex;
@@ -77,13 +76,13 @@ public class FasterStateFileReader implements StateFileReader {
 		final int minCount = 2;
 		final String datasetName = "reuters21578_noblah2";
 		final String topicWordIdxName = "wp_lucene4";
-		String topicMappingFilename = Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
+		String topicMappingFilename = jhn.Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
 		IntIndex topicMapping = (IntIndex) Util.deserialize(topicMappingFilename);
 		String topicWordIdxDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
 		try(IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)))) {
 			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 			
-			try(StateFileReader dtt = new FasterStateFileReader(jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2))) {
+			try(StateFileReader dtt = new FasterStateFileReader(jhn.eda.Paths.fasterStateFilename(jhn.Paths.outputDir("EDAValidation")+"/reuters21578_noblah2/EDA1/runs/0", 1))) {
 				for(DocTokenTopics topics : dtt) {
 					System.out.print(topics.docNum());
 					System.out.print(' ');

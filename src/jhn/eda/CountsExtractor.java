@@ -220,8 +220,8 @@ public class CountsExtractor implements AutoCloseable {
 		String datasetFilename = jhn.Paths.malletDatasetFilename(datasetName);
 		String topicWordIdxLuceneDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
 		
-		String topicMappingFilename =              Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
-		String propsFilename =                 Paths.propsFilename(topicWordIdxName, datasetName, minCount);
+		String topicMappingFilename =              jhn.Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
+		String propsFilename =                 jhn.Paths.propsFilename(topicWordIdxName, datasetName, minCount);
 		String topicCountsFilename =           jhn.Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
 		String restrictedTopicCountsFilename = jhn.Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		String filteredTopicCountsFilename =   jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);

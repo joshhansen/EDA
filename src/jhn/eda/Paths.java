@@ -7,29 +7,11 @@ public final class Paths {
 	
 	public static final String FAST_STATE_EXT = ".fast_state";
 	public static final String FASTER_STATE_EXT = ".faster_state";
-	public static final String PROPS_EXT = ".conf.ser";
-	public static final String LIBSVM_EXT = ".libsvm";
 	public static final String LIBSVM_UNNORM_EXT = ".libsvm_unnorm";
 	
 	public static String outputDir() {
 		return jhn.Paths.outputDir("EDA");
 	}
-	
-		public static String propsDir() {
-			return outputDir() + "/props";
-		}
-			public static String propsFilename(String topicWordIdxName, String datasetName, int minCount) {
-				return propsDir() + "/" + jhn.Paths.extractedDataID(topicWordIdxName, datasetName, minCount) + PROPS_EXT;
-			}
-	
-
-			
-			public static String topicMappingsDir() {
-				return outputDir() + "/topic_mappings";
-			}
-				public static String topicMappingFilename(String topicWordIdxName, String datasetName, int minCount) {
-					return topicMappingsDir() + "/" + jhn.Paths.extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
-				}
 
 		public static String labelAlphabetsDir() {
 			return outputDir() + "/label_alphabets";
@@ -111,7 +93,7 @@ public final class Paths {
 				}
 				
 					public static String libSvmReducedFilename(String runDir, int iteration, boolean normalize) {
-						return runDir + "/" + iteration + (normalize ? LIBSVM_EXT : LIBSVM_UNNORM_EXT);
+						return runDir + "/" + iteration + (normalize ? jhn.Paths.LIBSVM_EXT : LIBSVM_UNNORM_EXT);
 					}
 				
 				
