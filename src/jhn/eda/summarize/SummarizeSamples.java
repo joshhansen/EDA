@@ -77,31 +77,9 @@ public class SummarizeSamples {
 			classes = null;
 		}
 		
-		
-//		
-//		String fullFilename;
 		int docNum;
 		int docClass;
 		int topic;
-//		
-//		for(int i = startIter; i < stopIter; i++) {
-//			fullFilename = files[i].getPath();
-//			System.out.println(files[i].getName());
-//			
-//			try(FastStateFileReader stateFile = new FastStateFileReader(fullFilename)) {
-//				for(DocTokenTopics topics : stateFile) {
-//					docNum = topics.docNum();
-//					sources.put(docNum, topics.docSource());
-//					while(topics.hasNext()) {
-//						aggregateDocTopicCounts.inc(docNum, topics.nextInt());
-//					}
-//				}
-//			}
-//		}
-		
-//		fullFilename = null;
-		
-		
 		IntIntCounter counts;
 		Int2IntMap.Entry[] entries;
 		String docSrc;
