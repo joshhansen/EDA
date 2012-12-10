@@ -80,6 +80,7 @@ public class SummarizeSamples {
 		int docNum;
 		int docClass;
 		int topic;
+		int count;
 		IntIntCounter counts;
 		Int2IntMap.Entry[] entries;
 		String docSrc;
@@ -102,10 +103,11 @@ public class SummarizeSamples {
 				
 				Arrays.sort(entries, cmp);
 				
-				for(Int2IntMap.Entry count : entries) {
-					topic = count.getIntKey();
-					if(count.getIntValue() >= minCount) {
-						w.topicCount(topic, count.getIntValue());
+				for(Int2IntMap.Entry countEntry : entries) {
+					topic = countEntry.getIntKey();
+					count = countEntry.getIntValue();
+					if(count >= minCount) {
+						w.topicCount(topic, count);
 					}
 				}
 				w.endDocument();
