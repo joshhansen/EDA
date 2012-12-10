@@ -8,10 +8,10 @@ import java.lang.reflect.Constructor;
 import cc.mallet.types.InstanceList;
 
 import jhn.eda.listeners.PrintFastState;
+import jhn.eda.topiccounts.TopicCounts;
+import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Config;
 import jhn.util.Util;
-import jhn.wp.topiccounts.TopicCounts;
-import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 
 public class RunEDA {
