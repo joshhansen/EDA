@@ -97,7 +97,9 @@ public class FastStateFileReader implements StateFileReader {
 		try(IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)))) {
 			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 			
-			try(StateFileReader dtt = new FastStateFileReader(jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2))) {
+//			String fastStateFilename = jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2);
+			String fastStateFilename = "/home/josh/Projects/Output/EDAValidation/reuters21578_noblah2/EDA2/runs/0/fast_state/11.fast_state";
+			try(StateFileReader dtt = new FastStateFileReader(fastStateFilename)) {
 				for(DocTokenTopics topics : dtt) {
 					System.out.print(topics.docNum());
 					System.out.print(' ');

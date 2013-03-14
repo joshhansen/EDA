@@ -186,6 +186,13 @@ public class CountsExtractor implements AutoCloseable {
 		Iterator<TopicTypeCount> topicTypeIt;
 		
 		for(int topicNum = 0; topicNum < newTopicNums.size(); topicNum++) {
+			if(topicNum % 100 == 0) {
+				System.out.print(topicNum);
+				System.out.print(' ');
+				if(topicNum % 1000 == 0) {
+					System.out.println();
+				}
+			}
 			topicTypeIt = srcTopicTypeCounts.topicTypeCounts(topicNum);
 			while(topicTypeIt.hasNext()) {
 				topicTypeCount = topicTypeIt.next();
@@ -212,8 +219,8 @@ public class CountsExtractor implements AutoCloseable {
 	public static void main(String[] args) throws Exception {
 		// Config
 //		int minCount = 2;
-		String datasetName = "reuters21578_noblah2";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
-//		String datasetName = "toy_dataset4";
+//		String datasetName = "reuters21578_noblah2";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		String datasetName = "toy_dataset4";
 		int minCount = 2;
 		String topicWordIdxName = "wp_lucene4";
 		System.out.println("Extracting " + datasetName);

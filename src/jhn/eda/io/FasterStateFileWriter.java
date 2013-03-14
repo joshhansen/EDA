@@ -1,5 +1,6 @@
 package jhn.eda.io;
 
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,7 +10,7 @@ public class FasterStateFileWriter implements AutoCloseable, StateFileWriter {
 	private final DataOutputStream w;
 	public FasterStateFileWriter(String outputFilename, boolean includeClass) throws IOException {
 		this.includeClass = includeClass;
-		this.w = new DataOutputStream(new FileOutputStream(outputFilename));
+		this.w = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFilename)));
 		w.writeBoolean(includeClass);
 	}
 	

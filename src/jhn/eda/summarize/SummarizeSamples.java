@@ -18,7 +18,9 @@ import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.eda.Paths;
 import jhn.eda.io.FastStateFileReader;
+import jhn.eda.io.FasterStateFileReader;
 import jhn.eda.io.SampleSummaryFileWriter;
+import jhn.eda.io.StateFileReader;
 import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.util.Util;
 
@@ -47,8 +49,8 @@ public class SummarizeSamples {
 	}
 	
 	public static void summarize(SampleSummarizer summarizer, String runDir, int burn, int length, int minCount, boolean includeClass) throws Exception {
-		String fastStateDir = Paths.fastStateDir(runDir);
-		File[] allFiles = new File(fastStateDir).listFiles();
+		String fasterStateDir = Paths.fasterStateDir(runDir);
+		File[] allFiles = new File(fasterStateDir).listFiles();
 		Arrays.sort(allFiles, fileCmp);
 		final int startIter = burn;
 		final int stopIter = Math.min(allFiles.length, burn+length);
@@ -56,7 +58,7 @@ public class SummarizeSamples {
 		// +1 because iteration filenames are 1-indexed
 		String summaryFilename = Paths.sampleSummaryFilename(summarizer.name(), runDir, startIter+1, stopIter, minCount, includeClass);
 		
-		System.out.println("Summarizing " + fastStateDir + " -> " + summaryFilename);
+		System.out.println("Summarizing " + fasterStateDir + " -> " + summaryFilename);
 		Int2ObjectMap<String> sources = new Int2ObjectOpenHashMap<>();
 		
 		List<File> files = new ArrayList<>();
@@ -68,7 +70,7 @@ public class SummarizeSamples {
 		Int2IntMap classes;
 		if(includeClass) {
 			classes = new Int2IntOpenHashMap();
-			try(FastStateFileReader stateFile = new FastStateFileReader(files.get(0).getPath())) {
+			try(StateFileReader stateFile = new FasterStateFileReader(files.get(0).getPath())) {
 				for(DocTokenTopics dtt : stateFile) {
 					classes.put(dtt.docNum(), dtt.docClass());
 				}
@@ -122,11 +124,14 @@ public class SummarizeSamples {
 	
 	public static void main(String[] args) throws Exception {
 		final boolean includeClass = true;
-		final int burn = 10;
-		final int length = 500;
-		final int run = 67;
-		final int minCount = 5;
-		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
+		final int burn = 30;
+//		final int length = 500;
+		final int length = 70;
+//		final int run = 67;
+//		final int minCount = 5;
+		final int minCount = 2;
+//		final String runDir = Paths.runDir(Paths.defaultRunsDir(), run);
+		final String runDir = jhn.Paths.outputDir("EDAValidation") + "/toy_dataset4/EDA2_1/runs/0";
 		SampleSummarizer s = new SumSampleSummarizer();
 		summarize(s, runDir, burn, length, minCount, includeClass);
 	}

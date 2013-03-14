@@ -7,7 +7,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import jhn.counts.i.i.i.IntIntIntCounterMap;
 import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
-import jhn.eda.io.FastStateFileReader;
+import jhn.eda.io.StateFileReader;
+import jhn.eda.io.StateFiles;
 import jhn.eda.tokentopics.DocTokenTopics;
 
 public class SumSampleSummarizer implements SampleSummarizer {
@@ -21,7 +22,7 @@ public class SumSampleSummarizer implements SampleSummarizer {
 		for(File file : fastStateFiles) {
 			System.out.println(file.getName());
 			
-			try(FastStateFileReader stateFile = new FastStateFileReader(file.getPath())) {
+			try(StateFileReader stateFile = StateFiles.read(file.getPath())) {
 				for(DocTokenTopics topics : stateFile) {
 					docNum = topics.docNum();
 					sources.put(docNum, topics.docSource());

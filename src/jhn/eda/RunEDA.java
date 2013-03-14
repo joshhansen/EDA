@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import cc.mallet.types.InstanceList;
 
 import jhn.eda.listeners.PrintFastState;
+import jhn.eda.listeners.PrintFasterState;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Config;
@@ -34,7 +35,7 @@ public class RunEDA {
 	protected Config props;
 	
 	public RunEDA() {
-		this(EDA2.class, Paths.defaultRunsDir(), 500, 2, false, "wp_lucene4", "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		this(EDA2_1.class, Paths.defaultRunsDir(), 500, 2, false, "wp_lucene4", "toy_dataset4");// "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 	}
 	
 	public RunEDA(Class<? extends EDA> algo, String runsDir, int iterations, int minCount, boolean outputClass,
@@ -112,7 +113,8 @@ public class RunEDA {
 	
 	protected void addListeners(EDA eda) throws Exception {
 //		eda.addListener(new PrintState(PRINT_INTERVAL, runDir()));
-		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
+//		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
+		eda.addListener(new PrintFasterState(PRINT_INTERVAL, runDir(), outputClass));
 //		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir()));
 //		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir(), false));
 //		eda.addListener(new PrintDocTopics(PRINT_INTERVAL, runDir()));

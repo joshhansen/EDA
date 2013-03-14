@@ -5,9 +5,10 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 
-import jhn.eda.Paths;
-
 import cc.mallet.types.IDSorter;
+
+import jhn.counts.i.i.IntIntCounter;
+import jhn.eda.Paths;
 
 public class PrintDocTopics extends IntervalListener {
 //	private final int run;
@@ -40,7 +41,6 @@ public class PrintDocTopics extends IntervalListener {
 		try(PrintStream out = new PrintStream(new FileOutputStream(Paths.docTopicsFilename(runDir, iteration)))) {
 			out.print ("#doc source topic proportion ...\n");
 			final int numTopics = eda.numTopics();
-			int[] topicCounts = new int[numTopics];
 
 			IDSorter[] sortedTopics = new IDSorter[ numTopics ];
 			for (int topic = 0; topic < numTopics; topic++) {
@@ -53,11 +53,11 @@ public class PrintDocTopics extends IntervalListener {
 				out.print(eda.docName(docNum));
 				out.print (' ');
 
-				topicCounts = eda.docTopicCounts(docNum);
+				IntIntCounter topicCounts = eda.docTopicCounts(docNum);
 
 				// And normalize
 				for (int topic = 0; topic < numTopics; topic++) {
-					sortedTopics[topic].set(topic, (double) topicCounts[topic] / (double) eda.docLength(docNum));
+					sortedTopics[topic].set(topic, (double) topicCounts.getCount(topic) / (double) eda.docLength(docNum));
 				}
 				
 				Arrays.sort(sortedTopics);
@@ -69,8 +69,6 @@ public class PrintDocTopics extends IntervalListener {
 							  sortedTopics[i].getWeight() + " ");
 				}
 				out.print (" \n");
-
-				Arrays.fill(topicCounts, 0);
 			}
 		}
 	}
