@@ -8,6 +8,7 @@ package jhn.eda;
 
 import java.io.FileNotFoundException;
 
+import jhn.counts.i.i.IntIntCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
@@ -45,8 +46,8 @@ public class EDA2 extends EDA {
 		}
 		
 		@Override
-		protected double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) {
-			return ttc.count*(maybeMinusOne(docTopicCounts[ttc.topic]) + alphas[docNum]);
+		protected double completeConditional(TopicCount ttc, int oldTopic, IntIntCounter docTopicCounts) {
+			return ttc.count*(maybeMinusOne(docTopicCounts.getCount(ttc.topic)) + alphas[docNum]);
 		}
 	}//end class DocumentSampler2
 }

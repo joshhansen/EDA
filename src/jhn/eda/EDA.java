@@ -253,9 +253,11 @@ public abstract class EDA implements Serializable {
 	
 	protected abstract DocumentSampler samplerInstance(int docNum);
 
-	public int[] docTopicCounts(final int docNum) {
-		int[] docTopicCounts = new int[numTopics];
-		docTopicCounts(docNum, docTopicCounts);
+	public IntIntCounter docTopicCounts(final int docNum) {
+		IntIntCounter docTopicCounts = new IntIntRAMCounter();
+		for(int topic : topics[docNum]) {
+			docTopicCounts.inc(topic);
+		}
 		return docTopicCounts;
 	}
 	
@@ -267,12 +269,6 @@ public abstract class EDA implements Serializable {
 		return counts;
 	}
 	
-	private void docTopicCounts(final int docNum, final int[] topicCountsArr) {
-		for(int topic : topics[docNum]) {
-			topicCountsArr[topic]++;
-		}
-	}
-	
 	protected abstract class DocumentSampler implements Runnable {
 		protected final int docNum;
 		
@@ -280,14 +276,14 @@ public abstract class EDA implements Serializable {
 			this.docNum = docNum;
 		}
 		
-		protected abstract double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) throws Exception;
+		protected abstract double completeConditional(TopicCount ttc, int oldTopic, IntIntCounter docTopicCounts) throws Exception;
 		
 		@Override
 		public void run() {
 			int typeIdx, oldTopic, newTopic;
 			int docLength = docLengths[docNum];
 
-			int[] docTopicCounts = docTopicCounts(this.docNum);
+			IntIntCounter docTopicCounts = docTopicCounts(this.docNum);
 			
 			IntList ccTopics = new IntArrayList();
 			DoubleList ccScores = new DoubleArrayList();
@@ -365,7 +361,7 @@ public abstract class EDA implements Serializable {
 				System.out.print("Updating topicDocCounts " + docNum + "...");
 				synchronized(topicDocCounts) {
 					for(int topic = 0; topic < numTopics; topic++) {
-						topicDocCounts[topic][docTopicCounts[topic]] += 1;
+						topicDocCounts[topic][docTopicCounts.getCount(topic)] += 1;
 					}
 				}
 				System.out.println("done.");

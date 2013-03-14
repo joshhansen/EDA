@@ -2,6 +2,7 @@ package jhn.eda;
 
 import java.io.FileNotFoundException;
 
+import jhn.counts.i.i.IntIntCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
@@ -44,11 +45,11 @@ public class EDA1 extends EDA {
 		private int topicCount;
 		
 		@Override
-		protected double completeConditional(TopicCount ttc, int oldTopic, int[] docTopicCounts) throws Exception {
+		protected double completeConditional(TopicCount ttc, int oldTopic, IntIntCounter docTopicCounts) throws Exception {
 			topicCount = topicCounts.topicCount(ttc.topic);
 			
 			countDelta = ttc.topic==oldTopic ? 1.0 : 0.0;
-			return (alphas[ttc.topic] + docTopicCounts[ttc.topic] - countDelta) *
+			return (alphas[ttc.topic] + docTopicCounts.getCount(ttc.topic) - countDelta) *
 					(beta + ttc.count) /
 					(betaSum + topicCount - countDelta);
 		}
