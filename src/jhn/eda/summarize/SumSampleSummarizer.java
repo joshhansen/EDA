@@ -14,7 +14,7 @@ import jhn.eda.tokentopics.DocTokenTopics;
 public class SumSampleSummarizer implements SampleSummarizer {
 
 	@Override
-	public IntIntIntCounterMap summarize(File[] fastStateFiles, Int2ObjectMap<String> sources) throws IOException {
+	public IntIntIntCounterMap summarize(File[] fastStateFiles, Int2ObjectMap<String> sources) throws Exception {
 		IntIntIntCounterMap aggregateDocTopicCounts = new IntIntIntRAMCounterMap();
 		
 		int docNum;
