@@ -10,9 +10,11 @@ import cc.mallet.types.InstanceList;
 import jhn.ExtractorParams;
 import jhn.eda.listeners.PrintFastState;
 import jhn.eda.listeners.PrintFasterState;
+import jhn.eda.listeners.PrintLogLikelihood;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Config;
+import jhn.util.Log;
 import jhn.util.Util;
 
 
@@ -111,6 +113,7 @@ public class RunEDA {
 //		eda.addListener(new PrintState(PRINT_INTERVAL, runDir()));
 //		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
 		eda.addListener(new PrintFasterState(PRINT_INTERVAL, runDir(), outputClass));
+		eda.addListener(new PrintLogLikelihood(new Log(), PRINT_INTERVAL));
 //		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir()));
 //		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir(), false));
 //		eda.addListener(new PrintDocTopics(PRINT_INTERVAL, runDir()));
