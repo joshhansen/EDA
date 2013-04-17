@@ -8,7 +8,6 @@ import java.lang.reflect.Constructor;
 import cc.mallet.types.InstanceList;
 
 import jhn.ExtractorParams;
-import jhn.eda.listeners.PrintFastState;
 import jhn.eda.listeners.PrintFasterState;
 import jhn.eda.listeners.PrintLogLikelihood;
 import jhn.eda.topiccounts.TopicCounts;
