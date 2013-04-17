@@ -12,6 +12,7 @@ import org.apache.lucene.store.FSDirectory;
 import cc.mallet.types.LabelAlphabet;
 
 import jhn.ExtractorParams;
+import jhn.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.tokentopics.DocTokenTopics;
 import jhn.idx.IntIndex;
@@ -101,7 +102,7 @@ public class FastStateFileReader implements StateFileReader {
 			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 			
 //			String fastStateFilename = jhn.eda.Paths.fastStateFilename(jhn.Paths.outputDir("EDA")+"/runs/46", 2);
-			String fastStateFilename = "/home/josh/Projects/Output/EDAValidation/reuters21578_noblah2/EDA2/runs/0/fast_state/11.fast_state";
+			String fastStateFilename = Paths.outputDir("EDAValidation") + "/reuters21578_noblah2/EDA2/runs/0/fast_state/11.fast_state";
 			try(StateFileReader dtt = new FastStateFileReader(fastStateFilename)) {
 				for(DocTokenTopics topics : dtt) {
 					System.out.print(topics.docNum());
