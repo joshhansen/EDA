@@ -1,5 +1,7 @@
 package jhn.eda;
 
+import jhn.eda.summarize.SummaryParams;
+
 
 
 public final class Paths {
@@ -61,6 +63,10 @@ public final class Paths {
 					s.append(sampleSummaryKey(summarizerName, start, stop, minCount, includesClass));
 					s.append(jhn.Paths.STATE_EXT);
 					return s.toString();
+				}
+				
+				public static String sampleSummaryFilename(String runDir, SummaryParams sp) {
+					return sampleSummaryFilename(sp.summarizerName(), runDir, sp.firstIter, sp.lastIter, sp.minCount, sp.includeClass);
 				}
 				
 				public static String stateDir(String runDir) {

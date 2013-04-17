@@ -13,7 +13,7 @@ import jhn.counts.i.i.i.IntIntIntRAMCounterMap;
 import jhn.eda.io.FastStateFileReader;
 import jhn.eda.tokentopics.DocTokenTopics;
 
-public class MajoritySampleSummarizer implements SampleSummarizer {
+public class Majority implements SampleSummarizer {
 
 	@Override
 	public IntIntIntCounterMap summarize(File[] fastStateFiles, Int2ObjectMap<String> sources) throws Exception {
@@ -73,11 +73,6 @@ public class MajoritySampleSummarizer implements SampleSummarizer {
 			counts.inc(topic);
 		}
 		return counts.fastTopN(1).get(0).getIntKey();
-	}
-
-	@Override
-	public String name() {
-		return "majority";
 	}
 
 }
