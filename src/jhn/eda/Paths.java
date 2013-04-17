@@ -131,6 +131,10 @@ public final class Paths {
 				public static String topicLabelHitDataFilename(String runDir, int iteration) {
 					return runDir + "/topic_label_hit_data_it" + iteration + ".csv";
 				}
+				
+				public static String logLikelihoodFilename(String runDir) {
+					return runDir + "/log_likelihood.dat";
+				}
 	
 	public static int nextRun(String runsDir) {
 		return jhn.Paths.nextRun(runsDir);
