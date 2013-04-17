@@ -14,13 +14,6 @@ public final class Paths {
 	public static String outputDir() {
 		return jhn.Paths.outputDir("EDA");
 	}
-
-		public static String labelAlphabetsDir() {
-			return outputDir() + "/label_alphabets";
-		}
-			public static String labelAlphabetFilename(String topicWordIdxName, String datasetName, int minCount) {
-				return labelAlphabetsDir() + "/" + jhn.Paths.extractedDataID(topicWordIdxName, datasetName, minCount) + ".ser";
-			}
 		
 		public static String defaultRunsDir() {
 			return outputDir() + "/runs";
