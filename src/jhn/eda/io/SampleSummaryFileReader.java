@@ -11,6 +11,7 @@ import org.apache.lucene.store.FSDirectory;
 
 import cc.mallet.types.LabelAlphabet;
 
+import jhn.ExtractorParams;
 import jhn.eda.Paths;
 import jhn.eda.lucene.LuceneLabelAlphabet;
 import jhn.eda.tokentopics.DocTopicCounts;
@@ -68,18 +69,22 @@ public class SampleSummaryFileReader implements Iterator<DocTopicCounts>, Iterab
 	}
 	
 	public static void main(String[] args) throws IOException, Exception {
-		final int minCount = 2;
+		ExtractorParams ep = new ExtractorParams()
+			.topicWordIdxName("wp_lucene4")
+			.datasetName("reuters21578_noblah2")
+			.minCount(2);
+		
 		final int summaryMinCount = 5;
 		final int startIter = 11;
 		final int stopIter = 149;
 		final int run = 67;
-		final String datasetName = "reuters21578_noblah2";
-		final String topicWordIdxName = "wp_lucene4";
+		
+		
 		final String summarizer = "majority";
-		String topicMappingFilename = jhn.Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
+		String topicMappingFilename = jhn.Paths.topicMappingFilename(ep);
 		System.out.println(topicMappingFilename);
 		IntIndex topicMapping = (IntIndex) Util.deserialize(topicMappingFilename);
-		String topicWordIdxDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
+		String topicWordIdxDir = jhn.Paths.topicWordIndexDir(ep.topicWordIdxName);
 		try(IndexReader topicWordIdx = IndexReader.open(FSDirectory.open(new File(topicWordIdxDir)))) {
 			LabelAlphabet labels = new LuceneLabelAlphabet(topicWordIdx);
 

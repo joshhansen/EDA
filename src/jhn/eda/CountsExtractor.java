@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
+import jhn.ExtractorParams;
 import jhn.eda.topiccounts.ArrayTopicCounts;
 import jhn.eda.topiccounts.LuceneTopicCounts;
 import jhn.eda.topiccounts.TopicCounts;
@@ -216,23 +217,27 @@ public class CountsExtractor implements AutoCloseable {
 		Util.closeIfPossible(srcTopicTypeCounts);
 	}
 	
+	
+	
 	public static void main(String[] args) throws Exception {
-		// Config
-//		int minCount = 2;
-//		String datasetName = "reuters21578_noblah2";// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
-		String datasetName = "toy_dataset4";
-		int minCount = 2;
-		String topicWordIdxName = "wp_lucene4";
-		System.out.println("Extracting " + datasetName);
-		String datasetFilename = jhn.Paths.malletDatasetFilename(datasetName);
-		String topicWordIdxLuceneDir = jhn.Paths.topicWordIndexDir(topicWordIdxName);
+		ExtractorParams ep = new ExtractorParams();
+		ep.topicWordIdxName = "wp_lucene4";
+		ep.datasetName = "toy_dataset4";
+		ep.minCount = 2;
+		extractCounts(ep);
+	}
+	
+	public static void extractCounts(ExtractorParams ep) throws Exception {
+		System.out.println("Extracting " + ep.datasetName);
+		String datasetFilename = jhn.Paths.malletDatasetFilename(ep.datasetName);
+		String topicWordIdxLuceneDir = jhn.Paths.topicWordIndexDir(ep.topicWordIdxName);
 		
-		String topicMappingFilename =              jhn.Paths.topicMappingFilename(topicWordIdxName, datasetName, minCount);
-		String propsFilename =                 jhn.Paths.propsFilename(topicWordIdxName, datasetName, minCount);
-		String topicCountsFilename =           jhn.Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String restrictedTopicCountsFilename = jhn.Paths.restrictedTopicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String filteredTopicCountsFilename =   jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
-		String typeTopicCountsFilename =       jhn.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String topicMappingFilename =          jhn.Paths.topicMappingFilename(ep);
+		String propsFilename =                 jhn.Paths.propsFilename(ep);
+		String topicCountsFilename =           jhn.Paths.topicCountsFilename(ep);
+		String restrictedTopicCountsFilename = jhn.Paths.restrictedTopicCountsFilename(ep);
+		String filteredTopicCountsFilename =   jhn.Paths.filteredTopicCountsFilename(ep);
+		String typeTopicCountsFilename =       jhn.Paths.typeTopicCountsFilename(ep);
 		
 		// Load
 		InstanceList targetData = InstanceList.load(new File(datasetFilename));
@@ -248,7 +253,7 @@ public class CountsExtractor implements AutoCloseable {
 		
 		// Run
 		try(CountsExtractor ce = new CountsExtractor(srcTopicCounts, srcTypeTopicCounts, srcTopicTypeCounts,
-				typeCount, minCount, topicMappingFilename, propsFilename, topicCountsFilename, restrictedTopicCountsFilename,
+				typeCount, ep.minCount, topicMappingFilename, propsFilename, topicCountsFilename, restrictedTopicCountsFilename,
 				filteredTopicCountsFilename, typeTopicCountsFilename)) {
 			
 			ce.extract();

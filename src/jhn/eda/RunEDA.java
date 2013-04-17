@@ -7,6 +7,7 @@ import java.lang.reflect.Constructor;
 
 import cc.mallet.types.InstanceList;
 
+import jhn.ExtractorParams;
 import jhn.eda.listeners.PrintFastState;
 import jhn.eda.listeners.PrintFasterState;
 import jhn.eda.topiccounts.TopicCounts;
@@ -25,28 +26,23 @@ public class RunEDA {
 	protected String runsDir;
 	protected int run;
 	protected int iterations;
-	protected int minCount;
 	protected boolean outputClass;
-	protected String topicWordIdxName;
-	protected String datasetName;
+	protected ExtractorParams ep;
 	protected InstanceList targetData;
 	protected TypeTopicCounts ttcs;
 	protected TopicCounts tcs;
 	protected Config props;
 	
 	public RunEDA() {
-		this(EDA2_1.class, Paths.defaultRunsDir(), 500, 2, false, "wp_lucene4", "toy_dataset4");// "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		this(EDA2_1.class, Paths.defaultRunsDir(), 500, false, new ExtractorParams("wp_lucene4", "sotu_chunks"/*"toy_dataset4"*/, 2));// "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 	}
 	
-	public RunEDA(Class<? extends EDA> algo, String runsDir, int iterations, int minCount, boolean outputClass,
-			String topicWordIdxName, String datasetName) {
+	public RunEDA(Class<? extends EDA> algo, String runsDir, int iterations, boolean outputClass, ExtractorParams ep) {
 		this.algo = algo;
 		this.runsDir = runsDir;
 		this.iterations = iterations;
-		this.minCount = minCount;
 		this.outputClass = outputClass;
-		this.topicWordIdxName = topicWordIdxName;
-		this.datasetName = datasetName;
+		this.ep = ep;
 	}
 
 	protected void loadAll() throws Exception {
@@ -99,7 +95,7 @@ public class RunEDA {
 	}
 
 	protected Config loadProps() throws FileNotFoundException, IOException, ClassNotFoundException {
-		return (Config) Util.deserialize(jhn.Paths.propsFilename(topicWordIdxName, datasetName, minCount));
+		return (Config) Util.deserialize(jhn.Paths.propsFilename(ep));
 	}
 	
 	protected void configure(Config conf) {
@@ -131,14 +127,14 @@ public class RunEDA {
 	
 	protected InstanceList loadTargetData() {
 		System.out.print("Loading target corpus...");
-		InstanceList theTargetData = InstanceList.load(new File(jhn.Paths.malletDatasetFilename(datasetName)));
+		InstanceList theTargetData = InstanceList.load(new File(jhn.Paths.malletDatasetFilename(ep.datasetName)));
 		System.out.println("done.");
 		return theTargetData;
 	}
 	
 	protected TypeTopicCounts loadTypeTopicCounts() throws FileNotFoundException, IOException, ClassNotFoundException {
 		System.out.print("Loading type-topic counts...");
-		final String ttCountsFilename = jhn.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String ttCountsFilename = jhn.Paths.typeTopicCountsFilename(ep);
 		TypeTopicCounts theTTCs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 		return theTTCs;
@@ -146,7 +142,7 @@ public class RunEDA {
 	
 	protected TopicCounts loadTopicCounts() throws FileNotFoundException, IOException, ClassNotFoundException {
 		System.out.print("Loading topic counts...");
-		final String topicCountsFilename = jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = jhn.Paths.filteredTopicCountsFilename(ep);
 		TopicCounts theTCs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		System.out.println("done.");
 		return theTCs;
