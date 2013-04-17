@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 
 import jhn.eda.io.StateFileWriter;
+import jhn.idx.Index;
 
 /** Print state in a custom serialized format */
 public abstract class StateWriterListener extends IntervalListener {
@@ -39,18 +40,22 @@ public abstract class StateWriterListener extends IntervalListener {
 		String[] docNames = eda.docNames();
 		int[] docLengths = eda.docLengths();
 		int[][] topics = eda.topics();
+		int[] docTokenTopics;
+		Index<String> allLabels = eda.allLabels();
+		String[] docLabels = eda.docLabels();
 		
 		String docSource;
 		try(StateFileWriter out = writerCtor.newInstance(filename(iteration), Boolean.valueOf(outputClass))) {
 			for (int docNum = 0; docNum < eda.numDocs(); docNum++) {
 				docSource = docNames[docNum];
 				if(outputClass) {
-					out.startDocument(docNum, docSource, eda.allLabels().indexOf(eda.docLabels()[docNum], false));
+					out.startDocument(docNum, docSource, allLabels.indexOf(docLabels[docNum], false));
 				} else {
 					out.startDocument(docNum, docSource);
 				}
+				docTokenTopics = topics[docNum];
 				for (int position = 0; position < docLengths[docNum]; position++) {
-					out.nextTokenTopic(topics[docNum][position]);
+					out.nextTokenTopic(docTokenTopics[position]);
 				}
 				out.endDocument();
 			}
