@@ -393,7 +393,7 @@ public abstract class EDA implements Serializable {
 		}
 	}
 	
-	private static final boolean usingSymmetricAlpha = false;
+	public static final boolean usingSymmetricAlpha = true;
 	public void optimizeAlphas() {
 //		for (int thread = 0; thread < numThreads; thread++) {
 //			int[][] sourceTopicCounts = runnables[thread].getTopicDocCounts();
