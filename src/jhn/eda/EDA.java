@@ -378,6 +378,8 @@ public abstract class EDA implements Serializable {
 		}
 	}//end class DocumentSampler
 	
+	public abstract double logLikelihood();
+	
 	//BEGIN from ParallelTopicModel
 	// for dirichlet estimation
 //	public int[] docLengthCounts; // histogram of document sizes

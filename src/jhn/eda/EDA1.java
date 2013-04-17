@@ -54,4 +54,22 @@ public class EDA1 extends EDA {
 					(betaSum + topicCount - countDelta);
 		}
 	}//end class DocumentSampler2
+	
+	/**
+	 * The likelihood of the model is a combination of a Dirichlet-multinomial
+	 * for the words in each topic and a Dirichlet-multinomial for the topics in
+	 * each document.
+	 * 
+	 * The likelihood function of a dirichlet multinomial is Gamma( sum_i
+	 * alpha_i ) prod_i Gamma( alpha_i + N_i ) prod_i Gamma( alpha_i ) Gamma(
+	 * sum_i (alpha_i + N_i) )
+	 * 
+	 * So the log likelihood is logGamma ( sum_i alpha_i ) - logGamma ( sum_i
+	 * (alpha_i + N_i) ) + sum_i [ logGamma( alpha_i + N_i) - logGamma( alpha_i
+	 * ) ]
+	 */
+	@Override
+	public double logLikelihood() {
+		throw new UnsupportedOperationException();
+	}
 }

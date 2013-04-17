@@ -8,6 +8,10 @@ package jhn.eda;
 
 import java.io.FileNotFoundException;
 
+import org.apache.commons.math3.special.Gamma;
+
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+
 import jhn.counts.i.i.IntIntCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TopicCount;
@@ -60,4 +64,42 @@ public class EDA2_1 extends EDA {
 			return score;
 		}
 	}//end class DocumentSampler2
+
+	@Override
+	public double logLikelihood() {
+		if(!usingSymmetricAlpha) throw new UnsupportedOperationException("Log likelihood computation is unreasonably slow with assymetric alphas");
+		
+		//NOTE: assumes symmetric alphas!
+		final double alpha = alphas[0];
+		final double Kalpha = numTopics * alpha;
+		final double log_gamma_alpha = Gamma.logGamma(alpha);
+		
+		
+		double ll = Gamma.logGamma(Kalpha);
+		ll -= numTopics * log_gamma_alpha;
+		
+		int nonZeroTopics;
+		int zeroTopics;
+		
+		IntIntCounter docTopicCounts;
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			docTopicCounts = docTopicCounts(docNum);
+			
+			// Deal with non-zero-count topics:
+			for(Int2IntMap.Entry entry : docTopicCounts.int2IntEntrySet()) {
+				ll += Gamma.logGamma(entry.getIntValue() + alpha);
+				
+			}
+			
+			// Deal with zero-count topics:
+			nonZeroTopics = docTopicCounts.size();
+			zeroTopics = numTopics - nonZeroTopics;
+			ll += zeroTopics * log_gamma_alpha;
+			
+			
+			ll -= Gamma.logGamma(tokens[docNum].length + Kalpha);
+		}
+		
+		return ll;
+	}
 }

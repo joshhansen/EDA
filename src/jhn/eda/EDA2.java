@@ -50,4 +50,9 @@ public class EDA2 extends EDA {
 			return ttc.count*(maybeMinusOne(docTopicCounts.getCount(ttc.topic)) + alphas[docNum]);
 		}
 	}//end class DocumentSampler2
+
+	@Override
+	public double logLikelihood() {
+		throw new UnsupportedOperationException();
+	}
 }
