@@ -1,7 +1,7 @@
 package jhn.eda.listeners;
 
 
-public abstract class IntervalListener extends EDAListener {
+public abstract class IntervalListener extends ProbabilisticExplicitTopicModelListener {
 	protected final int printInterval;
 
 	public IntervalListener(int printInterval) {

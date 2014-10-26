@@ -15,13 +15,13 @@ import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCountsException;
 
 /** Actually LDA with static topic-word counts */
-public class EDA1 extends EDA {
+public class LDASTWD extends ProbabilisticExplicitTopicModel {
 	private static final long serialVersionUID = 1L;
 	
 	protected double beta;
 	protected double betaSum;
 	
-	public EDA1(TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
+	public LDASTWD(TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
 			int numTopics, String logDir) throws FileNotFoundException {
 		super(topicCountsFact, typeTopicCounts, numTopics, logDir);
 	}
@@ -38,12 +38,12 @@ public class EDA1 extends EDA {
 	
 	@Override
 	protected DocumentSampler samplerInstance(int docNum) {
-		return new OldEDADocumentSampler(this, docNum);
+		return new LDASTWDDocumentSampler(this, docNum);
 	}
 
-	private class OldEDADocumentSampler extends DocumentSampler {
+	private class LDASTWDDocumentSampler extends DocumentSampler {
 		
-		public OldEDADocumentSampler(EDA eda, int docNum) {
+		public LDASTWDDocumentSampler(ProbabilisticExplicitTopicModel eda, int docNum) {
 			eda.super(docNum);
 		}
 		

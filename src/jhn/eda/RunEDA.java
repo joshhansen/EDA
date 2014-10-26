@@ -23,7 +23,7 @@ public class RunEDA {
 	public static final double DEFAULT_ALPHA_SUM = 50.0;
 	public static final double DEFAULT_BETA = 0.01;
 	
-	protected Class<? extends EDA> algo;
+	protected Class<? extends ProbabilisticExplicitTopicModel> algo;
 	protected String runsDir;
 	protected int run;
 	protected int iterations;
@@ -35,10 +35,10 @@ public class RunEDA {
 	protected Config props;
 	
 	public RunEDA() {
-		this(EDA2_1.class, Paths.defaultRunsDir(), 500, false, new ExtractorParams("wp_lucene4", "sotu_chunks"/*"toy_dataset4"*/, 2));// "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
+		this(EDA.class, Paths.defaultRunsDir(), 500, false, new ExtractorParams("wp_lucene4", "sotu_chunks"/*"toy_dataset4"*/, 2));// "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 	}
 	
-	public RunEDA(Class<? extends EDA> algo, String runsDir, int iterations, boolean outputClass, ExtractorParams ep) {
+	public RunEDA(Class<? extends ProbabilisticExplicitTopicModel> algo, String runsDir, int iterations, boolean outputClass, ExtractorParams ep) {
 		this.algo = algo;
 		this.runsDir = runsDir;
 		this.iterations = iterations;
@@ -74,7 +74,7 @@ public class RunEDA {
 			System.out.println(ctor);
 		}
 		
-		EDA eda = algo.getConstructor(TopicCounts.class, TypeTopicCounts.class, Integer.TYPE, String.class)
+		ProbabilisticExplicitTopicModel eda = algo.getConstructor(TopicCounts.class, TypeTopicCounts.class, Integer.TYPE, String.class)
 				.newInstance(tcs, ttcs, Integer.valueOf(props.getInt(Options.NUM_TOPICS)), runDir()+"/main.log");
 		
 		configure(eda.conf);
@@ -108,7 +108,7 @@ public class RunEDA {
 		conf.putInt(Options.MAX_THREADS, NUM_CORES);
 	}
 	
-	protected void addListeners(EDA eda) throws Exception {
+	protected void addListeners(ProbabilisticExplicitTopicModel eda) throws Exception {
 //		eda.addListener(new PrintState(PRINT_INTERVAL, runDir()));
 //		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
 		eda.addListener(new PrintFasterState(PRINT_INTERVAL, runDir(), outputClass));
@@ -121,7 +121,7 @@ public class RunEDA {
 //		eda.addListener(new PrintTopTopicWords(PRINT_INTERVAL, runDir(), 10));
 	}
 	
-	protected void processTargetData(EDA eda) {
+	protected void processTargetData(ProbabilisticExplicitTopicModel eda) {
 		System.out.print("Processing target corpus...");
 		eda.setTrainingData(targetData);
 		System.out.println("done.");

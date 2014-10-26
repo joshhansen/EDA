@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class LogLikelihoodWriterListener extends EDAListener implements AutoCloseable  {
+public class LogLikelihoodWriterListener extends ProbabilisticExplicitTopicModelListener implements AutoCloseable  {
 	private boolean firstIter = true;
 	private DataOutputStream out;
 	public LogLikelihoodWriterListener(String filename) throws FileNotFoundException {

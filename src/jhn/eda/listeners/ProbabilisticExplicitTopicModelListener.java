@@ -1,11 +1,11 @@
 package jhn.eda.listeners;
 
-import jhn.eda.EDA;
+import jhn.eda.ProbabilisticExplicitTopicModel;
 
-public class EDAListener {
-	protected EDA eda;
+public class ProbabilisticExplicitTopicModelListener {
+	protected ProbabilisticExplicitTopicModel eda;
 	
-	public void samplerInit(EDA sampler) {
+	public void samplerInit(ProbabilisticExplicitTopicModel sampler) {
 		this.eda = sampler;
 	}
 	
