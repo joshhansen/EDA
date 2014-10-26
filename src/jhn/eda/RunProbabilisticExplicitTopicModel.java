@@ -17,7 +17,7 @@ import jhn.util.Log;
 import jhn.util.Util;
 
 
-public class RunEDA {
+public class RunProbabilisticExplicitTopicModel {
 	private static final int PRINT_INTERVAL = 1;
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 	public static final double DEFAULT_ALPHA_SUM = 50.0;
@@ -34,11 +34,11 @@ public class RunEDA {
 	protected TopicCounts tcs;
 	protected Config props;
 	
-	public RunEDA() {
+	public RunProbabilisticExplicitTopicModel() {
 		this(EDA.class, Paths.defaultRunsDir(), 500, false, new ExtractorParams("wp_lucene4", "sotu_chunks"/*"toy_dataset4"*/, 2));// "reuters21578_noblah2");// toy_dataset2 debates2012 sacred_texts state_of_the_union reuters21578
 	}
 	
-	public RunEDA(Class<? extends ProbabilisticExplicitTopicModel> algo, String runsDir, int iterations, boolean outputClass, ExtractorParams ep) {
+	public RunProbabilisticExplicitTopicModel(Class<? extends ProbabilisticExplicitTopicModel> algo, String runsDir, int iterations, boolean outputClass, ExtractorParams ep) {
 		this.algo = algo;
 		this.runsDir = runsDir;
 		this.iterations = iterations;
@@ -151,7 +151,7 @@ public class RunEDA {
 	}
 
 	public static void main(String[] args) throws Exception {
-		RunEDA runner = new RunEDA();
+		RunProbabilisticExplicitTopicModel runner = new RunProbabilisticExplicitTopicModel();
 		runner.run();
 	}
 }
