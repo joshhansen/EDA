@@ -7,8 +7,10 @@ information, see the file `LICENSE' included with this distribution. */
 package jhn.eda;
 
 import java.io.FileNotFoundException;
+import java.util.Iterator;
 
 import org.apache.commons.math3.special.Gamma;
+import org.apache.commons.math3.util.FastMath;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 
@@ -16,6 +18,7 @@ import jhn.counts.i.i.IntIntCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.eda.typetopiccounts.TypeTopicCountsException;
 
 /**
 * An implementation of Explicit Dirichlet Allocation using Gibbs sampling. Based on SimpleLDA by David Mimno and Andrew
@@ -66,7 +69,7 @@ public class EDA2_1 extends EDA {
 	}//end class DocumentSampler2
 
 	@Override
-	public double logLikelihood() {
+	public double logLikelihood() throws Exception {
 		if(!usingSymmetricAlpha) throw new UnsupportedOperationException("Log likelihood computation is unreasonably slow with assymetric alphas");
 		
 		//NOTE: assumes symmetric alphas!
@@ -98,6 +101,24 @@ public class EDA2_1 extends EDA {
 			
 			
 			ll -= Gamma.logGamma(tokens[docNum].length + Kalpha);
+			
+			for(int position = 0; position < docLengths[docNum]; position++) {
+				double topicWordProb = Double.NaN;
+				Iterator<TopicCount> it = typeTopicCounts.typeTopicCounts(tokens[docNum][position]);
+				while(it.hasNext()) {
+					TopicCount tc = it.next();
+					if(tc.topic==topics[docNum][position]) {
+						topicWordProb = (double)tc.count / (double) topicCorpusTopicCounts.topicCount(tc.topic);
+						break;
+					}
+				}
+				
+				if(Double.isNaN(topicWordProb)) {
+					System.err.println(topics[docNum][position]);
+				} else {
+					ll += FastMath.log(topicWordProb);
+				}
+			}
 		}
 		
 		return ll;

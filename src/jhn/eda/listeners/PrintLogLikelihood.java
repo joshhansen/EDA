@@ -10,7 +10,7 @@ public class PrintLogLikelihood extends IntervalListener implements AutoCloseabl
 	}
 
 	@Override
-	protected void iterationEndedAtInterval(int iteration) {
+	protected void iterationEndedAtInterval(int iteration) throws Exception {
 		out.println("<" + iteration + "> Log Likelihood: " + eda.logLikelihood());
 	}
 

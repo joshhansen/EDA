@@ -253,6 +253,16 @@ public abstract class EDA implements Serializable {
 	
 	protected abstract DocumentSampler samplerInstance(int docNum);
 
+	public IntIntCounter targetTopicCounts() {
+		IntIntCounter counts = new IntIntRAMCounter();
+		for(int[] docTopics : topics) {
+			for(int topic : docTopics) {
+				counts.inc(topic);
+			}
+		}
+		return counts;
+	}
+	
 	public IntIntCounter docTopicCounts(final int docNum) {
 		IntIntCounter docTopicCounts = new IntIntRAMCounter();
 		for(int topic : topics[docNum]) {
@@ -378,7 +388,7 @@ public abstract class EDA implements Serializable {
 		}
 	}//end class DocumentSampler
 	
-	public abstract double logLikelihood();
+	public abstract double logLikelihood() throws Exception;
 	
 	//BEGIN from ParallelTopicModel
 	// for dirichlet estimation
