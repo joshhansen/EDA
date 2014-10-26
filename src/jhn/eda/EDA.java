@@ -77,7 +77,7 @@ public abstract class EDA implements Serializable {
 	
 	// Data sources and other helpers
 	protected transient TypeTopicCounts typeTopicCounts;
-	protected transient TopicCounts topicCounts;
+	protected transient TopicCounts topicCorpusTopicCounts;
 	
 	public EDA (TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
 			final int numTopics, final String logDir) throws FileNotFoundException {
@@ -87,7 +87,7 @@ public abstract class EDA implements Serializable {
 	public EDA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts,
 			final int numTopics, final String logFilename, Randoms random) throws FileNotFoundException {
 		
-		this.topicCounts = topicCounts;
+		this.topicCorpusTopicCounts = topicCounts;
 		this.typeTopicCounts = typeTopicCounts;
 		this.random = random;
 		

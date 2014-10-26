@@ -54,7 +54,7 @@ public class EDA2_1 extends EDA {
 		@Override
 		protected double completeConditional(TopicCount ttc, int oldTopic, IntIntCounter docTopicCounts) throws Exception {
 			typeTopicCount = ttc.count;
-			topicCount = topicCounts.topicCount(ttc.topic);
+			topicCount = topicCorpusTopicCounts.topicCount(ttc.topic);
 			topicWordProb = topicCount != 0 ? typeTopicCount / topicCount : 0.0;
 			docTopicCount = docTopicCounts.getCount(ttc.topic) - (oldTopic==ttc.topic ? 1.0 : 0.0);
 			score = topicWordProb*(docTopicCount + alphas[ttc.topic]);
