@@ -108,17 +108,17 @@ public class RunProbabilisticExplicitTopicModel {
 		conf.putInt(Options.MAX_THREADS, NUM_CORES);
 	}
 	
-	protected void addListeners(ProbabilisticExplicitTopicModel eda) throws Exception {
-//		eda.addListener(new PrintState(PRINT_INTERVAL, runDir()));
-//		eda.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
-		eda.addListener(new PrintFasterState(PRINT_INTERVAL, runDir(), outputClass));
-		eda.addListener(new PrintLogLikelihood(new Log(), PRINT_INTERVAL));
-//		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir()));
-//		eda.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir(), false));
-//		eda.addListener(new PrintDocTopics(PRINT_INTERVAL, runDir()));
-//		eda.addListener(new SerializeModel(PRINT_INTERVAL, runDir()));
-//		eda.addListener(new PrintTopDocTopics(PRINT_INTERVAL, runDir(), 10));
-//		eda.addListener(new PrintTopTopicWords(PRINT_INTERVAL, runDir(), 10));
+	protected void addListeners(ProbabilisticExplicitTopicModel model) throws Exception {
+//		model.addListener(new PrintState(PRINT_INTERVAL, runDir()));
+//		model.addListener(new PrintFastState(PRINT_INTERVAL, runDir(), outputClass));
+		model.addListener(new PrintFasterState(PRINT_INTERVAL, runDir(), outputClass));
+		model.addListener(new PrintLogLikelihood(new Log(), PRINT_INTERVAL));
+//		model.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir()));
+//		model.addListener(new PrintReducedDocsLibSVM(PRINT_INTERVAL, runDir(), false));
+//		model.addListener(new PrintDocTopics(PRINT_INTERVAL, runDir()));
+//		model.addListener(new SerializeModel(PRINT_INTERVAL, runDir()));
+//		model.addListener(new PrintTopDocTopics(PRINT_INTERVAL, runDir(), 10));
+//		model.addListener(new PrintTopTopicWords(PRINT_INTERVAL, runDir(), 10));
 	}
 	
 	protected void processTargetData(ProbabilisticExplicitTopicModel eda) {
