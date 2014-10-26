@@ -9,16 +9,15 @@ import jhn.eda.typetopiccounts.TypeTopicCounts;
 
 /** Actually LDA with static topic-word counts */
 public class EDA1 extends EDA {
-	public EDA1(TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
-			int numTopics, String logDir) throws FileNotFoundException {
-		super(topicCountsFact, typeTopicCounts, numTopics, logDir);
-		// TODO Auto-generated constructor stub
-	}
-
 	private static final long serialVersionUID = 1L;
 	
 	protected double beta;
 	protected double betaSum;
+	
+	public EDA1(TopicCounts topicCountsFact, TypeTopicCounts typeTopicCounts,
+			int numTopics, String logDir) throws FileNotFoundException {
+		super(topicCountsFact, typeTopicCounts, numTopics, logDir);
+	}
 	
 	@Override
 	public void sample() throws Exception {
